@@ -18,6 +18,16 @@ class MyApp extends StatelessWidget {
           // errorColor: Colors.red,
           fontFamily: 'Quicksand',
           textTheme: ThemeData.light().textTheme.copyWith(
+                headline4: TextStyle(
+                    fontFamily: 'OpenSans',
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                    color: Colors.white),
+                headline5: TextStyle(
+                    fontFamily: 'OpenSans',
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                    color: Colors.black),
                 headline6: TextStyle(
                     fontFamily: 'OpenSans',
                     fontWeight: FontWeight.bold,
@@ -47,7 +57,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  /* final List<Transaction> _userTransactions = [
+  final List<Transaction> _userTransactions = [
     Transaction(
       id: 't1',
       title: 'New Shoes',
@@ -79,24 +89,24 @@ class _MyHomePageState extends State<MyHomePage> {
       date: DateTime.now(),
     ),
     Transaction(
-      id: 't2',
+      id: 't6',
       title: 'Weekly Groceries',
       amount: 16.53,
       date: DateTime.now(),
     ),
     Transaction(
-      id: 't1',
+      id: 't7',
       title: 'New Shoes',
       amount: 69.99,
       date: DateTime.now(),
     ),
     Transaction(
-      id: 't2',
+      id: 't8',
       title: 'Weekly Groceries',
       amount: 16.53,
       date: DateTime.now(),
     ),
-  ]; */
+  ];
 
   List<Transaction> get _recentTransactions {
     return _userTransactions.where((tx) {
@@ -124,6 +134,11 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _startAddNewTransaction(BuildContext ctx) {
     showModalBottomSheet(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(20),
+        ),
+      ),
       context: ctx,
       builder: (_) {
         return GestureDetector(
@@ -147,7 +162,7 @@ class _MyHomePageState extends State<MyHomePage> {
     double _width = MediaQuery.of(context).size.width;
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Theme.of(context).accentColor,
+        backgroundColor: Theme.of(context).primaryColor,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(
             bottom: Radius.circular(20),
@@ -176,39 +191,79 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
               child: Column(
                 children: [
-                  TransactionList(_userTransactions, _startAddNewTransaction,
-                      _deleteTransaction, _height, _width),
                   _userTransactions.isEmpty
                       ? Container()
-                      : Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            CircleAvatar(
-                              backgroundColor: Theme.of(context).accentColor,
-                              radius: 30,
-                              child: IconButton(
-                                iconSize: 40,
-                                icon: Icon(Icons.add),
-                                color: Colors.white,
-                                onPressed: () =>
-                                    _startAddNewTransaction(context),
-                              ),
-                            ),
-                            CircleAvatar(
-                              backgroundColor: Theme.of(context).accentColor,
-                              radius: 30,
-                              child: IconButton(
-                                iconSize: 40,
-                                icon: Icon(
-                                  Icons.pie_chart,
+                      : Padding(
+                          padding: const EdgeInsets.only(
+                            left: 25,
+                            top: 25.0,
+                            bottom: 10,
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Flexible(
+                                flex: 2,
+                                child: TextButton(
+                                  child: Text(
+                                    "Marzo - 2021 ",
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                      fontSize: 22,
+                                    ),
+                                  ),
+                                  onPressed: () => showDatePicker(
+                                    context: context,
+                                    initialDate: DateTime.now(),
+                                    firstDate: DateTime(DateTime.now().year),
+                                    lastDate: DateTime.now(),
+                                  ),
                                 ),
-                                color: Colors.white,
-                                onPressed: () => () {},
                               ),
-                            ),
-                          ],
-                        )
+                              Flexible(
+                                flex: 1,
+                                child: Row(
+                                  children: [
+                                    Align(
+                                      alignment: Alignment.centerRight,
+                                      child: CircleAvatar(
+                                        backgroundColor:
+                                            Theme.of(context).primaryColor,
+                                        radius: 25,
+                                        child: IconButton(
+                                          iconSize: 20,
+                                          icon: Icon(Icons.add),
+                                          color: Colors.white,
+                                          onPressed: () =>
+                                              _startAddNewTransaction(context),
+                                        ),
+                                      ),
+                                    ),
+                                    SizedBox(
+                                      width: 10,
+                                    ),
+                                    CircleAvatar(
+                                      backgroundColor:
+                                          Theme.of(context).accentColor,
+                                      radius: 25,
+                                      child: IconButton(
+                                        iconSize: 20,
+                                        icon: Icon(
+                                          Icons.pie_chart,
+                                        ),
+                                        color: Colors.white,
+                                        onPressed: () => () {},
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                  TransactionList(_userTransactions, _startAddNewTransaction,
+                      _deleteTransaction, _height, _width),
                 ],
               ),
             ),

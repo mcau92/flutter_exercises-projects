@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "1054224580645",
+    "firebase_url": "https://highlightslearning-default-rtdb.europe-west1.firebasedatabase.app",
+    "project_id": "highlightslearning",
+    "storage_bucket": "highlightslearning.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1054224580645:android:fd1e296652066d016effcc",
+        "android_client_info": {
+          "package_name": "com.example.highlightsLearning"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1054224580645-n22be6d9p1i7d0ghbv2f9ehlla4dijvm.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD4eQ0sKwJ_yHEN9Z-sHLw6UShZnSr7Ok4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1054224580645-n22be6d9p1i7d0ghbv2f9ehlla4dijvm.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "1054224580645-73s0nh5uvg2j4r2ngbslnmh8m7evp1d5.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.highlightsLearning"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

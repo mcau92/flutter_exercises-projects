@@ -77,6 +77,7 @@ class _AuthenticationPageState extends State<AuthenticationPage> {
             color: Theme.of(context).primaryColor,
           ),
           child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
                 Constant().title,

@@ -11,9 +11,10 @@ void main() {
     final license = await rootBundle.loadString('google_fonts/OFL.txt');
     yield LicenseEntryWithLineBreaks(['google_fonts'], license);
   });
-  SystemChrome.setPreferredOrientations(
+  /* SystemChrome.setPreferredOrientations(
           [DeviceOrientation.portraitUp, DeviceOrientation.portraitDown])
-      .then((_) => runApp(MyApp()));
+      .then((_) => runApp(MyApp())); */
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {

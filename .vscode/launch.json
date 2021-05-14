@@ -5,6 +5,12 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "splitmacros",
+            "cwd": "splitmacros",
+            "request": "launch",
+            "program": "lib/main.dart"
+        },
+        {
             "name": "money_saver",
             "cwd": "money_saver",
             "request": "launch",

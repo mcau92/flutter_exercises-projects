@@ -4,8 +4,10 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:splitmacros/auth/authentication.dart';
+import 'package:splitmacros/auth/widget/signin_widget.dart';
 import 'package:splitmacros/home/homepage.dart';
 import 'package:splitmacros/service/navigator_service.dart';
+import 'package:splitmacros/utils/constant.dart';
 
 class AuthenticationPage extends StatefulWidget {
   @override
@@ -44,7 +46,7 @@ class _AuthenticationPageState extends State<AuthenticationPage> {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
+    /* return FutureBuilder(
       future: Firebase.initializeApp(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.done) {
@@ -60,6 +62,29 @@ class _AuthenticationPageState extends State<AuthenticationPage> {
           size: 50.0,
         );
       },
+    ); */
+    double _height = MediaQuery.of(context).size.height;
+    double _width = MediaQuery.of(context).size.width;
+    return Scaffold(
+      body: Container(
+          height: _height,
+          width: _width,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(250),
+              bottomRight: Radius.circular(100),
+            ),
+            color: Theme.of(context).primaryColor,
+          ),
+          child: Column(
+            children: [
+              Text(
+                Constant().title,
+                style: Theme.of(context).textTheme.headline1,
+              ),
+              SignInWidget(_height, _width),
+            ],
+          )),
     );
   }
 }

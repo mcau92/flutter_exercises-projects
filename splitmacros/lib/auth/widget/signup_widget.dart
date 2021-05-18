@@ -1,36 +1,42 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:splitmacros/provider/auth_provider.dart';
+import 'package:splitmacros/service/database_service.dart';
 import 'package:splitmacros/service/navigator_service.dart';
 import 'package:splitmacros/service/snackbar_service.dart';
 
-class SignInWidget extends StatefulWidget {
+class SignUpWidget extends StatefulWidget {
   final double _heigth;
   final double _width;
   Function _changeSignPage;
-  SignInWidget(this._heigth, this._width, this._changeSignPage);
+  SignUpWidget(this._heigth, this._width, this._changeSignPage);
 
   @override
-  _SignInWidgetState createState() => _SignInWidgetState();
+  _SignUpWidgetState createState() => _SignUpWidgetState();
 }
 
-class _SignInWidgetState extends State<SignInWidget> {
+class _SignUpWidgetState extends State<SignUpWidget> {
   AuthProvider _auth;
+  String _username;
   String _email;
   String _password;
   bool _isButtonEnable = false;
   GlobalKey<FormState> _formKey;
 
-  _SignInWidgetState() {
+  _SignUpWidgetState() {
     _formKey = GlobalKey<FormState>();
   }
+
   void _checkValidator() {
-    if (_email != null &&
+    if (_username != null &&
+        _email != null &&
         _password != null &&
+        _username.length > 0 &&
         _email.length > 0 &&
-        _password.length > 0 &&
+        _password.length > 5 &&
         _email.contains('@')) {
       setState(() {
         _isButtonEnable = true;
@@ -43,14 +49,29 @@ class _SignInWidgetState extends State<SignInWidget> {
   }
 
   void _userAuth() async {
-    _auth.loginUserWithEmailAndPassword(_email, _password);
+    bool isUserAvailable= await DatabaseService.instance.checkUserNameIsAvailable(_username);
+    bool isEmailAvailable=await DatabaseService.instance.checkEmailIsAvailable(_email);
+    if (!isUserAvailable ) {
+      SnackBarService.instance.showSnackBarError("Username already used");
+    }
+    else if(!isEmailAvailable){
+      SnackBarService.instance.showSnackBarError("Email already used");
+    
+    }
+    else{
+      _auth.registerUserWithEmailAndPassword(_email, _password,
+          (String _uid) async {
+        await DatabaseService.instance
+            .createUserInDb(_uid, _email,_username, _password);
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     _auth = Provider.of<AuthProvider>(context);
     return Container(
-      height: widget._heigth * 0.45,
+      height: widget._heigth * 0.55,
       width: widget._width * 0.8,
       decoration: BoxDecoration(
         color: Color.fromRGBO(196, 196, 196, 1),
@@ -62,20 +83,19 @@ class _SignInWidgetState extends State<SignInWidget> {
             padding: const EdgeInsets.only(top: 10.0),
             child: Center(
               child: Text(
-                "Welcome back!",
+                "Welcome !",
                 style: Theme.of(context).textTheme.headline3,
               ),
             ),
           ),
-          _inputForm(context),
+          _inputForm(context, widget._changeSignPage),
         ],
       ),
     );
   }
 
-  Widget _inputForm(BuildContext _context) {
+  Widget _inputForm(BuildContext _context, Function _changeSignPage) {
     return Expanded(
-      flex: 2,
       child: Form(
           key: _formKey,
           onChanged: () {
@@ -83,12 +103,81 @@ class _SignInWidgetState extends State<SignInWidget> {
           },
           child: Column(
             children: [
+              _fullNameField(_context),
               _emailTextField(_context),
               _passwordTextField(_context),
               _submitButton(_context),
-              _signUpSection(_context),
+              _signUpSection(_context, _changeSignPage),
             ],
           )),
+    );
+  }
+
+  Widget _fullNameField(BuildContext _context) {
+    return Column(
+      children: [
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Padding(
+            padding: const EdgeInsets.only(
+              left: 30.0,
+              top: 10,
+            ),
+            child: Text(
+              "username",
+              style: Theme.of(_context).textTheme.headline2,
+            ),
+          ),
+        ),
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(192),
+            color: Theme.of(_context).accentColor,
+          ),
+          margin: EdgeInsets.symmetric(horizontal: 20),
+          child: TextFormField(
+            textAlignVertical: TextAlignVertical.bottom,
+            textAlign: TextAlign.start,
+            autocorrect: false,
+            style: Theme.of(_context).textTheme.headline4,
+            validator: (_input) {
+              return _input.length != 0 ? null : "Please Enter Your Username";
+            },
+            onSaved: (_input) {
+              if (_input != null) {
+                setState(() {
+                  _username = _input;
+                  _checkValidator();
+                });
+              }
+            },
+            cursorHeight: 18,
+            cursorColor: Colors.black,
+            decoration: InputDecoration(
+              hintText: "Type Your Username Here",
+              fillColor: Colors.black,
+              border: InputBorder.none,
+              focusedBorder: InputBorder.none,
+              enabledBorder: InputBorder.none,
+              errorBorder: InputBorder.none,
+              disabledBorder: InputBorder.none,
+              hintStyle: TextStyle(color: Theme.of(_context).buttonColor),
+              prefixIcon: Container(
+                decoration: BoxDecoration(
+                  color: Theme.of(_context).buttonColor,
+                  borderRadius: BorderRadius.circular(7),
+                ),
+                child: Icon(
+                  FontAwesomeIcons.user,
+                  color: Colors.black,
+                  size: 20,
+                ),
+                margin: EdgeInsets.all(7),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -121,9 +210,8 @@ class _SignInWidgetState extends State<SignInWidget> {
             validator: (_input) {
               return _input.length != 0 || _input.contains('@')
                   ? null
-                  : "Please Enter a Valid Email";
+                  : "Please Enter a valid email";
             },
-            style: Theme.of(_context).textTheme.headline4,
             onSaved: (_input) {
               if (_input != null) {
                 setState(() {
@@ -132,6 +220,7 @@ class _SignInWidgetState extends State<SignInWidget> {
                 });
               }
             },
+            style: Theme.of(_context).textTheme.headline4,
             cursorHeight: 18,
             cursorColor: Colors.black,
             decoration: InputDecoration(
@@ -190,7 +279,6 @@ class _SignInWidgetState extends State<SignInWidget> {
             validator: (_input) {
               return _input.length != 0 ? null : "Please Enter a Password";
             },
-            style: Theme.of(_context).textTheme.headline4,
             onSaved: (_input) {
               if (_input != null) {
                 setState(() {
@@ -199,6 +287,7 @@ class _SignInWidgetState extends State<SignInWidget> {
                 });
               }
             },
+            style: Theme.of(_context).textTheme.headline4,
             cursorHeight: 18,
             cursorColor: Colors.black,
             decoration: InputDecoration(
@@ -233,13 +322,13 @@ class _SignInWidgetState extends State<SignInWidget> {
       padding: EdgeInsets.symmetric(horizontal: 70, vertical: 20),
       child: RaisedButton(
         onPressed: () => _isButtonEnable ? _userAuth() : null,
-        color: _isButtonEnable ? Colors.green : Colors.green.withOpacity(0.5),
+        color: _isButtonEnable ? Colors.red : Colors.red.withOpacity(0.5),
         elevation: 20,
         shape: RoundedRectangleBorder(
             borderRadius: new BorderRadius.circular(30.0)),
         child: Center(
           child: Text(
-            "Sign In",
+            "Sign Up",
             style: _isButtonEnable
                 ? Theme.of(_context).textTheme.headline5
                 : Theme.of(_context)
@@ -252,18 +341,18 @@ class _SignInWidgetState extends State<SignInWidget> {
     );
   }
 
-  Widget _signUpSection(BuildContext _context) {
+  Widget _signUpSection(BuildContext _context, Function _changeSignPage) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(
-          "Don't have an account? ",
+          "Already have an account? ",
           style: Theme.of(_context).textTheme.headline4,
         ),
         TextButton(
-          onPressed: () => widget._changeSignPage(),
+          onPressed: () => _changeSignPage(),
           child: Text(
-            "Sign Up",
+            "Sign In",
             style: Theme.of(_context).textTheme.headline4.copyWith(
                   fontWeight: FontWeight.bold,
                 ),

@@ -19,7 +19,7 @@ class AuthProvider extends ChangeNotifier {
 
   AuthProvider() {
     _auth = FirebaseAuth.instance;
-    _checkCurrentUserIsAuthenticated();
+    _checkCurrentUserIsAuthenticated(); 
   }
   void _autoLogin() async {
     if (user != null) {
@@ -28,12 +28,13 @@ class AuthProvider extends ChangeNotifier {
   }
 
   void _checkCurrentUserIsAuthenticated() async {
-    user = await _auth.currentUser;
+    user = _auth.currentUser;
     if (user != null) {
       notifyListeners();
       _autoLogin();
     }
   }
+  
 
   void loginUserWithEmailAndPassword(String _email, String _password) async {
     status = AuthStatus.Authenticating;
@@ -48,7 +49,7 @@ class AuthProvider extends ChangeNotifier {
       NavigationService.instance.navigateToReplacement("home");
     } catch (e) {
       status = AuthStatus.Error;
-      SnackBarService.instance.showSnackBarSuccesfull("Error Authenticating");
+      SnackBarService.instance.showSnackBarError("Error Authenticating,check username or password");
       user = null;
     }
     notifyListeners();
@@ -62,13 +63,13 @@ class AuthProvider extends ChangeNotifier {
           email: _email, password: _password);
       user = _result.user;
       status = AuthStatus.Authenticated;
-      // await onSuccess(user.uid);
+      await onSuccess(user.uid);
       SnackBarService.instance.showSnackBarSuccesfull("Welcome, ${user.email}");
-      NavigationService.instance.goBack();
       NavigationService.instance.navigateToReplacement("home");
     } catch (e) {
       print(e);
       status = AuthStatus.Error;
+      SnackBarService.instance.showSnackBarError("Error Registering, try again");
       user = null;
     }
     notifyListeners();

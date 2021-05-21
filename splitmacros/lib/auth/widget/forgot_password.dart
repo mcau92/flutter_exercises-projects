@@ -6,34 +6,26 @@ import 'package:splitmacros/provider/auth_provider.dart';
 import 'package:splitmacros/service/navigator_service.dart';
 import 'package:splitmacros/service/snackbar_service.dart';
 
-class SignInWidget extends StatefulWidget {
+class ForgotPasswordWidget extends StatefulWidget {
   final double _heigth;
   final double _width;
-  Function _changeSignPage;
-  Function _resetPassword;
-  SignInWidget(
-      this._heigth, this._width, this._changeSignPage, this._resetPassword);
+  ForgotPasswordWidget(this._heigth, this._width);
 
   @override
-  _SignInWidgetState createState() => _SignInWidgetState();
+  _ForgotPasswordWidgetState createState() => _ForgotPasswordWidgetState();
 }
 
-class _SignInWidgetState extends State<SignInWidget> {
+class _ForgotPasswordWidgetState extends State<ForgotPasswordWidget> {
   AuthProvider _auth;
   String _email;
-  String _password;
   bool _isButtonEnable = false;
   GlobalKey<FormState> _formKey;
 
-  _SignInWidgetState() {
+  _ForgotPasswordWidgetState() {
     _formKey = GlobalKey<FormState>();
   }
   void _checkValidator() {
-    if (_email != null &&
-        _password != null &&
-        _email.length > 0 &&
-        _password.length > 0 &&
-        _email.contains('@')) {
+    if (_email != null && _email.length > 0 && _email.contains('@')) {
       setState(() {
         _isButtonEnable = true;
       });
@@ -44,8 +36,12 @@ class _SignInWidgetState extends State<SignInWidget> {
     }
   }
 
-  void _userAuth() async {
-    _auth.loginUserWithEmailAndPassword(_email, _password);
+  void _sendNewPassword() async {
+    _auth.sendRecoveryPassword(_email);
+  }
+
+  void _undoOpearation() {
+    NavigationService.instance.navigateToReplacement("login");
   }
 
   @override
@@ -64,7 +60,7 @@ class _SignInWidgetState extends State<SignInWidget> {
             padding: const EdgeInsets.only(top: 10.0),
             child: Center(
               child: Text(
-                "Welcome back!",
+                "Password Recovery",
                 style: Theme.of(context).textTheme.headline3,
               ),
             ),
@@ -85,13 +81,26 @@ class _SignInWidgetState extends State<SignInWidget> {
           },
           child: Column(
             children: [
+              _passwordRecoveryDescription(_context),
               _emailTextField(_context),
-              _passwordTextField(_context),
+              _undoOperationButton(_context),
               _submitButton(_context),
-              _signUpSection(_context),
-              _passwordForgotten(_context),
             ],
           )),
+    );
+  }
+
+  Widget _passwordRecoveryDescription(_context) {
+    return Padding(
+      padding: const EdgeInsets.only(
+        top: 30,
+        left: 15.0,
+        right: 15,
+        bottom: 10,
+      ),
+      child: Text(
+          "Insert your email, we'll send you a new temporary password to use to sign in",
+          style: Theme.of(_context).textTheme.headline6),
     );
   }
 
@@ -164,85 +173,34 @@ class _SignInWidgetState extends State<SignInWidget> {
     );
   }
 
-  Widget _passwordTextField(BuildContext _context) {
-    return Column(
-      children: [
-        Align(
-          alignment: Alignment.centerLeft,
-          child: Padding(
-            padding: const EdgeInsets.only(
-              left: 30.0,
-              top: 10,
-            ),
-            child: Text(
-              "password",
-              style: Theme.of(_context).textTheme.headline2,
-            ),
-          ),
+  Widget _undoOperationButton(BuildContext _context) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 70, vertical: 20),
+      child: RaisedButton(
+        onPressed: () => _undoOpearation(),
+        color: Colors.red,
+        elevation: 20,
+        shape: RoundedRectangleBorder(
+            borderRadius: new BorderRadius.circular(30.0)),
+        child: Center(
+          child: Text("Cancel", style: Theme.of(_context).textTheme.headline5),
         ),
-        Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(192),
-            color: Theme.of(_context).accentColor,
-          ),
-          margin: EdgeInsets.symmetric(horizontal: 20),
-          child: TextFormField(
-            textAlignVertical: TextAlignVertical.bottom,
-            textAlign: TextAlign.start,
-            autocorrect: false,
-            validator: (_input) {
-              return _input.length != 0 ? null : "Please Enter a Password";
-            },
-            style: Theme.of(_context).textTheme.headline4,
-            onSaved: (_input) {
-              if (_input != null) {
-                setState(() {
-                  _password = _input;
-                  _checkValidator();
-                });
-              }
-            },
-            cursorHeight: 18,
-            cursorColor: Colors.black,
-            decoration: InputDecoration(
-              hintText: "Type password here..",
-              fillColor: Colors.black,
-              border: InputBorder.none,
-              focusedBorder: InputBorder.none,
-              enabledBorder: InputBorder.none,
-              errorBorder: InputBorder.none,
-              disabledBorder: InputBorder.none,
-              hintStyle: TextStyle(color: Theme.of(_context).buttonColor),
-              prefixIcon: Container(
-                decoration: BoxDecoration(
-                  color: Theme.of(_context).buttonColor,
-                  borderRadius: BorderRadius.circular(7),
-                ),
-                child: Icon(
-                  Icons.vpn_key,
-                  color: Colors.black,
-                ),
-                margin: EdgeInsets.all(7),
-              ),
-            ),
-          ),
-        ),
-      ],
+      ),
     );
   }
 
   Widget _submitButton(BuildContext _context) {
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 70, vertical: 20),
+      padding: EdgeInsets.symmetric(horizontal: 70),
       child: RaisedButton(
-        onPressed: () => _isButtonEnable ? _userAuth() : null,
+        onPressed: () => _isButtonEnable ? _sendNewPassword() : null,
         color: _isButtonEnable ? Colors.green : Colors.green.withOpacity(0.5),
         elevation: 20,
         shape: RoundedRectangleBorder(
             borderRadius: new BorderRadius.circular(30.0)),
         child: Center(
           child: Text(
-            "Sign In",
+            "Send Email",
             style: _isButtonEnable
                 ? Theme.of(_context).textTheme.headline5
                 : Theme.of(_context)
@@ -250,41 +208,6 @@ class _SignInWidgetState extends State<SignInWidget> {
                     .headline5
                     .copyWith(color: Colors.white.withOpacity(0.5)),
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _signUpSection(BuildContext _context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text(
-          "Don't have an account? ",
-          style: Theme.of(_context).textTheme.headline4,
-        ),
-        TextButton(
-          onPressed: () => widget._changeSignPage(),
-          child: Text(
-            "Sign Up",
-            style: Theme.of(_context).textTheme.headline4.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-          ),
-        )
-      ],
-    );
-  }
-
-  Widget _passwordForgotten(BuildContext _context) {
-    return Center(
-      child: TextButton(
-        onPressed: () => widget._resetPassword(),
-        child: Text(
-          "Forgot Password?",
-          style: Theme.of(_context).textTheme.headline4.copyWith(
-              fontWeight: FontWeight.bold,
-              decoration: TextDecoration.underline),
         ),
       ),
     );

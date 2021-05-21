@@ -58,6 +58,11 @@ class MyApp extends StatelessWidget {
             fontSize: 22,
             fontWeight: FontWeight.bold,
           ), //button white text
+          headline6: GoogleFonts.sahitya(
+            color: Colors.black,
+            fontSize: 22,
+            fontStyle: FontStyle.normal,
+          ),
         ),
       ),
       initialRoute: "login",

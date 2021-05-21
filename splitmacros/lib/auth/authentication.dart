@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:splitmacros/auth/widget/forgot_password.dart';
 import 'package:splitmacros/auth/widget/signin_widget.dart';
 import 'package:splitmacros/auth/widget/signup_widget.dart';
 import 'package:splitmacros/service/snackbar_service.dart';
@@ -12,10 +13,17 @@ class AuthenticationPage extends StatefulWidget {
 
 class _AuthenticationPageState extends State<AuthenticationPage> {
   bool _isSignIn = true;
+  bool _isChangePassword = false;
 
   void _changeSignPage() {
     setState(() {
       _isSignIn = !_isSignIn;
+    });
+  }
+
+  void _resetPassword() {
+    setState(() {
+      _isChangePassword = true;
     });
   }
 
@@ -31,36 +39,37 @@ class _AuthenticationPageState extends State<AuthenticationPage> {
         width: _width,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.only(
-              topLeft: _isSignIn ? Radius.circular(450) : Radius.circular(0),
-              topRight: _isSignIn ? Radius.circular(0) : Radius.circular(450),
-              bottomRight:
-                  _isSignIn ? Radius.circular(200) : Radius.circular(0),
-              bottomLeft:
-                  _isSignIn ? Radius.circular(0) : Radius.circular(200)),
+            topLeft: Radius.circular(450),
+            bottomRight: Radius.circular(200),
+          ),
           color: Theme.of(context).primaryColor,
         ),
-        
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Container(
-                height: _height * 0.30,
-                child: Align(
-                  alignment: Alignment.bottomCenter,
-                  child: Text(
-                    Constant().title,
-                    style: Theme.of(context).textTheme.headline1,
-                  ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Container(
+              height: _height * 0.30,
+              child: Align(
+                alignment: Alignment.bottomCenter,
+                child: Text(
+                  Constant().title,
+                  style: Theme.of(context).textTheme.headline1,
                 ),
               ),
-              SizedBox(height: _height * 0.03),
-              _isSignIn
-                  ? SignInWidget(_height, _width, _changeSignPage)
-                  : SignUpWidget(_height, _width, _changeSignPage),
-            ],
-          ),
+            ),
+            SizedBox(height: _height * 0.03),
+            if (_isSignIn && !_isChangePassword)
+              SignInWidget(_height, _width, _changeSignPage, _resetPassword)
+            else if (!_isSignIn && !_isChangePassword)
+              SignUpWidget(_height, _width, _changeSignPage)
+            else
+              ForgotPasswordWidget(
+                _height,
+                _width,
+              )
+          ],
         ),
-      
+      ),
     );
   }
 }

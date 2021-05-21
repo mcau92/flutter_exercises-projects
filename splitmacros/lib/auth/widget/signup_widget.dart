@@ -49,20 +49,21 @@ class _SignUpWidgetState extends State<SignUpWidget> {
   }
 
   void _userAuth() async {
-    bool isUserAvailable= await DatabaseService.instance.checkUserNameIsAvailable(_username);
-    bool isEmailAvailable=await DatabaseService.instance.checkEmailIsAvailable(_email);
-    if (!isUserAvailable ) {
+    _email = _email.trim();
+    _username = _username.trim();
+    bool isUserAvailable =
+        await DatabaseService.instance.checkUserNameIsAvailable(_username);
+    bool isEmailAvailable =
+        await DatabaseService.instance.checkEmailIsAvailable(_email);
+    if (!isUserAvailable) {
       SnackBarService.instance.showSnackBarError("Username already used");
-    }
-    else if(!isEmailAvailable){
+    } else if (!isEmailAvailable) {
       SnackBarService.instance.showSnackBarError("Email already used");
-    
-    }
-    else{
+    } else {
       _auth.registerUserWithEmailAndPassword(_email, _password,
           (String _uid) async {
         await DatabaseService.instance
-            .createUserInDb(_uid, _email,_username, _password);
+            .createUserInDb(_uid, _email, _username, _password);
       });
     }
   }
@@ -319,22 +320,25 @@ class _SignUpWidgetState extends State<SignUpWidget> {
 
   Widget _submitButton(BuildContext _context) {
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 70, vertical: 20),
+      padding: EdgeInsets.symmetric(
+        horizontal: 70,
+        vertical: 20,
+      ),
       child: RaisedButton(
         onPressed: () => _isButtonEnable ? _userAuth() : null,
         color: _isButtonEnable ? Colors.red : Colors.red.withOpacity(0.5),
         elevation: 20,
         shape: RoundedRectangleBorder(
-            borderRadius: new BorderRadius.circular(30.0)),
+          borderRadius: BorderRadius.circular(30),
+        ),
         child: Center(
           child: Text(
             "Sign Up",
             style: _isButtonEnable
                 ? Theme.of(_context).textTheme.headline5
-                : Theme.of(_context)
-                    .textTheme
-                    .headline5
-                    .copyWith(color: Colors.white.withOpacity(0.5)),
+                : Theme.of(_context).textTheme.headline5.copyWith(
+                      color: Colors.white.withOpacity(0.5),
+                    ),
           ),
         ),
       ),
@@ -346,16 +350,17 @@ class _SignUpWidgetState extends State<SignUpWidget> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(
-          "Already have an account? ",
+          "Already have an account?",
           style: Theme.of(_context).textTheme.headline4,
         ),
         TextButton(
           onPressed: () => _changeSignPage(),
           child: Text(
             "Sign In",
-            style: Theme.of(_context).textTheme.headline4.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+            style: Theme.of(_context)
+                .textTheme
+                .headline4
+                .copyWith(fontWeight: FontWeight.bold),
           ),
         )
       ],

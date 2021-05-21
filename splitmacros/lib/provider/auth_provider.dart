@@ -19,9 +19,9 @@ class AuthProvider extends ChangeNotifier {
 
   AuthProvider() {
     _auth = FirebaseAuth.instance;
-    _checkCurrentUserIsAuthenticated(); 
+    //_checkCurrentUserIsAuthenticated(); TODO remove exception
   }
-  void _autoLogin() async {
+  /* void _autoLogin() async {
     if (user != null) {
       return NavigationService.instance.navigateToReplacement("home");
     }
@@ -33,8 +33,7 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
       _autoLogin();
     }
-  }
-  
+  } */
 
   void loginUserWithEmailAndPassword(String _email, String _password) async {
     status = AuthStatus.Authenticating;
@@ -49,7 +48,8 @@ class AuthProvider extends ChangeNotifier {
       NavigationService.instance.navigateToReplacement("home");
     } catch (e) {
       status = AuthStatus.Error;
-      SnackBarService.instance.showSnackBarError("Error Authenticating,check username or password");
+      SnackBarService.instance
+          .showSnackBarError("Error Authenticating,check username or password");
       user = null;
     }
     notifyListeners();
@@ -69,7 +69,8 @@ class AuthProvider extends ChangeNotifier {
     } catch (e) {
       print(e);
       status = AuthStatus.Error;
-      SnackBarService.instance.showSnackBarError("Error Registering, try again");
+      SnackBarService.instance
+          .showSnackBarError("Error Registering, try again");
       user = null;
     }
     notifyListeners();
@@ -85,5 +86,20 @@ class AuthProvider extends ChangeNotifier {
     } catch (e) {
       SnackBarService.instance.showSnackBarError("Error Loging out");
     }
+  }
+
+  void sendRecoveryPassword(String email) async {
+    try {
+      await _auth.sendPasswordResetEmail(email: email);
+      SnackBarService.instance
+          .showSnackBarSuccesfull("Check your email to reset your password");
+      NavigationService.instance.navigateToReplacement("login");
+    } catch (e) {
+      print(e);
+      SnackBarService.instance
+          .showSnackBarError("Error sending recovery email");
+    }
+
+    notifyListeners();
   }
 }

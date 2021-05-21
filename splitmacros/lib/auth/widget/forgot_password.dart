@@ -48,7 +48,7 @@ class _ForgotPasswordWidgetState extends State<ForgotPasswordWidget> {
   Widget build(BuildContext context) {
     _auth = Provider.of<AuthProvider>(context);
     return Container(
-      height: widget._heigth * 0.45,
+      height: widget._heigth * 0.50,
       width: widget._width * 0.8,
       decoration: BoxDecoration(
         color: Color.fromRGBO(196, 196, 196, 1),

@@ -39,12 +39,13 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         brightness: Brightness.dark,
         primaryColor: Color.fromRGBO(234, 142, 35, 1),
-        backgroundColor: Color.fromRGBO(73, 67, 67, 1),
+        backgroundColor: Color.fromRGBO(205, 199, 199, 1),
+        cardColor: Color.fromRGBO(73, 67, 67, 1),
         accentColor: Color.fromRGBO(218, 218, 218, 1),
         buttonColor: Color.fromRGBO(196, 196, 196, 1),
         textTheme: TextTheme(
           headline1: GoogleFonts.satisfy(
-              color: Colors.white, fontSize: 50), //main title
+              color: Colors.white, fontSize: 50), //main title signin
           headline2: GoogleFonts.sahitya(
               color: Colors.black, fontSize: 22), //title input form
           headline3: GoogleFonts.sahitya(

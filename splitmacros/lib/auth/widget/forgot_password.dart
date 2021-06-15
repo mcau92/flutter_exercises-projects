@@ -85,6 +85,8 @@ class _ForgotPasswordWidgetState extends State<ForgotPasswordWidget> {
               _emailTextField(_context),
               _undoOperationButton(_context),
               _submitButton(_context),
+              SizedBox
+                  .shrink() //creates empty space bellow submit button for a better UI
             ],
           )),
     );
@@ -94,13 +96,14 @@ class _ForgotPasswordWidgetState extends State<ForgotPasswordWidget> {
     return Padding(
       padding: const EdgeInsets.only(
         top: 30,
-        left: 15.0,
+        left: 15,
         right: 15,
         bottom: 10,
       ),
       child: Text(
-          "Insert your email, we'll send you a new temporary password to use to sign in",
-          style: Theme.of(_context).textTheme.headline6),
+          "Insert your email, we'll send you an email to reset your password",
+          style: Theme.of(_context).textTheme.headline6,
+          textAlign: TextAlign.center),
     );
   }
 
@@ -144,7 +147,7 @@ class _ForgotPasswordWidgetState extends State<ForgotPasswordWidget> {
                 });
               }
             },
-            cursorHeight: 18,
+            cursorHeight: 20,
             cursorColor: Colors.black,
             decoration: InputDecoration(
               hintText: "Type Your Email here..",

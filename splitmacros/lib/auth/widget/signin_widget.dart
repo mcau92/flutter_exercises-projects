@@ -84,6 +84,7 @@ class _SignInWidgetState extends State<SignInWidget> {
             _formKey.currentState.save();
           },
           child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _emailTextField(_context),
               _passwordTextField(_context),

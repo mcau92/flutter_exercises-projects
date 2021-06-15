@@ -103,6 +103,7 @@ class _SignUpWidgetState extends State<SignUpWidget> {
             _formKey.currentState.save();
           },
           child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _fullNameField(_context),
               _emailTextField(_context),

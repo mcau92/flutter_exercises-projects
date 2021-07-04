@@ -1,0 +1,13 @@
+
+
+-stream builder non refresha ui nella homepage (non credo sia necessario sistemare)
+-gestire la logica di salvataggio in mobile per i dati di base (solo i prodotti li salviamo esclusivamente nel db)
+-mostrare container quando i pasti non sono ancora stati selezionati in plan_user_section_widget
+
+aggiornamento
+    -trovare modo di ordinare il numero dei pasti
+
+
+-PROBLEMI
+    -nel plan_user_section_widget capire perchè lo streambuilder non refresha l'aggiornamento del tipo di pasto,
+        ad ora sto refreshando "a mano" andando a salvare il tipo di pasto e usando lo setstate

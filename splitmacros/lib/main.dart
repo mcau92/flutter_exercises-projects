@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -7,6 +8,7 @@ import 'package:provider/provider.dart';
 import 'package:splitmacros/auth/authentication.dart';
 import 'package:splitmacros/home/homepage.dart';
 import 'package:splitmacros/provider/auth_provider.dart';
+import 'package:splitmacros/provider/day_provider.dart';
 import 'package:splitmacros/service/navigator_service.dart';
 
 void main() async {
@@ -19,11 +21,15 @@ void main() async {
           [DeviceOrientation.portraitUp, DeviceOrientation.portraitDown])
       .then((_) => runApp(MyApp())); */
   await Firebase.initializeApp(); //init firebase
+  //setting up firestore cache
+  /* FirebaseFirestore.instance.settings = Settings(
+    persistenceEnabled: true,
+    cacheSizeBytes: 50,
+  ); */
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (context) => AuthProvider()),
-        Provider(create: (context) => AuthenticationPage()),
+        ChangeNotifierProvider<DayProvider>.value(value: DayProvider.instance),
       ],
       child: MyApp(),
     ),
@@ -66,7 +72,7 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-      initialRoute: "login",
+      initialRoute: "home",
       routes: {
         "login": (BuildContext _context) => AuthenticationPage(),
         "home": (BuildContext _contex) => HomePage()

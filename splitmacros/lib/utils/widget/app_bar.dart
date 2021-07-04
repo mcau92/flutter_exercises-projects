@@ -20,19 +20,24 @@ class AppBarWidget extends StatelessWidget with PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: _height,
       decoration: BoxDecoration(
-        color: Theme.of(context).primaryColor,
-        border: Border.all(width: 0, color: Colors.transparent),
-        borderRadius: BorderRadius.only(
-          bottomRight: Radius.circular(50),
-        ),
+        color: _background,
+        border: Border.all(width: 0, color: _background),
       ),
-      child: Padding(
-        padding: const EdgeInsets.only(top: 20.0, left: 30, right: 30),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [_leftWidget, _centerWidget, _rightWidget],
+      child: Container(
+        height: _height,
+        decoration: BoxDecoration(
+          color: Theme.of(context).primaryColor,
+          borderRadius: BorderRadius.only(
+            bottomRight: Radius.circular(50),
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.only(top: 20.0, left: 30, right: 30),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [_leftWidget, _centerWidget, _rightWidget],
+          ),
         ),
       ),
     );

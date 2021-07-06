@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:splitmacros/auth/authentication.dart';
 import 'package:splitmacros/home/homepage.dart';
+import 'package:splitmacros/introduction/introduction_page.dart';
 import 'package:splitmacros/provider/auth_provider.dart';
 import 'package:splitmacros/provider/day_provider.dart';
 import 'package:splitmacros/service/navigator_service.dart';
@@ -26,6 +27,7 @@ void main() async {
     persistenceEnabled: true,
     cacheSizeBytes: 50,
   ); */
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(
     MultiProvider(
       providers: [
@@ -72,9 +74,10 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-      initialRoute: "home",
+      initialRoute: "introduction",
       routes: {
         "login": (BuildContext _context) => AuthenticationPage(),
+        "introduction": (BuildContext _context) => IntroductionPage(),
         "home": (BuildContext _contex) => HomePage()
       },
     );

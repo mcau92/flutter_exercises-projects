@@ -278,7 +278,7 @@ class PlanUserSectionWidget extends StatelessWidget {
           builder: (context, snapshot) {
             List<UserMealModel> _mealsData = snapshot.data;
             if (_mealsData != null && _mealsData.isNotEmpty) {
-              _setDefaultMealSplit();
+              _setDefaultMealSplit().then((value) => null);
             }
             return ListView.builder(
                 itemCount: _mealsData.length,

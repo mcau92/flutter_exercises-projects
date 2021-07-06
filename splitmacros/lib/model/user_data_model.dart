@@ -5,6 +5,7 @@ class UserDataModel {
   String username;
   String email;
   String password;
+  bool demoCompleted;
   int kcal;
   int mealsSplitType;
   int carbsPerc;
@@ -16,6 +17,7 @@ class UserDataModel {
       this.username,
       this.email,
       this.password,
+      this.demoCompleted,
       this.kcal,
       this.mealsSplitType,
       this.carbsPerc,
@@ -30,6 +32,7 @@ class UserDataModel {
         username: _data["username"],
         email: _data["email"],
         password: _data["password"],
+        demoCompleted:_data["demoCompleted"],
         kcal: _data["kcal"],
         mealsSplitType:_data["mealsSplitType"],
         carbsPerc: _data["carbsPerc"],

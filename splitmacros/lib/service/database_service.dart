@@ -51,6 +51,7 @@ class DatabaseService {
           "username": _username,
           "email": _email,
           "password": _password,
+          "demoCompleted":false
         },
       );
     } catch (e) {

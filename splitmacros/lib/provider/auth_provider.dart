@@ -1,5 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:splitmacros/model/user_data_model.dart';
+import 'package:splitmacros/service/database_service.dart';
 import 'package:splitmacros/service/navigator_service.dart';
 import 'package:splitmacros/service/snackbar_service.dart';
 
@@ -15,6 +17,7 @@ class AuthProvider extends ChangeNotifier {
   User user;
   AuthStatus status;
   FirebaseAuth _auth;
+  DatabaseService _databaseService;
   static AuthProvider instance = AuthProvider();
 
   AuthProvider() {
@@ -45,7 +48,11 @@ class AuthProvider extends ChangeNotifier {
       status = AuthStatus.Authenticated;
       SnackBarService.instance
           .showSnackBarSuccesfull("Welcome back, ${user.email}");
-      NavigationService.instance.navigateToReplacement("home");
+      UserDataModel model = await _databaseService.getUserData(user.uid).first;
+      if (model.demoCompleted) {
+        NavigationService.instance.navigateToReplacement("home");
+      } else {}
+      NavigationService.instance.navigateToReplacement("introduction");
     } catch (e) {
       status = AuthStatus.Error;
       SnackBarService.instance
@@ -65,7 +72,7 @@ class AuthProvider extends ChangeNotifier {
       status = AuthStatus.Authenticated;
       await onSuccess(user.uid);
       SnackBarService.instance.showSnackBarSuccesfull("Welcome, ${user.email}");
-      NavigationService.instance.navigateToReplacement("home");
+      NavigationService.instance.navigateToReplacement("introduction");
     } catch (e) {
       print(e);
       status = AuthStatus.Error;

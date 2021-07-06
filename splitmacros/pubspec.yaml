@@ -39,6 +39,7 @@ dependencies:
   provider: ^4.3.3
   flutter_calendar_carousel: ^1.5.2
   table_calendar: ^2.3.3
+  introduction_screen: ^1.0.9
 dev_dependencies:
   flutter_test:
     sdk: flutter

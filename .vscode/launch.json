@@ -5,10 +5,17 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "market_organizer",
+            "cwd": "market_organizer",
+            "request": "launch",
+            "type": "dart"
+        },
+        {
             "name": "splitmacros",
             "cwd": "splitmacros",
             "request": "launch",
-            "program": "lib/main.dart"
+            "program": "lib/main.dart",
+            "type": "dart"
         },
         {
             "name": "money_saver",

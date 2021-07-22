@@ -4,7 +4,9 @@ import 'package:provider/provider.dart';
 import 'package:splitmacros/home/widget/calendar_widget.dart';
 import 'package:splitmacros/home/widget/generic_user_info_widget.dart';
 import 'package:splitmacros/home/widget/plan_user_section_widget.dart';
+import 'package:splitmacros/model/user_data_model.dart';
 import 'package:splitmacros/provider/auth_provider.dart';
+import 'package:splitmacros/service/database_service.dart';
 import 'package:splitmacros/utils/constant.dart';
 import '../utils/widget/app_bar.dart';
 

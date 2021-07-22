@@ -1,0 +1,31 @@
+database firebase
+
+-utenti
+    -per ogni utente sono salvati i dati generali come:
+        -email
+        -password
+        -data di nascita
+        (altri da valutare)
+
+    -per ogni utente sono salvati i workspace da lui creati 
+        -questi saranno sovrascritti anche dagli invitati (owner che l'utente invita)
+    -per ogni utente è salvata la lista dei workspace a cui è stato invitato
+        -vengono salvati l'id del creatore
+        -vengono salvati l'id del workspace
+        -vengono salvati i permessi (rw,r)
+        (da valutare altro come campi per la lettura veloce ma dipende non ha molto senso)
+
+    -workspace
+        -i workspace contengono info generali come:
+            -nome workspace 
+            (da valutare)
+        -i workspace contengono i prodotti
+            -ogni prodotto ha dei dati come:
+                -id di chi lo ha creato
+                -nome di chi lo ha creato
+                -nome del prodotto
+                -descrizione prodotto
+                -unità di misura (grammi, pezzi, mista ecc da valutare)
+                -quantità
+                -immagine dell'avatar che lo rappresenta (icone pre create + possibilità che l'utente inserisca da camera/galleria)
+    

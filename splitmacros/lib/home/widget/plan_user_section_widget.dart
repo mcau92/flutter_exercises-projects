@@ -230,13 +230,10 @@ class PlanUserSectionWidget extends StatelessWidget {
           children: [
             Flexible(flex: 2, child: _titleSection(context)),
             Flexible(
-              flex: 5,
+              flex: 6,
               child: _listMealSection(),
             ),
-            Flexible(
-              flex: 1,
-              child: _quoteSection(context),
-            ),
+            
           ],
         );
       },
@@ -277,9 +274,7 @@ class PlanUserSectionWidget extends StatelessWidget {
           stream: DatabaseService.instance.getUserMealInfo(_userId),
           builder: (context, snapshot) {
             List<UserMealModel> _mealsData = snapshot.data;
-            if (_mealsData != null && _mealsData.isNotEmpty) {
-              _setDefaultMealSplit();
-            }
+            
             return ListView.builder(
                 itemCount: _mealsData.length,
                 itemBuilder: (context, index) {
@@ -297,7 +292,7 @@ class PlanUserSectionWidget extends StatelessWidget {
           topLeft: Radius.circular(100),
         ),
       ),
-      child: Center(
+      /* child: Center(
         child: Text(
           "qua devo mettere la frase random",
           style: Theme.of(context)
@@ -305,7 +300,7 @@ class PlanUserSectionWidget extends StatelessWidget {
               .headline4
               .copyWith(color: Colors.white),
         ),
-      ),
+      ), */
     );
   }
 }

@@ -1,7 +1,14 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:market_organizer/database/database_service.dart';
-import 'package:market_organizer/homepage/widget/body_widget.dart';
+import 'package:market_organizer/homepage/widget/commons/appbar_custom_widget.dart';
+import 'package:market_organizer/homepage/widget/commons/weekpicker_widget.dart';
+import 'package:market_organizer/homepage/widget/spesa/spesa_widget.dart';
+import 'package:market_organizer/homepage/widget/menu/menu_widget.dart';
 import 'package:market_organizer/models/userworkspace.model.dart';
+import 'package:market_organizer/provider/date_provider.dart';
+import 'package:market_organizer/utils/utils.dart';
+import 'package:provider/provider.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -9,155 +16,82 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  int _selectedIndex = 0;
   List<UserWorkspace> workspaces;
   UserWorkspace focusedWorkspace;
-  BuildContext _context;
 
   @override
   Widget build(BuildContext context) {
-    _context = context;
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Color.fromRGBO(43, 43, 43, 1),
       appBar: PreferredSize(
-        preferredSize: Size.fromHeight(25.0), // here the desired height
-        child: AppBar(
-          backgroundColor: Colors.white,
-          elevation: 0,
-        ),
-      ),
+          preferredSize: Size.fromHeight(10.0), // here the desired height
+          child: AppBar(
+              backgroundColor: Color.fromRGBO(43, 43, 43, 1), elevation: 0)),
+      bottomNavigationBar: _bottomBar(),
       /* body: ChangeNotifierProvider<AuthProvider>.value(
         value: AuthProvider.instance,
         child: _homePageBody(_height),
       ), */
-      body: StreamBuilder<List<UserWorkspace>>(
-        stream:
-            DatabaseService.instance.getUserWorkspace("nadLzn6xd00BJcpy1Gtc"),
-        builder: (context, snapshot) {
-          print(snapshot.hasData);
-          if (snapshot.hasData) {
-            workspaces = snapshot.data;
-            focusedWorkspace =
-                workspaces.where((element) => element.focused == true).first;
-            return Column(
-              children: [
-                _header(),
-                _body(),
-              ],
-            );
+
+      body: FutureBuilder<List<UserWorkspace>>(
+        future: DatabaseService.instance
+            .getUserWorkspace("LMgqupuW0wVW4RZn3QyC0y9Xxrg1"),
+        builder: (ctx, _snap) {
+          if (_snap.hasData) {
+            workspaces = _snap.data;
+            focusedWorkspace = workspaces.where((w) => w.focused).first;
+            return _bodySelection();
           } else {
-            return Center(
-              child: CircularProgressIndicator(
-                backgroundColor: Colors.black,
-              ),
-            );
+            return CircularProgressIndicator();
           }
         },
       ),
     );
   }
 
+  Widget _bodySelection() {
+    if (_selectedIndex == 0)
+      return SpesaWidget(
+        focusedWorkspace.id,
+      );
+    else if (_selectedIndex == 1)
+      return MenuWidget(
+        focusedWorkspace.id,
+      );
+    else
+      return Container();
+  }
 //header section
-  Widget _header() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        _workspaceTitle(),
-        _addButton(),
-      ],
-    );
+
+  //bottombar
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
   }
 
-  Widget _workspaceTitle() {
-    return Row(children: [
-      Padding(
-        padding: const EdgeInsets.only(left: 15.0),
-        child: Text(
-          focusedWorkspace.name,
-          style: TextStyle(
-            color: Colors.black,
-            fontSize: 40,
-          ),
+  Widget _bottomBar() {
+    return CupertinoTabBar(
+      items: const <BottomNavigationBarItem>[
+        BottomNavigationBarItem(
+          icon: Icon(CupertinoIcons.cart),
+          label: 'Spesa',
         ),
-      ),
-      Icon(Icons.arrow_drop_down),
-    ]);
-  }
-
-  Widget _addButton() {
-    return Padding(
-      padding: const EdgeInsets.only(right: 25.0),
-      child: Icon(
-        Icons.add,
-        color: Colors.black,
-        size: 30,
-      ),
-    );
-  }
-  //end header section
-
-  //body section
-  Widget _body() {
-    return Expanded(
-      child: Column(
-        children: [
-          SizedBox(height: 30),
-          _userListBar(),
-          _workspaceBar(),
-          BodyWidget(focusedWorkspace),
-        ],
-      ),
-    );
-  }
-
-  String createString(int _days) {
-    if (_days == 0) return "La tua spesa è prevista oggi";
-    if (_days == 1) return "La tua spesa è prevista domani";
-    return "La tua spesa è prevista tra " + _days.toString() + " giorni";
-  }
-
-  Widget _userListBar() {
-    return Row(
-      children: [
-        Container(
-          height: 30,
-          width: 40,
-          decoration: BoxDecoration(
-            color: Theme.of(_context).cardColor,
-            borderRadius: BorderRadius.only(
-              topRight: Radius.circular(10),
-              topLeft: Radius.circular(10),
-            ),
-          ),
+        BottomNavigationBarItem(
+          icon: Icon(CupertinoIcons.calendar),
+          label: 'Menu',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(CupertinoIcons.person_alt),
+          label: 'Profile',
         ),
       ],
-    );
-  }
-
-  Widget _workspaceBar() {
-    int _days = focusedWorkspace.date.difference(DateTime.now()).inDays;
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(_context).cardColor,
-        borderRadius: BorderRadius.only(
-          topRight: Radius.circular(20),
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.only(left: 15.0, right: 15, top: 5),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              createString(_days),
-              style: TextStyle(
-                color: Colors.red,
-                fontSize: 12,
-              ),
-            ),
-            IconButton(icon: Icon(Icons.more_horiz), onPressed: () {})
-          ],
-        ),
-      ),
+      currentIndex: _selectedIndex,
+      activeColor: Colors.red,
+      inactiveColor: Colors.white.withOpacity(0.5),
+      backgroundColor: Color.fromRGBO(43, 43, 43, 1),
+      onTap: _onItemTapped,
     );
   }
 }

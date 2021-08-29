@@ -1,4 +1,13 @@
 # This is a generated file; do not edit or check into version control.
+cloud_firestore=/Users/michaelcauduro/develop/flutter/.pub-cache/hosted/pub.dartlang.org/cloud_firestore-0.14.4/
+cloud_firestore_web=/Users/michaelcauduro/develop/flutter/.pub-cache/hosted/pub.dartlang.org/cloud_firestore_web-0.2.1+2/
+firebase_auth=/Users/michaelcauduro/develop/flutter/.pub-cache/hosted/pub.dartlang.org/firebase_auth-0.18.4/
+firebase_auth_web=/Users/michaelcauduro/develop/flutter/.pub-cache/hosted/pub.dartlang.org/firebase_auth_web-0.3.2+3/
+firebase_core=/Users/michaelcauduro/develop/flutter/.pub-cache/hosted/pub.dartlang.org/firebase_core-0.5.3/
+firebase_core_web=/Users/michaelcauduro/develop/flutter/.pub-cache/hosted/pub.dartlang.org/firebase_core_web-0.2.1+1/
+firebase_database=/Users/michaelcauduro/develop/flutter/.pub-cache/hosted/pub.dartlang.org/firebase_database-4.4.0/
+flutter_keyboard_visibility=/Users/michaelcauduro/develop/flutter/.pub-cache/hosted/pub.dartlang.org/flutter_keyboard_visibility-4.0.6/
+flutter_keyboard_visibility_web=/Users/michaelcauduro/develop/flutter/.pub-cache/hosted/pub.dartlang.org/flutter_keyboard_visibility_web-1.0.1/
 path_provider=/Users/michaelcauduro/develop/flutter/.pub-cache/hosted/pub.dartlang.org/path_provider-1.6.28/
 path_provider_linux=/Users/michaelcauduro/develop/flutter/.pub-cache/hosted/pub.dartlang.org/path_provider_linux-0.0.1+2/
 path_provider_macos=/Users/michaelcauduro/develop/flutter/.pub-cache/hosted/pub.dartlang.org/path_provider_macos-0.0.4+8/

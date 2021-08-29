@@ -1,62 +1,40 @@
-import 'package:market_organizer/models/product_model.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:market_organizer/models/men%C3%B9.dart';
+import 'package:market_organizer/models/spesa.dart';
+
+
 
 class UserWorkspace {
   String id;
   String name;
   String ownerId;
   List<String> contributorsId;
-  DateTime date;
-  List<Product> products;
   bool focused; //last user selected workspace on homepage
+  List<String> spesaIdsRef;
+  List<String> menuIdsRef;
 
-  UserWorkspace(
-      {this.id, this.name, this.ownerId, this.contributorsId,this.date,this.products, this.focused});
+  UserWorkspace({
+    this.id,
+    this.name,
+    this.ownerId,
+    this.contributorsId,
+    this.focused,
+    this.spesaIdsRef,
+    this.menuIdsRef,
+  });
 
-  static List<UserWorkspace> example = [
-    new UserWorkspace(
-        id: "nadLzn6xd00BJcpy1Gtc",
-        name: "Spesa",
-        ownerId: "nadLzn6xd00BJcpy1Gtc",
-        contributorsId: ["nadLzn6xd00BJcpy1Gtc","nBwscXIfGQogH4BxkrtX"],
-        date: DateTime.now().add(Duration(days: 7),),
-        products: [
-          Product(
-              ownerId: "nadLzn6xd00BJcpy1Gtc",
-              ownerName: "michael",
-              color: "blue",
-              description: "1 casco di banane mature",
-              name: "Banane",
-              measureUnit: "piece",
-              quantity: 4,
-              image:
-                  "https://cdn.iconscout.com/icon/free/png-256/banana-1624204-1375362.png",
-              reparto: "Frutta e verdura"),
-          Product(
-              ownerId: "nBwscXIfGQogH4BxkrtX",
-              ownerName: "giulia",
-              color: "pink",
-              description: "pollo a fettine",
-              name: "Petto di pollo",
-              measureUnit: "g",
-              quantity: 200,
-              image:
-                  "https://image.flaticon.com/icons/png/512/1046/1046751.png",
-              reparto: "Macelleria")
-        ],
-        focused: true),
-  ];
-  /* factory UserDataModel.fromFirestore(DocumentSnapshot _snapshot) {
+  factory UserWorkspace.fromFirestore(DocumentSnapshot _snapshot) {
     var _data = _snapshot.data();
 
-    return UserDataModel(
-        id: _snapshot.id,
-        username: _data["username"],
-        email: _data["email"],
-        password: _data["password"],
-        kcal: _data["kcal"],
-        mealsSplitType:_data["mealsSplitType"],
-        carbsPerc: _data["carbsPerc"],
-        proteinsPerc: _data["proteinsPerc"],
-        fatsPerc: _data["fatsPerc"]);
-  } */
+    
+    return UserWorkspace(
+      id: _snapshot.id,
+      name: _data["name"],
+      ownerId: _data["ownerId"],
+      contributorsId: _data["contributorsId"].cast<String>(),
+      focused: _data["focused"],
+      spesaIdsRef: _data["spesaIdsRef"].cast<String>(),
+      menuIdsRef: _data["menuIdsRef"].cast<String>(),
+    );
+  }
 }

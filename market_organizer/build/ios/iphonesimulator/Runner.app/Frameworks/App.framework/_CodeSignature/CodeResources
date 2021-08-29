@@ -10,7 +10,7 @@
 		</data>
 		<key>flutter_assets/AssetManifest.json</key>
 		<data>
-		oG5/OGn+vw7vp/nu5DUDoZJ4nFc=
+		AmbbzJO0K1W/n6GfeeAHbpnBD5Y=
 		</data>
 		<key>flutter_assets/FontManifest.json</key>
 		<data>
@@ -18,7 +18,11 @@
 		</data>
 		<key>flutter_assets/NOTICES</key>
 		<data>
-		S38JiwGIpdHHHyYbW4VVky2xHFQ=
+		+tMbHu2gMoyLYIlQUoC79q3a6tw=
+		</data>
+		<key>flutter_assets/assets/images/empty_spesa.svg</key>
+		<data>
+		GFWYOV46oVPv0Tni+ISupxhCh0I=
 		</data>
 		<key>flutter_assets/fonts/MaterialIcons-Regular.otf</key>
 		<data>
@@ -30,7 +34,7 @@
 		</data>
 		<key>flutter_assets/kernel_blob.bin</key>
 		<data>
-		36EDh4j53xzM39sG9M5yEISh76E=
+		Y/abRv74thl3HV7K5jUU9DmNkh8=
 		</data>
 		<key>flutter_assets/packages/cupertino_icons/assets/CupertinoIcons.ttf</key>
 		<data>
@@ -47,11 +51,11 @@
 		<dict>
 			<key>hash</key>
 			<data>
-			oG5/OGn+vw7vp/nu5DUDoZJ4nFc=
+			AmbbzJO0K1W/n6GfeeAHbpnBD5Y=
 			</data>
 			<key>hash2</key>
 			<data>
-			Sps95+7JukayebvM0TLjL1LW1VXXndpKp/O8tOm9ZR8=
+			xyR3f+Wei7qauvXYZxFR8Gfe4NqLsMruNs6LGCuxpcc=
 			</data>
 		</dict>
 		<key>flutter_assets/FontManifest.json</key>
@@ -69,11 +73,22 @@
 		<dict>
 			<key>hash</key>
 			<data>
-			S38JiwGIpdHHHyYbW4VVky2xHFQ=
+			+tMbHu2gMoyLYIlQUoC79q3a6tw=
 			</data>
 			<key>hash2</key>
 			<data>
-			88nOOrPX0CWdtdhSpJfdLk14CotiNuWjTLr8oHFD1xc=
+			0zOVnf+rCGcq+kgzEkZhjOPEyO8l7JhpGXARn8y3MFQ=
+			</data>
+		</dict>
+		<key>flutter_assets/assets/images/empty_spesa.svg</key>
+		<dict>
+			<key>hash</key>
+			<data>
+			GFWYOV46oVPv0Tni+ISupxhCh0I=
+			</data>
+			<key>hash2</key>
+			<data>
+			1CWJoR055nE7AJbJZg/HEMcAfacoallZJ9RJ/09N6rc=
 			</data>
 		</dict>
 		<key>flutter_assets/fonts/MaterialIcons-Regular.otf</key>
@@ -102,11 +117,11 @@
 		<dict>
 			<key>hash</key>
 			<data>
-			36EDh4j53xzM39sG9M5yEISh76E=
+			Y/abRv74thl3HV7K5jUU9DmNkh8=
 			</data>
 			<key>hash2</key>
 			<data>
-			f4ByJI0jZ1IA628yVcBlrxczGC2JkJSp41nVppD/asY=
+			WB/jaHwDk8Hi8QV8TVbPHKE0Mi5w6YosUxLD00VokTU=
 			</data>
 		</dict>
 		<key>flutter_assets/packages/cupertino_icons/assets/CupertinoIcons.ttf</key>

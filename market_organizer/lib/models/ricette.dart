@@ -1,17 +1,20 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:market_organizer/models/product_model.dart';
 
 class Ricette {
+  String id;
   String ownerId;
   String ownerName;
-  int color;
+  String color;
   String name;
   String description; //titolo ricetta
   String pasto; //pranzo colazione ecc
   DateTime date;
-  List<Product> products; //lista prodotti per fare la ricetta
   String image; //opzionale?
+  String menuIdRef;
 
   Ricette({
+    this.id,
     this.ownerId,
     this.ownerName,
     this.color,
@@ -19,9 +22,23 @@ class Ricette {
     this.description,
     this.pasto,
     this.date,
-    this.products,
     this.image,
+    this.menuIdRef,
   });
 
-  
+  factory Ricette.fromFirestore(DocumentSnapshot _snapshot) {
+    var _data = _snapshot.data();
+    return Ricette(
+      id: _snapshot.id,
+      ownerId: _data["ownerId"],
+      ownerName: _data["ownerName"],
+      color: _data["color"] ,
+      name: _data["name"] != null ? _data["name"] : "default",
+      description: _data["description"],
+      pasto: _data["pasto"],
+      date: _data["date"].toDate(),
+      image: _data["image"],
+      menuIdRef: _data["menuIdRef"],
+    );
+  }
 }

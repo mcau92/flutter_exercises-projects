@@ -1,0 +1,22 @@
+---------SPESA------------
+# sistemare schermata nessun prodotto
+# (IN FUTURO) aggiungere sezione inserimento immagine (per ora possibilità di selezionare icone pre settate)
+# sistemare trailing widget prodotto in modo che siano sempre allineati
+# aggiungere possibilità di invitare persone a lavorare nel workspace e possibilità di visualizzare nella freccia accanto a SPESA
+# per ora solo gestione in euro e in italiano
+# (IN FUTURO) possibilità di selezionare il week end cliccando sulla barra,per ora solo selezione con frecce
+# aggiungere nella card la possibilità di visualizzare se quel prodotto è legato o meno ad un menu (non a quale altrimenti troppo complesso)
+
+-------MENU--------------
+# modellare modelli come base dati e sistemare codice
+# agganciare logica db
+# quando inserisco un prodotto in ricetta, posso mettere l'opzione di inserirlo in spesa, se selezionato allora chiedo i dati mancanti ovvero reparto e prezzo
+# valutare se creare funzione per gestire l'inserimento del prodotto in menu nella SPESA
+    - bottone che se cliccato aggiunge o rimuove prodotto in spesa 
+    - quando elimino prodotto dal menu lo tolgo direttamente o chiedo se l'utente vuole rimuoverlo? (idem per la spesa)
+
+
+
+
+
+-------PROFILE-----------

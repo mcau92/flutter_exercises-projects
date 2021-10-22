@@ -5,9 +5,29 @@ import 'package:market_organizer/models/spesa.dart';
 
 class Utils {
   static Utils instance = Utils();
-List months = 
-['Gen', 'Feb', 'Mar', 'Apr', 'Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic'];
-List<String> weekDays=["Lunedi","Martedi","Mercoledi","Giovedi","Venerdi","Sabato","Domenica"];
+  List months = [
+    'Gen',
+    'Feb',
+    'Mar',
+    'Apr',
+    'Mag',
+    'Giu',
+    'Lug',
+    'Ago',
+    'Set',
+    'Ott',
+    'Nov',
+    'Dic'
+  ];
+  List<String> weekDays = [
+    "Lunedi",
+    "Martedi",
+    "Mercoledi",
+    "Giovedi",
+    "Venerdi",
+    "Sabato",
+    "Domenica"
+  ];
   List<String> getReparti(List<Product> products) {
     List<String> reparti = [];
     products.forEach((element) {
@@ -22,25 +42,28 @@ List<String> weekDays=["Lunedi","Martedi","Mercoledi","Giovedi","Venerdi","Sabat
       List<Spesa> references, DateTime start, DateTime end) {
     List<Spesa> model = references
         .where((element) => element.startWeek == start)
-        .where((element) => element.endWeek == end).toList();
-    if (model == null || model.isEmpty) {
-      return [];
-    }
-    return model;
-  }
-  List<Menu> getCurrentMenuListByWeek(
-      List<Menu> references, DateTime start, DateTime end) {
-    List<Menu> model = references
-        .where((element) => element.startWeek.isAtSameMomentAs(start))
-        .where((element) => element.endWeek.isAtSameMomentAs(end)).toList();
+        .where((element) => element.endWeek == end)
+        .toList();
     if (model == null || model.isEmpty) {
       return [];
     }
     return model;
   }
 
-  String convertWeekDay(int month){
-    return months[month-1];
+  List<Menu> getCurrentMenuListByWeek(
+      List<Menu> references, DateTime start, DateTime end) {
+    List<Menu> model = references
+        .where((element) => element.startWeek.isAtSameMomentAs(start))
+        .where((element) => element.endWeek.isAtSameMomentAs(end))
+        .toList();
+    if (model == null || model.isEmpty) {
+      return [];
+    }
+    return model;
+  }
+
+  String convertWeekDay(int month) {
+    return months[month - 1];
   }
 
   List<String> getPasti(List<Ricette> ricette) {

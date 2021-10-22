@@ -8,6 +8,7 @@ class Spesa {
   DateTime startWeek;
   DateTime endWeek;
   DateTime date;
+  double ammount;
   String workspaceIdRef;
 
   Spesa({
@@ -17,6 +18,7 @@ class Spesa {
     this.startWeek,
     this.endWeek,
     this.date,
+    this.ammount,
     this.workspaceIdRef,
   });
   factory Spesa.fromFirestore(DocumentSnapshot _snapshot) {
@@ -28,6 +30,9 @@ class Spesa {
       startWeek: _data["startWeek"].toDate(),
       endWeek: _data["endWeek"].toDate(),
       date: _data["date"]!=null?_data["date"].toDate():null,
+      ammount:_data["ammount"]!= null
+          ? double.parse(_data["ammount"].toString())
+          : 0.0,
       workspaceIdRef:_data["workspaceIdRef"],
     );
   }

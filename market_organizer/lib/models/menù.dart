@@ -1,5 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:market_organizer/models/ricette.dart';
 
 class Menu {
   String id;

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:market_organizer/models/ricette.dart';
+import 'package:market_organizer/models/ricetta.dart';
 
 class SingleRicettaSearch extends StatelessWidget {
- final Ricette _ricetta;
+ final Ricetta _ricetta;
   SingleRicettaSearch(this._ricetta);
   @override
   Widget build(BuildContext context) {

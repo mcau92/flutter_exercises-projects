@@ -15,8 +15,9 @@ class SingleDayPage extends StatefulWidget {
 class _SingleDayPageState extends State<SingleDayPage> {
 
   SingleDayPageInput singleDayPageInput;
-  void _showMealDetailsPage(String pasto) {
-    
+
+  //navigo al dettaglio del pasto
+  void _showMealDetailsPage(String pasto) {  
     Navigator.pushReplacementNamed(
       context,
       "mealDetail",
@@ -111,6 +112,7 @@ class _SingleDayPageState extends State<SingleDayPage> {
           },
           itemCount: pasti.length,
           itemBuilder: (context, index) {
+            //mostro il pasto corrente
             return PastoWidget(
               pasti[index],
               _input.ricette.where((r) => r.pasto == pasti[index]).toList(),

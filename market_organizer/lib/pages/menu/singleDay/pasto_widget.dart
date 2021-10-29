@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:market_organizer/models/ricette.dart';
+import 'package:market_organizer/models/ricetta.dart';
 import 'package:market_organizer/pages/menu/singleDay/single_ricett_widget.dart';
 
 class PastoWidget extends StatelessWidget {
   final String _pastoName;
-  final List<Ricette> _ricette;
+  final List<Ricetta> _ricette;
   PastoWidget(this._pastoName,this._ricette);
   @override
     Widget build(BuildContext context) {

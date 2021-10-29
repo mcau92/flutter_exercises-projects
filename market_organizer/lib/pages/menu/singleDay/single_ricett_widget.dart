@@ -1,10 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:market_organizer/models/ricette.dart';
+import 'package:market_organizer/models/ricetta.dart';
 import 'package:market_organizer/utils/color_costant.dart';
 
 class SingleRicetta extends StatelessWidget {
-  final Ricette _ricetta;
+  final Ricetta _ricetta;
   SingleRicetta(this._ricetta);
   @override
   Widget build(BuildContext context) {

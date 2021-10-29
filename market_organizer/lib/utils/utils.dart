@@ -1,6 +1,6 @@
 import 'package:market_organizer/models/men%C3%B9.dart';
 import 'package:market_organizer/models/product_model.dart';
-import 'package:market_organizer/models/ricette.dart';
+import 'package:market_organizer/models/ricetta.dart';
 import 'package:market_organizer/models/spesa.dart';
 
 class Utils {
@@ -66,7 +66,7 @@ class Utils {
     return months[month - 1];
   }
 
-  List<String> getPasti(List<Ricette> ricette) {
+  List<String> getPasti(List<Ricetta> ricette) {
     List<String> pasti = [];
     ricette.forEach((element) {
       if (!pasti.contains(element.pasto)) {

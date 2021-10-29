@@ -5,7 +5,7 @@ import 'package:market_organizer/pages/widget/commons/appbar_custom_widget.dart'
 import 'package:market_organizer/pages/widget/commons/weekpicker_widget.dart';
 import 'package:market_organizer/pages/menu/singleDay/single_day_page_model.dart';
 import 'package:market_organizer/models/men%C3%B9.dart';
-import 'package:market_organizer/models/ricette.dart';
+import 'package:market_organizer/models/ricetta.dart';
 import 'package:market_organizer/provider/date_provider.dart';
 import 'package:market_organizer/utils/utils.dart';
 import 'package:provider/provider.dart';
@@ -49,14 +49,14 @@ class MenuWidget extends StatelessWidget {
         if (_snap.hasData) {
           Menu _currentMenu = _snap.data.isEmpty ? null : _snap.data[0];
           //se menu non nullo recupero le ricette altrimenti iniziallizo con valori di default
+          
           if (_currentMenu != null) {
-            print("arr");
-            return FutureBuilder<List<Ricette>>(
+            return FutureBuilder<List<Ricetta>>(
                 future: DatabaseService.instance
                     .getReciptsFromMenuId(_currentMenu.id),
                 builder: (_context, _snap) {
                   if (_snap.hasData) {
-                    List<Ricette> _ricette = _snap.data;
+                    List<Ricetta> _ricette = _snap.data;
                     _weekDaysContainers = initWeekDaysContainers(
                         _context, _currentMenu, _ricette);
                     return GridView.count(
@@ -94,7 +94,7 @@ class MenuWidget extends StatelessWidget {
     return (dateStart.day + (Utils.instance.weekDays.indexOf(day))).toString();
   }
 
-  String _countRec(List<Ricette> recipts, String day) {
+  String _countRec(List<Ricetta> recipts, String day) {
     List dayRecipts = recipts
         .where(
           (element) =>
@@ -107,7 +107,7 @@ class MenuWidget extends StatelessWidget {
     return "0";
   }
 
-  String _countPast(List<Ricette> recipts, String day) {
+  String _countPast(List<Ricetta> recipts, String day) {
     List dayRecipts = recipts
         .where(
           (element) =>
@@ -115,7 +115,7 @@ class MenuWidget extends StatelessWidget {
         )
         .toList();
     if (dayRecipts.isNotEmpty) {
-      List<Ricette> _filterRecipts = [];
+      List<Ricetta> _filterRecipts = [];
       dayRecipts.forEach((eDay) {
         if (!_filterRecipts.any((eFilter) => eFilter.pasto = eDay.pasto)) {
           _filterRecipts.add(eDay);
@@ -127,21 +127,26 @@ class MenuWidget extends StatelessWidget {
   }
 
   // method to redirect to day page
-  void _showDay(BuildContext context,Menu menu, String day, List<Ricette> ricette) {
+  void _showDay(
+      BuildContext context, Menu menu, String day, List<Ricetta> ricette) {
     Navigator.pushNamed(
       context,
       "singleDay",
       arguments: SingleDayPageInput(
-          day,
-          dateStart.add(Duration(days: Utils.instance.weekDays.indexOf(day))),menu.id,
-          ricette,
-          ),
+        worksapceId,//mi serve per inserire il menu se non presente
+        day,
+        dateStart.add(Duration(days: Utils.instance.weekDays.indexOf(day))),
+        dateStart,
+        dateEnd,
+        menu!=null?menu.id:null,//può essere nullo
+        ricette,//possono essere empty se non vuote sono gia filtrate per il giorno
+      ),
     );
   }
 
   //list
   List<Widget> initWeekDaysContainers(
-      BuildContext context, Menu menu, List<Ricette> recipts) {
+      BuildContext context, Menu menu, List<Ricetta> recipts) {
     return Utils.instance.weekDays.map((day) {
       return GestureDetector(
         onTap: () => _showDay(

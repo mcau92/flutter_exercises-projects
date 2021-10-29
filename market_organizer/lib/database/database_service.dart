@@ -1,10 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:market_organizer/models/men%C3%B9.dart';
 import 'package:market_organizer/models/product_model.dart';
-import 'package:market_organizer/models/ricette.dart';
+import 'package:market_organizer/models/ricetta.dart';
 import 'package:market_organizer/models/spesa.dart';
 import 'package:market_organizer/models/userdata_model.dart';
 import 'package:market_organizer/models/userworkspace.model.dart';
+import 'package:market_organizer/pages/menu/singleDay/meal/meal_detail_model.dart';
 import 'package:market_organizer/utils/color_costant.dart';
 
 class DatabaseService {
@@ -87,14 +88,14 @@ class DatabaseService {
         );
   }
 
-  Future<List<Ricette>> getReciptsFromMenuId(String menuId) async {
+  Future<List<Ricetta>> getReciptsFromMenuId(String menuId) async {
     return await _db
         .collection(_menuCollection)
         .doc(menuId)
         .collection(_ricettaCollection)
         .get()
         .then((value) =>
-            value.docs.map((ds) => Ricette.fromFirestore(ds)).toList());
+            value.docs.map((ds) => Ricetta.fromFirestore(ds)).toList());
   }
 
   Stream<List<Menu>> getMenuFromDate(
@@ -113,15 +114,15 @@ class DatabaseService {
         );
   }
 
-  Future<List<Ricette>> searchRicetteByName(String string) async {
+  Future<List<Ricetta>> searchRicetteByName(String string) async {
     //per ogni menu, aggiungo le ricette che non sono duplicate
     //vado quindi a cercare se una certa ricetta nel menu corrente è presente guardando il nome e la descrizione
-    List<Ricette> ricette = [];
+    List<Ricetta> ricette = [];
     await _db.collection(_menuCollection).get().then(
           (qs) => qs.docs.map(
             (qd) => qd.reference.collection(_ricettaCollection).get().then(
                   (qs) => ricette.add(
-                    Ricette.fromFirestore(qd),
+                    Ricetta.fromFirestore(qd),
                   ),
                 ),
           ),
@@ -133,88 +134,101 @@ class DatabaseService {
         : [];
   }
 
+/*
+*metodo che inserisce o aggiorna un menu inserendo una nuova ricetta
+* riceve una ricetta, una mappa prodotto e boolean per capire se inserirli anche nella spesa e riceve altri dati utili all'inserimento
+* la ricetta che arriva sarà gia senza id per poter gestire l'inserimento da lista consigli o nuova 
+*/
   void insertSearchedRicettaOnMenu(
-      Ricette ricetta,
-      Map<Product, bool>
-          products, //prodotti da inserire, booleano che indica se devo inserire in spesa
-      Menu menu,
-      String pasto,
-      String ownerId,
-      String ownerName,
-      DateTime date) async {
-    if (menu.id == null) {
+    Ricetta ricetta,
+    MealDetailModel details,
+    Map<Product, bool> products,
+  ) //prodotti da inserire, booleano che indica se devo inserire in spesa
+  async {
+    String menuId = details.singleDayPageInput.menuIdRef;
+    if (menuId == null) {
       //creo menu nuovo
       DocumentReference docRef = await _db.collection(_menuCollection).add({
         "name": "default",
-        "ownerId": ownerId,
-        "startWeek": menu.startWeek,
-        "endWeek": menu.endWeek,
-        "workspaceIdRef": menu.workspaceIdRef
+        "ownerId": ricetta.ownerId,
+        "startWeek": details.singleDayPageInput.dateStart,
+        "endWeek": details.singleDayPageInput.dateEnd,
+        "workspaceIdRef": details.singleDayPageInput.workspaceId
       });
       //aggiorno il menu con il suo nuovo id
-      menu.id = docRef.id;
+      menuId = docRef.id;
     }
-    ricetta.pasto = pasto;
-    ricetta.date = date;
-    String _color = await getUserColorForRecipt(menu.id, ownerId);
-    ricetta.color = _color;
-    ricetta.ownerId = ownerId;
-    ricetta.ownerName = ownerName;
+    String _color = await getUserColorForRecipt(
+      details.singleDayPageInput.workspaceId,
+      ricetta.ownerId,
+    );
     //inserisco ricetta
     DocumentReference ricettaDocRef = await _db
         .collection(_menuCollection)
-        .doc(menu.id)
+        .doc(menuId)
         .collection(_ricettaCollection)
         .add({
-      "ownerId": ownerId,
-      "ownerName": ownerName,
+      "ownerId": ricetta.ownerId,
+      "ownerName": ricetta.ownerName,
       "color": _color,
       "name": ricetta.name,
       "description": ricetta.description,
-      "pasto": pasto,
-      "date": date,
+      "pasto": ricetta.pasto,
+      "date": ricetta.date,
       "image": "",
-      "menuIdRef": menu.id,
+      "menuIdRef": menuId,
     });
     //aggiorno i product e aggiungo il riferimento alla ricetta e metto a null l'id perchè cosi gestico anche il fatto che siano prodotti creati da zero o meno
-
-    products.entries.forEach((entry) async{
-      Product p = entry.key;
-      p.id = null;
-      p.ricettaIdRef = ricettaDocRef.id;
-      DocumentReference pRef = await _db
-          .collection(_menuCollection)
-          .doc(menu.id)
-          .collection(_ricettaCollection)
-          .add(p.toMap());
-          if(entry.value){
-            //insert on spesa and update CONTINUARE
-          }
+    //transazione
+    _db.runTransaction((transaction) async {
+      products.entries.forEach((entry) async {
+        Product p = entry.key;
+        p.id = null;
+        p.ricettaIdRef = ricettaDocRef.id;
+        CollectionReference prodRef = _db
+            .collection(_menuCollection)
+            .doc(menuId)
+            .collection(_ricettaCollection)
+            .doc(ricettaDocRef.id)
+            .collection(_productCollection);
+        transaction
+            .set(prodRef.doc(), {
+              'ownerId': p.ownerId,
+              'ownerName': p.ownerName,
+              'color': "",
+              'name': p.name,
+              'description': p.description,
+              'measureUnit': p.measureUnit,
+              'quantity': p.quantity,
+              'image': p.image,
+              'reparto': p.reparto,
+              'spesaIdRef': p.spesaIdRef,
+              'ricettaIdRef': p.ricettaIdRef,
+              'currency': p.currency,
+              'price': p.price,
+            });
+        if (entry.value) {
+          //insert on spesa and update CONTINUARE
+        }
+      });
     });
   }
 
-  Future<String> getUserColorForRecipt(String menuId, String ownerId) async {
+  Future<String> getUserColorForRecipt(
+      String workspaceId, String ownerId) async {
     String color;
-    if (menuId == null) {
-      return ColorCostant.colorMap.keys.first;
-    }
-    var _recRef = _db
-        .collection(_menuCollection)
-        .doc(menuId)
-        .collection(_ricettaCollection);
-    color = await _recRef.where("ownerId", isEqualTo: ownerId).get().then(
-      (qs) {
-        if (qs.docs.isNotEmpty) {
-          return qs.docs.first["color"];
-        } else
-          return null;
-      },
-    );
+    UserWorkspace workspaceData = await _db
+        .collection(_workspaceCollection)
+        .doc(workspaceId)
+        .get()
+        .then((d) => UserWorkspace.fromFirestore(d));
+    color =
+        workspaceData.userColors[ownerId]; //recupero il colore può essere nullo
     if (color == null) {
       List<String> colorsUsed = [];
-      await _recRef
-          .get()
-          .then((qs) => qs.docs.map((ds) => colorsUsed.add(ds["color"])));
+      workspaceData.userColors.values.forEach((color) {
+        colorsUsed.add(color);
+      });
       if (colorsUsed.isNotEmpty) {
         //filter color
         color = ColorCostant.colorMap.keys

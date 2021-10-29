@@ -1,7 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:market_organizer/database/database_service.dart';
-import 'package:market_organizer/models/ricette.dart';
+import 'package:market_organizer/models/ricetta.dart';
+import 'package:market_organizer/models/userdata_model.dart';
 import 'package:market_organizer/pages/menu/singleDay/meal/meal_detail_model.dart';
 import 'package:market_organizer/pages/menu/singleDay/meal/single_ricetta_search.dart';
 
@@ -15,7 +16,7 @@ class MealDetailPage extends StatefulWidget {
 class _MealDetailPageState extends State<MealDetailPage> {
   MealDetailModel mealInput;
   TextEditingController _textController;
-  List<Ricette> _ricette;//lista di ricette trovate
+  List<Ricetta> _ricette; //lista di ricette trovate
 
   @override
   void initState() {
@@ -23,14 +24,14 @@ class _MealDetailPageState extends State<MealDetailPage> {
     _textController = TextEditingController();
   }
 
-  void _updateResearch(String string) async{
-    setState(() async{
-      if (string != null && string != "") {
-
-        _ricette = null;
-        _ricette = await DatabaseService.instance.searchRicetteByName(string);
-      }
-    });
+  void _updateResearch(String string) async {
+    if (string != null && string != "") {
+      List<Ricetta> _result =
+          await DatabaseService.instance.searchRicetteByName(string);
+      setState(()  {
+        _ricette=_result;
+      });
+    }
   }
 
   @override
@@ -65,7 +66,6 @@ class _MealDetailPageState extends State<MealDetailPage> {
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: CupertinoSearchTextField(
-
         controller: _textController,
         itemColor: Colors.white38,
         placeholder: "Ricerca una ricetta..",
@@ -79,10 +79,14 @@ class _MealDetailPageState extends State<MealDetailPage> {
     return _ricette != null ? Expanded(child: _ricetteList()) : Container();
   }
 
-void _insertRicettaAndPop(Ricette _ricetta){
- DatabaseService.instance.insertSearchedRicettaOnMenu(_ricetta,mealInput);
-  Navigator.pop(context);
-}
+  void _insertRicettaAndPop(Ricetta _ricetta) {
+    //aggiorno i dati nella ricetta per poterla duplicare
+    _ricetta = _cleanRicettaData(_ricetta);
+    DatabaseService.instance
+        .insertSearchedRicettaOnMenu(_ricetta, mealInput, null);
+    Navigator.pop(context);
+  }
+
   Widget _ricetteList() {
     return ListView.separated(
         shrinkWrap: true,
@@ -96,8 +100,17 @@ void _insertRicettaAndPop(Ricette _ricetta){
         itemBuilder: (context, index) {
           return Padding(
             padding: const EdgeInsets.all(8.0),
-            child: GestureDetector(child: SingleRicettaSearch(_ricette[index]),onTap:()=>_insertRicettaAndPop(_ricette[index])),
+            child: GestureDetector(
+                child: SingleRicettaSearch(_ricette[index]),
+                onTap: () => _insertRicettaAndPop(_ricette[index])),
           );
         });
+  }
+
+  Ricetta _cleanRicettaData(Ricetta ricetta) {
+    UserDataModel user = UserDataModel.example;
+    ricetta.id = null;
+    ricetta.ownerId = user.id;
+    ricetta.ownerName = user.name;
   }
 }

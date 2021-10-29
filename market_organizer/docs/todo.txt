@@ -15,7 +15,12 @@
     - bottone che se cliccato aggiunge o rimuove prodotto in spesa 
     - quando elimino prodotto dal menu lo tolgo direttamente o chiedo se l'utente vuole rimuoverlo? (idem per la spesa)
 
-
+22 ottobre 2021
+-sistemare il menu e il metodo del database per inserire una nuova ricetta e prodotti
+    il senso è che nel database riceviamo una ricetta senza id ecc e una mappa di prodotti da inserire eventualmente anche nella spesa
+    (gestire quindi il modo di aggiungere o togliere prodotti quando un utente seleziona una ricetta gia esistente)
+-gestire anche inserimento su spesa
+-rifattorizzare codice creare metodo converte in mappa per gli inserimenti in ogni modello
 
 
 

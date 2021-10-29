@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:market_organizer/models/product_model.dart';
 
-class Ricette {
+class Ricetta {
   String id;
   String ownerId;
   String ownerName;
@@ -13,7 +13,7 @@ class Ricette {
   String image; //opzionale?
   String menuIdRef;
 
-  Ricette({
+  Ricetta({
     this.id,
     this.ownerId,
     this.ownerName,
@@ -26,9 +26,9 @@ class Ricette {
     this.menuIdRef,
   });
 
-  factory Ricette.fromFirestore(DocumentSnapshot _snapshot) {
+  factory Ricetta.fromFirestore(DocumentSnapshot _snapshot) {
     var _data = _snapshot.data();
-    return Ricette(
+    return Ricetta(
       id: _snapshot.id,
       ownerId: _data["ownerId"],
       ownerName: _data["ownerName"],

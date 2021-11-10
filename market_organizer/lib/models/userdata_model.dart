@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:market_organizer/models/workspace_shared.model.dart';
 
 class UserDataModel {
@@ -16,27 +17,35 @@ class UserDataModel {
     this.surname,
     this.workspaceShared,
   });
-  static UserDataModel example = 
-    new UserDataModel(
-      id: "nadLzn6xd00BJcpy1Gtc",
-      email: "92mika@gmail.com",
-      password: "testtest",
-      name: "michael",
-      surname: "cauduro",
-      workspaceShared: [],
-    );
-  /* factory UserDataModel.fromFirestore(DocumentSnapshot _snapshot) {
-    var _data = _snapshot.data();
+  static UserDataModel example = new UserDataModel(
+    id: "nadLzn6xd00BJcpy1Gtc",
+    email: "92mika@gmail.com",
+    password: "testtest",
+    name: "michael",
+    surname: "cauduro",
+    workspaceShared: [],
+  );
 
+  factory UserDataModel.fromFirestore(DocumentSnapshot _snapshot) {
+    var _data = _snapshot.data();
+    List _wks = _data["workspaceShared"];
+    if (_wks != null && _wks != []) {
+      _wks = _wks.map((_w) {
+        return WorkspaceShared(
+            ownerId: _w["ownerId"],
+            permissions: _w["permissions"],
+            workspaceId: _w["workspaceId"]);
+      }).toList();
+    } else {
+      _wks = [];
+    }
     return UserDataModel(
-        id: _snapshot.id,
-        username: _data["username"],
-        email: _data["email"],
-        password: _data["password"],
-        kcal: _data["kcal"],
-        mealsSplitType:_data["mealsSplitType"],
-        carbsPerc: _data["carbsPerc"],
-        proteinsPerc: _data["proteinsPerc"],
-        fatsPerc: _data["fatsPerc"]);
-  } */
+      id: _snapshot.id,
+      email: _data["email"],
+      password: _data["password"],
+      name: _data["name"],
+      surname: _data["surname"],
+      workspaceShared: _wks,
+    );
+  }
 }

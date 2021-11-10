@@ -62,6 +62,24 @@
       "languageVersion": "2.12"
     },
     {
+      "name": "cloud_firestore",
+      "rootUri": "file:///Users/michaelcauduro/develop/flutter/.pub-cache/hosted/pub.dartlang.org/cloud_firestore-0.14.4",
+      "packageUri": "lib/",
+      "languageVersion": "2.1"
+    },
+    {
+      "name": "cloud_firestore_platform_interface",
+      "rootUri": "file:///Users/michaelcauduro/develop/flutter/.pub-cache/hosted/pub.dartlang.org/cloud_firestore_platform_interface-2.2.1",
+      "packageUri": "lib/",
+      "languageVersion": "2.0"
+    },
+    {
+      "name": "cloud_firestore_web",
+      "rootUri": "file:///Users/michaelcauduro/develop/flutter/.pub-cache/hosted/pub.dartlang.org/cloud_firestore_web-0.2.1+2",
+      "packageUri": "lib/",
+      "languageVersion": "2.1"
+    },
+    {
       "name": "collection",
       "rootUri": "file:///Users/michaelcauduro/develop/flutter/.pub-cache/hosted/pub.dartlang.org/collection-1.15.0-nullsafety.5",
       "packageUri": "lib/",
@@ -110,6 +128,48 @@
       "languageVersion": "2.12"
     },
     {
+      "name": "firebase_auth",
+      "rootUri": "file:///Users/michaelcauduro/develop/flutter/.pub-cache/hosted/pub.dartlang.org/firebase_auth-0.18.4",
+      "packageUri": "lib/",
+      "languageVersion": "2.0"
+    },
+    {
+      "name": "firebase_auth_platform_interface",
+      "rootUri": "file:///Users/michaelcauduro/develop/flutter/.pub-cache/hosted/pub.dartlang.org/firebase_auth_platform_interface-2.1.4",
+      "packageUri": "lib/",
+      "languageVersion": "2.0"
+    },
+    {
+      "name": "firebase_auth_web",
+      "rootUri": "file:///Users/michaelcauduro/develop/flutter/.pub-cache/hosted/pub.dartlang.org/firebase_auth_web-0.3.2+3",
+      "packageUri": "lib/",
+      "languageVersion": "2.0"
+    },
+    {
+      "name": "firebase_core",
+      "rootUri": "file:///Users/michaelcauduro/develop/flutter/.pub-cache/hosted/pub.dartlang.org/firebase_core-0.5.3",
+      "packageUri": "lib/",
+      "languageVersion": "2.1"
+    },
+    {
+      "name": "firebase_core_platform_interface",
+      "rootUri": "file:///Users/michaelcauduro/develop/flutter/.pub-cache/hosted/pub.dartlang.org/firebase_core_platform_interface-2.1.0",
+      "packageUri": "lib/",
+      "languageVersion": "2.1"
+    },
+    {
+      "name": "firebase_core_web",
+      "rootUri": "file:///Users/michaelcauduro/develop/flutter/.pub-cache/hosted/pub.dartlang.org/firebase_core_web-0.2.1+1",
+      "packageUri": "lib/",
+      "languageVersion": "2.1"
+    },
+    {
+      "name": "firebase_database",
+      "rootUri": "file:///Users/michaelcauduro/develop/flutter/.pub-cache/hosted/pub.dartlang.org/firebase_database-4.4.0",
+      "packageUri": "lib/",
+      "languageVersion": "2.0"
+    },
+    {
       "name": "flutter",
       "rootUri": "file:///Users/michaelcauduro/develop/flutter/packages/flutter",
       "packageUri": "lib/",
@@ -122,8 +182,44 @@
       "languageVersion": "2.12"
     },
     {
+      "name": "flutter_keyboard_visibility",
+      "rootUri": "file:///Users/michaelcauduro/develop/flutter/.pub-cache/hosted/pub.dartlang.org/flutter_keyboard_visibility-4.0.6",
+      "packageUri": "lib/",
+      "languageVersion": "2.1"
+    },
+    {
+      "name": "flutter_keyboard_visibility_platform_interface",
+      "rootUri": "file:///Users/michaelcauduro/develop/flutter/.pub-cache/hosted/pub.dartlang.org/flutter_keyboard_visibility_platform_interface-1.0.1",
+      "packageUri": "lib/",
+      "languageVersion": "2.1"
+    },
+    {
+      "name": "flutter_keyboard_visibility_web",
+      "rootUri": "file:///Users/michaelcauduro/develop/flutter/.pub-cache/hosted/pub.dartlang.org/flutter_keyboard_visibility_web-1.0.1",
+      "packageUri": "lib/",
+      "languageVersion": "2.1"
+    },
+    {
+      "name": "flutter_svg",
+      "rootUri": "file:///Users/michaelcauduro/develop/flutter/.pub-cache/hosted/pub.dartlang.org/flutter_svg-0.19.2+1",
+      "packageUri": "lib/",
+      "languageVersion": "2.2"
+    },
+    {
       "name": "flutter_test",
       "rootUri": "file:///Users/michaelcauduro/develop/flutter/packages/flutter_test",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
+      "name": "flutter_typeahead",
+      "rootUri": "file:///Users/michaelcauduro/develop/flutter/.pub-cache/hosted/pub.dartlang.org/flutter_typeahead-1.9.1",
+      "packageUri": "lib/",
+      "languageVersion": "1.19"
+    },
+    {
+      "name": "flutter_web_plugins",
+      "rootUri": "file:///Users/michaelcauduro/develop/flutter/packages/flutter_web_plugins",
       "packageUri": "lib/",
       "languageVersion": "2.12"
     },
@@ -164,6 +260,12 @@
       "languageVersion": "2.10"
     },
     {
+      "name": "intl",
+      "rootUri": "file:///Users/michaelcauduro/develop/flutter/.pub-cache/hosted/pub.dartlang.org/intl-0.16.1",
+      "packageUri": "lib/",
+      "languageVersion": "2.5"
+    },
+    {
       "name": "io",
       "rootUri": "file:///Users/michaelcauduro/develop/flutter/.pub-cache/hosted/pub.dartlang.org/io-0.3.4",
       "packageUri": "lib/",
@@ -200,6 +302,12 @@
       "languageVersion": "2.12"
     },
     {
+      "name": "nested",
+      "rootUri": "file:///Users/michaelcauduro/develop/flutter/.pub-cache/hosted/pub.dartlang.org/nested-1.0.0",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
       "name": "node_interop",
       "rootUri": "file:///Users/michaelcauduro/develop/flutter/.pub-cache/hosted/pub.dartlang.org/node_interop-1.2.1",
       "packageUri": "lib/",
@@ -222,6 +330,18 @@
       "rootUri": "file:///Users/michaelcauduro/develop/flutter/.pub-cache/hosted/pub.dartlang.org/path-1.8.0-nullsafety.3",
       "packageUri": "lib/",
       "languageVersion": "2.12"
+    },
+    {
+      "name": "path_drawing",
+      "rootUri": "file:///Users/michaelcauduro/develop/flutter/.pub-cache/hosted/pub.dartlang.org/path_drawing-0.4.1+1",
+      "packageUri": "lib/",
+      "languageVersion": "1.19"
+    },
+    {
+      "name": "path_parsing",
+      "rootUri": "file:///Users/michaelcauduro/develop/flutter/.pub-cache/hosted/pub.dartlang.org/path_parsing-0.1.4",
+      "packageUri": "lib/",
+      "languageVersion": "1.19"
     },
     {
       "name": "path_provider",
@@ -260,6 +380,12 @@
       "languageVersion": "2.12"
     },
     {
+      "name": "petitparser",
+      "rootUri": "file:///Users/michaelcauduro/develop/flutter/.pub-cache/hosted/pub.dartlang.org/petitparser-3.1.0",
+      "packageUri": "lib/",
+      "languageVersion": "2.7"
+    },
+    {
       "name": "platform",
       "rootUri": "file:///Users/michaelcauduro/develop/flutter/.pub-cache/hosted/pub.dartlang.org/platform-3.0.0-nullsafety.4",
       "packageUri": "lib/",
@@ -284,8 +410,20 @@
       "languageVersion": "2.12"
     },
     {
+      "name": "provider",
+      "rootUri": "file:///Users/michaelcauduro/develop/flutter/.pub-cache/hosted/pub.dartlang.org/provider-4.3.2+3",
+      "packageUri": "lib/",
+      "languageVersion": "2.7"
+    },
+    {
       "name": "pub_semver",
       "rootUri": "file:///Users/michaelcauduro/develop/flutter/.pub-cache/hosted/pub.dartlang.org/pub_semver-1.4.4",
+      "packageUri": "lib/",
+      "languageVersion": "2.0"
+    },
+    {
+      "name": "quiver",
+      "rootUri": "file:///Users/michaelcauduro/develop/flutter/.pub-cache/hosted/pub.dartlang.org/quiver-2.1.5",
       "packageUri": "lib/",
       "languageVersion": "2.0"
     },
@@ -404,6 +542,12 @@
       "languageVersion": "2.3"
     },
     {
+      "name": "xml",
+      "rootUri": "file:///Users/michaelcauduro/develop/flutter/.pub-cache/hosted/pub.dartlang.org/xml-4.5.1",
+      "packageUri": "lib/",
+      "languageVersion": "2.7"
+    },
+    {
       "name": "yaml",
       "rootUri": "file:///Users/michaelcauduro/develop/flutter/.pub-cache/hosted/pub.dartlang.org/yaml-2.2.1",
       "packageUri": "lib/",
@@ -416,7 +560,7 @@
       "languageVersion": "2.7"
     }
   ],
-  "generated": "2021-07-16T13:15:13.626145Z",
+  "generated": "2021-08-29T15:49:08.534242Z",
   "generator": "pub",
   "generatorVersion": "2.12.0-141.0.dev"
 }

@@ -38,7 +38,8 @@ class MyApp extends StatelessWidget {
       },
       onGenerateRoute: (settings) {
         if (settings.name == "singleProductDetailPage") {
-          SingleProductDetailPageInput args = settings.arguments as SingleProductDetailPageInput;
+          SingleProductDetailPageInput args =
+              settings.arguments as SingleProductDetailPageInput;
           print(args.product.color);
           return MaterialPageRoute(builder: (context) {
             return SingleProductDetailPage(args);

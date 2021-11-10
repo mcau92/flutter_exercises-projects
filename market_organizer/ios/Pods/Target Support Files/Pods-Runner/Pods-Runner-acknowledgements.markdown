@@ -1,6 +1,11 @@
 # Acknowledgements
 This application makes use of the following third party libraries:
 
+## integration_test
+
+Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
+
+
 ## path_provider
 
 Copyright 2017, the Flutter project authors. All rights reserved.

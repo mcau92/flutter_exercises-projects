@@ -2,9 +2,11 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:market_organizer/database/database_service.dart';
 import 'package:market_organizer/models/ricetta.dart';
-import 'package:market_organizer/models/userdata_model.dart';
 import 'package:market_organizer/pages/menu/singleDay/meal/meal_detail_model.dart';
 import 'package:market_organizer/pages/menu/singleDay/meal/single_ricetta_search.dart';
+import 'package:market_organizer/pages/menu/singleDay/receipt/new_receipt_input.dart';
+import 'package:market_organizer/pages/menu/singleDay/receipt/selected/new_selected_receipt_input.dart';
+import 'package:market_organizer/service/navigation_service.dart';
 
 class MealDetailPage extends StatefulWidget {
   const MealDetailPage({Key key}) : super(key: key);
@@ -28,10 +30,23 @@ class _MealDetailPageState extends State<MealDetailPage> {
     if (string != null && string != "") {
       List<Ricetta> _result =
           await DatabaseService.instance.searchRicetteByName(string);
-      setState(()  {
-        _ricette=_result;
+      setState(() {
+        _ricette = _result;
+      });
+    } else {
+      setState(() {
+        _ricette = [];
       });
     }
+  }
+
+/** metodo che ci porta ad una nuova pagina dove andiamo a gestire l'inserimento, modifica e conferma della ricetta per poi essere salvata */
+  void _insertNewRecipt() {
+    //ricetta può essere nulla se sono in fase di creazione da zero altrimenti è valorizzata con quella selezionata
+    NewReceiptInput receiptInput =
+        new NewReceiptInput(mealInput.singleDayPageInput, mealInput.pasto);
+    NavigationService.instance
+        .navigateToWithParameters("addReceiptPage", receiptInput);
   }
 
   @override
@@ -43,16 +58,21 @@ class _MealDetailPageState extends State<MealDetailPage> {
         backgroundColor: Color.fromRGBO(43, 43, 43, 1),
         centerTitle: true,
         leading: IconButton(
-          icon: Icon(
-            CupertinoIcons.back,
-            color: Colors.white,
-          ),
-          onPressed: () => Navigator.pop(context),
-        ),
+            icon: Icon(
+              CupertinoIcons.back,
+              color: Colors.white,
+            ),
+            onPressed: () => NavigationService.instance.goBack()),
         title: Text(
           mealInput.pasto,
           style: TextStyle(color: Colors.white),
         ),
+        actions: [
+          IconButton(
+            icon: Icon(CupertinoIcons.add, color: Colors.white),
+            onPressed: () => _insertNewRecipt(),
+          ),
+        ],
       ),
       body: _body(),
     );
@@ -79,38 +99,26 @@ class _MealDetailPageState extends State<MealDetailPage> {
     return _ricette != null ? Expanded(child: _ricetteList()) : Container();
   }
 
-  void _insertRicettaAndPop(Ricetta _ricetta) {
-    //aggiorno i dati nella ricetta per poterla duplicare
-    _ricetta = _cleanRicettaData(_ricetta);
-    DatabaseService.instance
-        .insertSearchedRicettaOnMenu(_ricetta, mealInput, null);
-    Navigator.pop(context);
+//metodo che ci porta nella pagina di inserimento che è la stessa che si visualizza quando si crea la ricetta da zero solo che in questo caso ci saranno i prodotti della ricetta caricati
+  void _showRicettaDetailForInsert(Ricetta _ricetta) {
+    //ricetta può essere nulla se sono in fase di creazione da zero altrimenti è valorizzata con quella selezionata
+    NewSelectedReceiptInput receiptInput = new NewSelectedReceiptInput(
+        _ricetta, mealInput.singleDayPageInput, mealInput.pasto);
+    NavigationService.instance
+        .navigateToWithParameters("addSelectedReceiptPage", receiptInput);
   }
 
   Widget _ricetteList() {
-    return ListView.separated(
+    return ListView.builder(
         shrinkWrap: true,
-        separatorBuilder: (context, index) {
-          return Divider(
-            height: 20,
-            thickness: 0,
-          );
-        },
         itemCount: _ricette.length,
         itemBuilder: (context, index) {
           return Padding(
             padding: const EdgeInsets.all(8.0),
             child: GestureDetector(
                 child: SingleRicettaSearch(_ricette[index]),
-                onTap: () => _insertRicettaAndPop(_ricette[index])),
+                onTap: () => _showRicettaDetailForInsert(_ricette[index])),
           );
         });
-  }
-
-  Ricetta _cleanRicettaData(Ricetta ricetta) {
-    UserDataModel user = UserDataModel.example;
-    ricetta.id = null;
-    ricetta.ownerId = user.id;
-    ricetta.ownerName = user.name;
   }
 }

@@ -6,6 +6,8 @@ class DateProvider with ChangeNotifier {
   DateTime dateEnd;
   String dateFormatted;
 
+  static DateProvider instance = DateProvider();
+
   DateProvider() {
     dateStart = new DateTime(
             DateTime.now().year, DateTime.now().month, DateTime.now().day)
@@ -17,10 +19,10 @@ class DateProvider with ChangeNotifier {
   }
 
   void increaseWeek() {
-    dateStart=dateStart.add(Duration(
+    dateStart = dateStart.add(Duration(
       days: 7,
     ));
-    dateEnd=dateEnd.add(
+    dateEnd = dateEnd.add(
       Duration(
         days: 7,
       ),
@@ -30,10 +32,10 @@ class DateProvider with ChangeNotifier {
   }
 
   void decreaseWeek() {
-    dateStart=dateStart.subtract(Duration(
+    dateStart = dateStart.subtract(Duration(
       days: 7,
     ));
-    dateEnd=dateEnd.subtract(
+    dateEnd = dateEnd.subtract(
       Duration(
         days: 7,
       ),
@@ -43,7 +45,7 @@ class DateProvider with ChangeNotifier {
   }
 
   void createString() {
-    dateFormatted= dateStart.day.toString() +
+    dateFormatted = dateStart.day.toString() +
         " " +
         Utils.instance.convertWeekDay(dateStart.month) +
         " - " +

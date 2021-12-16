@@ -24,8 +24,6 @@ class BodyWidget extends StatelessWidget {
               List<Product> _products = _snapshot.data;
               List<String> reparti = Utils.instance.getReparti(_products);
               return ListView.separated(
-                  shrinkWrap: true,
-                  physics: NeverScrollableScrollPhysics(),
                   separatorBuilder: (context, index) {
                     return SizedBox(
                       height: 7,

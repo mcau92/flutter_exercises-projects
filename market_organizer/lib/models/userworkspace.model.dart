@@ -22,7 +22,7 @@ class UserWorkspace {
 
   factory UserWorkspace.fromFirestore(DocumentSnapshot _snapshot) {
     var _data = _snapshot.data();
-    
+
     Map<String, String> userColors = {};
     if (_data["userColors"] != null) {
       List.from(_data["userColors"]).forEach((map) {
@@ -31,7 +31,6 @@ class UserWorkspace {
         });
       });
     }
-
     return UserWorkspace(
       id: _snapshot.id,
       name: _data["name"],

@@ -62,12 +62,6 @@
       "languageVersion": "2.12"
     },
     {
-      "name": "convert",
-      "rootUri": "file:///Users/michaelcauduro/dev/flutter/sdk/flutter/.pub-cache/hosted/pub.dartlang.org/convert-2.1.1",
-      "packageUri": "lib/",
-      "languageVersion": "1.17"
-    },
-    {
       "name": "crypto",
       "rootUri": "file:///Users/michaelcauduro/dev/flutter/sdk/flutter/.pub-cache/hosted/pub.dartlang.org/crypto-3.0.1",
       "packageUri": "lib/",
@@ -171,9 +165,9 @@
     },
     {
       "name": "flutter_svg",
-      "rootUri": "file:///Users/michaelcauduro/dev/flutter/sdk/flutter/.pub-cache/hosted/pub.dartlang.org/flutter_svg-0.19.2+1",
+      "rootUri": "file:///Users/michaelcauduro/dev/flutter/sdk/flutter/.pub-cache/hosted/pub.dartlang.org/flutter_svg-0.23.0+1",
       "packageUri": "lib/",
-      "languageVersion": "2.2"
+      "languageVersion": "2.12"
     },
     {
       "name": "flutter_test",
@@ -261,15 +255,15 @@
     },
     {
       "name": "path_drawing",
-      "rootUri": "file:///Users/michaelcauduro/dev/flutter/sdk/flutter/.pub-cache/hosted/pub.dartlang.org/path_drawing-0.4.1+1",
+      "rootUri": "file:///Users/michaelcauduro/dev/flutter/sdk/flutter/.pub-cache/hosted/pub.dartlang.org/path_drawing-0.5.1+1",
       "packageUri": "lib/",
-      "languageVersion": "1.19"
+      "languageVersion": "2.12"
     },
     {
       "name": "path_parsing",
-      "rootUri": "file:///Users/michaelcauduro/dev/flutter/sdk/flutter/.pub-cache/hosted/pub.dartlang.org/path_parsing-0.1.4",
+      "rootUri": "file:///Users/michaelcauduro/dev/flutter/sdk/flutter/.pub-cache/hosted/pub.dartlang.org/path_parsing-0.2.1",
       "packageUri": "lib/",
-      "languageVersion": "1.19"
+      "languageVersion": "2.12"
     },
     {
       "name": "path_provider",
@@ -309,9 +303,9 @@
     },
     {
       "name": "petitparser",
-      "rootUri": "file:///Users/michaelcauduro/dev/flutter/sdk/flutter/.pub-cache/hosted/pub.dartlang.org/petitparser-3.1.0",
+      "rootUri": "file:///Users/michaelcauduro/dev/flutter/sdk/flutter/.pub-cache/hosted/pub.dartlang.org/petitparser-4.4.0",
       "packageUri": "lib/",
-      "languageVersion": "2.7"
+      "languageVersion": "2.14"
     },
     {
       "name": "platform",
@@ -429,9 +423,9 @@
     },
     {
       "name": "xml",
-      "rootUri": "file:///Users/michaelcauduro/dev/flutter/sdk/flutter/.pub-cache/hosted/pub.dartlang.org/xml-4.5.1",
+      "rootUri": "file:///Users/michaelcauduro/dev/flutter/sdk/flutter/.pub-cache/hosted/pub.dartlang.org/xml-5.3.1",
       "packageUri": "lib/",
-      "languageVersion": "2.7"
+      "languageVersion": "2.14"
     },
     {
       "name": "market_organizer",
@@ -440,7 +434,7 @@
       "languageVersion": "2.7"
     }
   ],
-  "generated": "2021-11-10T07:27:31.028085Z",
+  "generated": "2021-12-08T14:15:25.720274Z",
   "generator": "pub",
   "generatorVersion": "2.14.0"
 }

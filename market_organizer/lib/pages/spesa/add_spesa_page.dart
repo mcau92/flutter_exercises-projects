@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:market_organizer/database/database_service.dart';
 import 'package:market_organizer/models/spesa.dart';
+import 'package:market_organizer/models/userdata_model.dart';
 import 'package:market_organizer/provider/date_provider.dart';
 import 'package:market_organizer/service/navigation_service.dart';
 import 'package:market_organizer/utils/measure_unit_list.dart';
@@ -24,8 +25,8 @@ class _AddSpesaPageState extends State<AddSpesaPage> {
   double _quantity = 0.0;
   String _measureUnit = "";
   bool _isInsertSelected = false;
-  String _currency ;
-  double _price ;
+  String _currency;
+  double _price;
 
   @override
   void dispose() {
@@ -45,12 +46,13 @@ class _AddSpesaPageState extends State<AddSpesaPage> {
   void _saveProduct() async {
     _formKey.currentState.save();
     if (_formKey.currentState.validate()) {
-      if (_currentSpesa.id == null) {
+      if (_currentSpesa == null || _currentSpesa.id == null) {
         //create new spesa
         _currentSpesa =
             await DatabaseService.instance.createNewSpesa(_currentSpesa);
       }
       await DatabaseService.instance.insertProductOnSpesa(
+        _currentSpesa.workspaceIdRef,
         _currentSpesa.id,
         _currentSpesa.ownerId,
         _productName,
@@ -249,8 +251,11 @@ class _AddSpesaPageState extends State<AddSpesaPage> {
         ),
       ),
       suggestionsCallback: (pattern) {
-        return DatabaseService.instance
-            .getUserRepartiByInput(pattern, _currentSpesa.ownerId);
+        return DatabaseService.instance.getUserRepartiByInput(
+            pattern,
+            _currentSpesa != null
+                ? _currentSpesa.ownerId
+                : UserDataModel.example.id);
       },
       itemBuilder: (context, suggestion) {
         return ListTile(
@@ -349,6 +354,7 @@ class _AddSpesaPageState extends State<AddSpesaPage> {
 
   void _showCupertinoPicker() {
     FocusScope.of(context).requestFocus(new FocusNode());
+
     showCupertinoModalPopup(
         context: context,
         builder: (context) {

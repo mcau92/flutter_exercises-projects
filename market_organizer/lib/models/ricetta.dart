@@ -32,9 +32,10 @@ class Ricetta {
       id: _snapshot.id,
       ownerId: _data["ownerId"],
       ownerName: _data["ownerName"],
-      color: _data["color"] ,
+      color: _data["color"],
       name: _data["name"] != null ? _data["name"] : "default",
-      description: _data["description"],
+      description:
+          _data["description"] != null ? _data["description"] : "default",
       pasto: _data["pasto"],
       date: _data["date"].toDate(),
       image: _data["image"],

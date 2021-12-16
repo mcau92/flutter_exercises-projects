@@ -33,11 +33,15 @@ class _SpesaWidgetState extends State<SpesaWidget> {
   }
 
   void _newSpesa() {
-    _currentSpesa = new Spesa(
-        workspaceIdRef: widget.worksapceId,
-        startWeek: dateStart,
-        endWeek: dateEnd,
-        ownerId: "LMgqupuW0wVW4RZn3QyC0y9Xxrg1");
+    //controllo se è la prima spesa o se esiste gia
+    _currentSpesa != null
+        ? NavigationService.instance
+            .navigateToWithParameters("addSpesaPage", _currentSpesa)
+        : _currentSpesa = new Spesa(
+            workspaceIdRef: widget.worksapceId,
+            startWeek: dateStart,
+            endWeek: dateEnd,
+            ownerId: "LMgqupuW0wVW4RZn3QyC0y9Xxrg1");
     NavigationService.instance
         .navigateToWithParameters("addSpesaPage", _currentSpesa);
   }
@@ -62,7 +66,7 @@ class _SpesaWidgetState extends State<SpesaWidget> {
   Widget _body() {
     return StreamBuilder<List<Spesa>>(
       stream: DatabaseService.instance
-          .getSpesaFromIdAndDate(widget.worksapceId, dateStart, dateEnd),
+          .getSpesaStreamFromIdAndDate(widget.worksapceId, dateStart, dateEnd),
       builder: (_context, _snap) {
         if (_snap.hasData) {
           if (_snap.data.isNotEmpty) {
@@ -101,10 +105,10 @@ class _SpesaWidgetState extends State<SpesaWidget> {
     return CupertinoButton(
       onPressed: () => _newSpesa(),
       child: Container(
-          padding: EdgeInsets.all(20),
+          padding: EdgeInsets.all(15),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(25),
           ),
           child: Text("AGGIUNGI", style: TextStyle(color: Colors.red[600]))),
     );
@@ -113,13 +117,13 @@ class _SpesaWidgetState extends State<SpesaWidget> {
   Widget _description() {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(8.0),
+        padding: const EdgeInsets.all(10.0),
         child: Text(
           "Nessun Prodotto Presente",
           style: TextStyle(
               color: Colors.red[600],
               fontWeight: FontWeight.bold,
-              fontSize: 20),
+              fontSize: 18),
         ),
       ),
     );
@@ -129,8 +133,8 @@ class _SpesaWidgetState extends State<SpesaWidget> {
     return Container(
       padding: EdgeInsets.all(30),
       clipBehavior: Clip.hardEdge,
-      height: 250,
-      width: 250,
+      height: 200,
+      width: 200,
       child: SvgPicture.asset(
         'assets/images/empty_spesa.svg',
       ),
@@ -144,7 +148,7 @@ class _SpesaWidgetState extends State<SpesaWidget> {
   String createString(double ammount) {
     String tot = "Tot. ";
     if (ammount == null) return tot + "0.0 €";
-    return tot + ammount.toString() + " €";
+    return tot + num.parse(ammount.toStringAsFixed(2)).toString() + " €";
   }
 
   Widget _workspaceBar(Spesa _currentSpesa) {
@@ -152,6 +156,7 @@ class _SpesaWidgetState extends State<SpesaWidget> {
       return Align(
         alignment: Alignment.centerLeft,
         child: Container(
+          margin: EdgeInsets.symmetric(vertical: 10),
           child: Padding(
             padding: const EdgeInsets.only(left: 15.0),
             child: Text(

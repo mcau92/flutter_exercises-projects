@@ -49,7 +49,7 @@ class MenuWidget extends StatelessWidget {
         if (_snap.hasData) {
           Menu _currentMenu = _snap.data.isEmpty ? null : _snap.data[0];
           //se menu non nullo recupero le ricette altrimenti iniziallizo con valori di default
-          
+
           if (_currentMenu != null) {
             return FutureBuilder<List<Ricetta>>(
                 future: DatabaseService.instance
@@ -108,7 +108,7 @@ class MenuWidget extends StatelessWidget {
   }
 
   String _countPast(List<Ricetta> recipts, String day) {
-    List dayRecipts = recipts
+    List<Ricetta> dayRecipts = recipts
         .where(
           (element) =>
               element.date.weekday == Utils.instance.weekDays.indexOf(day) + 1,
@@ -117,29 +117,29 @@ class MenuWidget extends StatelessWidget {
     if (dayRecipts.isNotEmpty) {
       List<Ricetta> _filterRecipts = [];
       dayRecipts.forEach((eDay) {
-        if (!_filterRecipts.any((eFilter) => eFilter.pasto = eDay.pasto)) {
+        if (_filterRecipts.isEmpty ||
+            !_filterRecipts.any((eFilter) => eFilter.pasto == eDay.pasto)) {
           _filterRecipts.add(eDay);
         }
       });
+      print("arrivo");
       return _filterRecipts.length.toString();
     }
     return "0";
   }
 
   // method to redirect to day page
-  void _showDay(
-      BuildContext context, Menu menu, String day, List<Ricetta> ricette) {
+  void _showDay(BuildContext context, Menu menu, String day) {
     Navigator.pushNamed(
       context,
       "singleDay",
       arguments: SingleDayPageInput(
-        worksapceId,//mi serve per inserire il menu se non presente
+        worksapceId, //mi serve per inserire il menu se non presente
         day,
         dateStart.add(Duration(days: Utils.instance.weekDays.indexOf(day))),
         dateStart,
         dateEnd,
-        menu!=null?menu.id:null,//può essere nullo
-        ricette,//possono essere empty se non vuote sono gia filtrate per il giorno
+        menu != null ? menu.id : null, //può essere nullo
       ),
     );
   }
@@ -153,13 +153,6 @@ class MenuWidget extends StatelessWidget {
           context,
           menu,
           day,
-          recipts != null
-              ? recipts
-                  .where((element) =>
-                      element.date.weekday ==
-                      Utils.instance.weekDays.indexOf(day) + 1)
-                  .toList()
-              : [],
         ),
         child: Container(
           margin: EdgeInsets.all(20),

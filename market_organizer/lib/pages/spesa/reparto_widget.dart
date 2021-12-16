@@ -8,12 +8,11 @@ class RepartoWidget extends StatelessWidget {
   final String repartoName;
   final List<Product> products;
 
-  RepartoWidget(this._workspaceId,this.repartoName, this.products);
+  RepartoWidget(this._workspaceId, this.repartoName, this.products);
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.only(bottom: 15, top: 10, right: 15, left: 15),
-      
+      padding: EdgeInsets.only(bottom: 5, top: 5, right: 15, left: 15),
       child: Column(
         children: [_titleReparto(), _productsList()],
       ),
@@ -46,7 +45,7 @@ class RepartoWidget extends StatelessWidget {
         },
         itemCount: products.length,
         itemBuilder: (context, index) {
-          return SingleProductWidget(_workspaceId,products[index],index);
+          return SingleProductWidget(_workspaceId, products[index], index);
         });
   }
 }

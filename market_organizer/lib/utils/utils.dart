@@ -35,6 +35,8 @@ class Utils {
         reparti.add(element.reparto);
       }
     });
+    reparti.sort(
+        (a, b) => a.toString().compareTo(b.toString())); //ordine alfabetico
     return reparti;
   }
 

@@ -32,6 +32,7 @@ class _SpesaWidgetState extends State<SpesaWidget> {
         .navigateToWithParameters("addSpesaPage", _currentSpesa);
   }
 
+  void _cloneSpesa() {}
   void _newSpesa() {
     //controllo se è la prima spesa o se esiste gia
     _currentSpesa != null
@@ -156,18 +157,28 @@ class _SpesaWidgetState extends State<SpesaWidget> {
       return Align(
         alignment: Alignment.centerLeft,
         child: Container(
-          margin: EdgeInsets.symmetric(vertical: 10),
           child: Padding(
-            padding: const EdgeInsets.only(left: 15.0),
-            child: Text(
-              createString(_currentSpesa.ammount),
-              style: TextStyle(
-                color: Colors.red,
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
+              padding: const EdgeInsets.symmetric(horizontal: 15.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    createString(_currentSpesa.ammount),
+                    style: TextStyle(
+                      color: Colors.red,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  CupertinoButton(
+                      padding: EdgeInsets.all(0),
+                      child: Icon(
+                        CupertinoIcons.ellipsis,
+                        color: Colors.white,
+                      ),
+                      onPressed: () => _cloneSpesa())
+                ],
+              )),
         ),
       );
     });

@@ -145,6 +145,30 @@ class DatabaseService {
           ).toList(),
         );
   }
+//ricerca prodotto per nome
+
+  Future<List<Product>> searchProductByName(String string) async {
+    //recupero tutti i prodotti in spesa o in ricetta creati dall'utente corrente che matchano la stringa richiesta
+    List<Product> products = await _db
+        .collectionGroup(_productCollection)
+        .where("ownerId", isEqualTo: UserDataModel.example.id)
+        .where("name", isGreaterThanOrEqualTo: string)
+        .where("name", isLessThanOrEqualTo: string + '\uf8ff')
+        .get()
+        .then((_qs) =>
+            _qs.docs.map((_ds) => Product.fromFirestore(_ds)).toList());
+    //filtro i doppioni
+    List<Product> filteredList = [];
+    await products.forEach((prod) {
+      if (filteredList.indexWhere((element) =>
+              element.name == prod.name ||
+              element.description == prod.description) <
+          0) {
+        filteredList.add(prod);
+      }
+    });
+    return filteredList;
+  }
 
   //metodo che ritorna la lista delle ricerche suggerite con il path utilizzato nell'input per l'utente corrente
   Future<List<Ricetta>> searchRicetteByName(String string) async {
@@ -414,16 +438,16 @@ class DatabaseService {
   }
 
   //recupero prodotti dato id spesa
-  Stream<List<Product>> getProductsByRecipt(String menuId, String ricettaId) {
+  Future<List<Product>> getProductsByRecipt(String menuId, String ricettaId) {
     return _db
         .collection(_menuCollection)
         .doc(menuId)
         .collection(_ricettaCollection)
         .doc(ricettaId)
         .collection(_productCollection)
-        .snapshots()
-        .map(
-          (_q) => _q.docs.map(
+        .get()
+        .then(
+          (qs) => qs.docs.map(
             (_d) {
               return Product.fromFirestore(_d);
             },

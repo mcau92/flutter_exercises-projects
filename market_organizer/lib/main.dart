@@ -2,12 +2,16 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:market_organizer/pages/home_page.dart';
 import 'package:market_organizer/pages/menu/singleDay/receipt/new_receipt_page.dart';
+import 'package:market_organizer/pages/menu/singleDay/receipt/searchProduct/single_product_search_widget.dart';
 import 'package:market_organizer/pages/menu/singleDay/receipt/selected/new_selected_receipt_page.dart';
+import 'package:market_organizer/pages/menu/singleDay/receipt/selected/searchProduct/single_product_insert_search_widget.dart';
+import 'package:market_organizer/pages/menu/singleDay/receipt/selected/searchProduct/single_product_search_widget.dart';
 import 'package:market_organizer/pages/menu/singleDay/receipt/show/show_receipt_page.dart';
 import 'package:market_organizer/pages/menu/singleDay/receipt/show/single_product_insert_show_widget.dart';
 import 'package:market_organizer/pages/menu/singleDay/receipt/show/single_product_update_show_widget%20copy.dart';
 import 'package:market_organizer/pages/menu/singleDay/receipt/single_product_insert_widget.dart';
 import 'package:market_organizer/pages/menu/singleDay/receipt/single_product_update_widget.dart';
+import 'package:market_organizer/pages/menu/singleDay/searchProduct/new_product_menu_page.dart';
 import 'package:market_organizer/pages/spesa/add_spesa_page.dart';
 import 'package:market_organizer/pages/spesa/single_product_detail_page.dart';
 import 'package:market_organizer/provider/date_provider.dart';
@@ -43,6 +47,9 @@ class MyApp extends StatelessWidget {
         "mealDetail": (BuildContext _context) => MealDetailPage(),
         "addSpesaPage": (BuildContext _context) => AddSpesaPage(),
         "addReceiptPage": (BuildContext _context) => NewReceiptPage(),
+        //inserisco prodotto per menu
+        "addProductPageForMenu": (BuildContext _context) =>
+            NewProductForMenuPage(),
         "addSelectedReceiptPage": (BuildContext _context) =>
             NewSelectedReceiptPage(),
         "showReceiptPage": (BuildContext _context) => ShowReceiptPage(),
@@ -56,12 +63,36 @@ class MyApp extends StatelessWidget {
             return SingleProductDetailPage(args);
           });
         }
+
         //DETTAGLIO PRODOTTO IN RICETTA IN FASE DI INSERIMENTO singleProductUpdateDetailPage
         if (settings.name == "singleProductInsertDetailPage") {
           SingleProductInsertInput args =
               settings.arguments as SingleProductInsertInput;
           return MaterialPageRoute(builder: (context) {
             return SingleProductInsertWidget(args);
+          });
+        }
+        //RICERCA PRODOTTO IN FASE DI INSERIMENTO
+        if (settings.name == "singleProductSearchDetailPage") {
+          SingleProductSearchInput args =
+              settings.arguments as SingleProductSearchInput;
+          return MaterialPageRoute(builder: (context) {
+            return SingleProductSearchWidget(args);
+          });
+        }
+        if (settings.name == "singleProductSearchNewPage") {
+          SingleProductSearchNewInput args =
+              settings.arguments as SingleProductSearchNewInput;
+          return MaterialPageRoute(builder: (context) {
+            return SingleProductSearchNewWidget(args);
+          });
+        }
+        //DETTAGLIO PRODOTTO IN RICETTA IN FASE DI INSERIMENTO TRAMITE RICERCA
+        if (settings.name == "singleProductInsertSearchDetailPage") {
+          SingleProductSearchDetailInput args =
+              settings.arguments as SingleProductSearchDetailInput;
+          return MaterialPageRoute(builder: (context) {
+            return SingleProductInsertSearchWidget(args);
           });
         }
         //DETTAGLIO PRODOTTO IN RICETTA IN FASE DI AGGIORNAMENTO
@@ -88,6 +119,7 @@ class MyApp extends StatelessWidget {
             return SingleProductUpdateShowWidget(args);
           });
         }
+
         return null;
       },
     );

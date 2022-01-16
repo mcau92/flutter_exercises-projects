@@ -7,6 +7,7 @@ import 'package:market_organizer/models/product_model.dart';
 import 'package:market_organizer/models/ricetta.dart';
 import 'package:market_organizer/models/userdata_model.dart';
 import 'package:market_organizer/pages/menu/singleDay/receipt/selected/new_selected_receipt_input.dart';
+import 'package:market_organizer/pages/menu/singleDay/receipt/selected/searchProduct/single_product_search_widget.dart';
 import 'package:market_organizer/pages/menu/singleDay/receipt/single_product_insert_widget.dart';
 import 'package:market_organizer/pages/menu/singleDay/receipt/single_product_receipts_widget.dart';
 import 'package:market_organizer/service/navigation_service.dart';
@@ -25,7 +26,6 @@ class _NewSelectedReceiptPageState extends State<NewSelectedReceiptPage> {
   TextEditingController _controller;
   //
   Ricetta _currentRicetta;
-  Map<Product, bool> _newProductList = {};
   //
   bool _isInsertSelected = false;
 
@@ -45,14 +45,15 @@ class _NewSelectedReceiptPageState extends State<NewSelectedReceiptPage> {
   //aggiungo prodotto alla lista dei prodotti da inserire
   void insertNewProduct(Product prod, bool inSpesa) {
     setState(() {
-      _newProductList.putIfAbsent(prod, () => inSpesa);
+      _receiptInput.productsFetched.putIfAbsent(prod, () => inSpesa);
     });
   }
 
-  //rimuovo prodotto dalla lista
+  //creo una mappa di appoggio dove inserisco i prodotti che non sono stati rimossi. la uso quindi solo se valorizzata poichè vorrebbe dire che
   void removeProduct(Product product) {
     setState(() {
-      _newProductList.remove(product);
+      _receiptInput.productsFetched.removeWhere((p, b) =>
+          p.name == product.name && p.description == product.description);
     });
   }
 
@@ -61,15 +62,15 @@ class _NewSelectedReceiptPageState extends State<NewSelectedReceiptPage> {
     setState(() {
       //prima rimuovo prodotto poichè non ho l'id devo cercarlo per index con cui è stato creato  (guardare in fondo )
       int i = 0;
-      for (var item in _newProductList.entries) {
+      for (var item in _receiptInput.productsFetched.entries) {
         if (i == index) {
-          _newProductList.remove(item);
+          _receiptInput.productsFetched.remove(item);
         } else {
           i++;
         }
       }
       //aggiungo
-      _newProductList.putIfAbsent(product, () => isToInsert);
+      _receiptInput.productsFetched.putIfAbsent(product, () => isToInsert);
     });
   }
 
@@ -96,7 +97,7 @@ class _NewSelectedReceiptPageState extends State<NewSelectedReceiptPage> {
               _currentRicetta,
               _receiptInput.singleDayPageInput,
               _receiptInput.pasto,
-              _newProductList);
+              _receiptInput.productsFetched);
 
       NavigationService.instance.goBackUntil("singleDay");
     } else {
@@ -123,6 +124,15 @@ class _NewSelectedReceiptPageState extends State<NewSelectedReceiptPage> {
           });
     }
   }
+//search product
+
+//search
+  void _searchProduct() {
+    NavigationService.instance.navigateToWithParameters(
+        "singleProductSearchDetailPage",
+        SingleProductSearchInput(
+            insertNewProduct, _receiptInput.singleDayPageInput.workspaceId));
+  }
 
   //add new product
   void _addProduct() {
@@ -134,7 +144,7 @@ class _NewSelectedReceiptPageState extends State<NewSelectedReceiptPage> {
 
   // funzione che controlla se ci sono prodotti e se l'utente prova a tornare indietro gli chiede se vuole eliminarli
   void _goback() async {
-    if (_newProductList.length > 0) {
+    if (_receiptInput.productsFetched.length > 0) {
       await showCupertinoDialog(
           context: context,
           builder: (ctx) {
@@ -328,53 +338,107 @@ class _NewSelectedReceiptPageState extends State<NewSelectedReceiptPage> {
           ),
         ),
       ),
-      _productAddButton()
+      Row(
+        children: [
+          _searchProductButton(),
+          SizedBox(
+            width: 10,
+          ),
+          _productAddButton()
+        ],
+      ),
     ]);
   }
 
   //
+  Future<bool> _confirmDismiss(BuildContext context) async {
+    return await showCupertinoDialog(
+        context: context,
+        builder: (ctx) {
+          return CupertinoAlertDialog(
+            title: Text("Confermi di cancellare questo elemento?"),
+            actions: [
+              CupertinoDialogAction(
+                child: Text("si"),
+                onPressed: () {
+                  Navigator.of(
+                    ctx,
+                    // rootNavigator: true,
+                  ).pop(true);
+                },
+              ),
+              CupertinoDialogAction(
+                child: Text("no"),
+                onPressed: () {
+                  Navigator.of(
+                    ctx,
+                  ).pop(false);
+                },
+              )
+            ],
+          );
+        });
+  }
 
   Widget _productListWidget() {
     if (_currentRicetta.id != null) {
-      return StreamBuilder<List<Product>>(
-          stream: DatabaseService.instance.getProductsByRecipt(
-              _currentRicetta.menuIdRef, _currentRicetta.id),
-          builder: (context, _snapshot) {
-            //se trovo prodotti
-            if (_snapshot.hasData) {
-              _snapshot.data.forEach((_p) {
-                if (!_newProductList.keys
-                    .any((element) => element.id == _p.id)) {
-                  _newProductList.putIfAbsent(_p, () => false);
-                }
-              });
-            }
-            if (_newProductList.length > 0) {
-              //mostro solo i prodotti da inserire
-              List<Product> _prods = _newProductList.keys.toList();
-              return ListView.separated(
-                separatorBuilder: (context, index) {
-                  return Divider(
-                    height: 20,
-                    thickness: 0,
-                  );
-                },
-                itemCount: _prods.length,
-                itemBuilder: (context, index) {
-                  return SingleProductReceiptsWidget(
-                      _prods[index],
-                      _newProductList[_prods[index]],
-                      updateProduct,
-                      removeProduct,
-                      index);
-                },
-              );
-            } else {
-              return Container();
-            }
-          });
+      if (_receiptInput.productsFetched.length > 0) {
+        //mostro solo i prodotti da inserire
+        List<Product> _prods = _receiptInput.productsFetched.keys.toList();
+        return ListView.separated(
+          separatorBuilder: (context, index) {
+            return Divider(
+              height: 20,
+              thickness: 0,
+            );
+          },
+          itemCount: _prods.length,
+          itemBuilder: (context, index) {
+            return Dismissible(
+              child: SingleProductReceiptsWidget(
+                  _prods[index],
+                  _receiptInput.productsFetched[_prods[index]],
+                  updateProduct,
+                  index),
+              key: UniqueKey(),
+              onDismissed: (direction) => removeProduct(_prods[index]),
+              direction: DismissDirection.startToEnd,
+              dismissThresholds: {DismissDirection.startToEnd: 0.3},
+              confirmDismiss: (direction) => _confirmDismiss(context),
+              background: Container(
+                decoration: BoxDecoration(
+                    color: Colors.red, borderRadius: BorderRadius.circular(10)),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 10.0),
+                    child: Icon(
+                      CupertinoIcons.delete,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      } else {
+        return Container();
+      }
     }
     return Container();
+  }
+
+  Widget _searchProductButton() {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: CupertinoButton(
+        color: Color.fromRGBO(52, 52, 52, 1),
+        padding: EdgeInsets.all(2),
+        onPressed: () => _searchProduct(),
+        child: Icon(Icons.search, color: Colors.white24),
+      ),
+    );
   }
 
   Widget _productAddButton() {

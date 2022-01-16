@@ -5,7 +5,6 @@ import 'package:market_organizer/models/ricetta.dart';
 import 'package:market_organizer/pages/menu/singleDay/meal/meal_detail_model.dart';
 import 'package:market_organizer/pages/menu/singleDay/pasto_widget.dart';
 import 'package:market_organizer/pages/menu/singleDay/single_day_page_model.dart';
-import 'package:market_organizer/service/navigation_service.dart';
 import 'package:market_organizer/utils/utils.dart';
 
 class SingleDayPage extends StatefulWidget {

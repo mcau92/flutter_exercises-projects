@@ -7,17 +7,26 @@ import 'package:market_organizer/pages/menu/singleDay/single_day_page_model.dart
 import 'package:market_organizer/models/men%C3%B9.dart';
 import 'package:market_organizer/models/ricetta.dart';
 import 'package:market_organizer/provider/date_provider.dart';
+import 'package:market_organizer/service/navigation_service.dart';
 import 'package:market_organizer/utils/utils.dart';
 import 'package:provider/provider.dart';
 
-class MenuWidget extends StatelessWidget {
+class MenuWidget extends StatefulWidget {
   final String worksapceId;
+  MenuWidget(this.worksapceId);
+
+  @override
+  State<MenuWidget> createState() => _MenuWidgetState();
+}
+
+class _MenuWidgetState extends State<MenuWidget> {
   DateTime dateStart;
+
   DateTime dateEnd;
+
   DateProvider _dateProvider;
 
   void _addMenu() {}
-  MenuWidget(this.worksapceId);
 
   @override
   Widget build(BuildContext context) {
@@ -37,12 +46,11 @@ class MenuWidget extends StatelessWidget {
     ]);
   }
 
-  //body section
   Widget _body() {
     List<Widget> _weekDaysContainers = [];
     return StreamBuilder<List<Menu>>(
       stream: DatabaseService.instance
-          .getMenuFromDate(worksapceId, dateStart, dateEnd),
+          .getMenuFromDate(widget.worksapceId, dateStart, dateEnd),
       builder: (_context, _snap) {
         //if (_snap.hasData && _snap.data.isNotEmpty) {
         //il controllo lo faccio quando devo popolare l'anteprima
@@ -89,7 +97,6 @@ class MenuWidget extends StatelessWidget {
     );
   }
 
-// creation of  week days containers
   String createDateString(String day) {
     return (dateStart.day + (Utils.instance.weekDays.indexOf(day))).toString();
   }
@@ -128,23 +135,22 @@ class MenuWidget extends StatelessWidget {
     return "0";
   }
 
-  // method to redirect to day page
   void _showDay(BuildContext context, Menu menu, String day) {
-    Navigator.pushNamed(
-      context,
-      "singleDay",
-      arguments: SingleDayPageInput(
-        worksapceId, //mi serve per inserire il menu se non presente
-        day,
-        dateStart.add(Duration(days: Utils.instance.weekDays.indexOf(day))),
-        dateStart,
-        dateEnd,
-        menu != null ? menu.id : null, //può essere nullo
-      ),
-    );
+    NavigationService.instance
+        .navigateToWithParameters(
+          "singleDay",
+          SingleDayPageInput(
+            widget.worksapceId, //mi serve per inserire il menu se non presente
+            day,
+            dateStart.add(Duration(days: Utils.instance.weekDays.indexOf(day))),
+            dateStart,
+            dateEnd,
+            menu != null ? menu.id : null, //può essere nullo
+          ),
+        )
+        .then((value) => setState(() {}));
   }
 
-  //list
   List<Widget> initWeekDaysContainers(
       BuildContext context, Menu menu, List<Ricetta> recipts) {
     return Utils.instance.weekDays.map((day) {

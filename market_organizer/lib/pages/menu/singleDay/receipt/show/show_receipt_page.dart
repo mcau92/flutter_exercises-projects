@@ -82,6 +82,8 @@ class _ShowReceiptPageState extends State<ShowReceiptPage> {
     }
   }
 
+//search
+  void _searchProduct() {}
   //add new product
   void _addProduct() {
     NavigationService.instance.navigateToWithParameters(
@@ -287,7 +289,15 @@ class _ShowReceiptPageState extends State<ShowReceiptPage> {
           ),
         ),
       ),
-      _productAddButton()
+      Row(
+        children: [
+          _searchProductButton(),
+          SizedBox(
+            width: 10,
+          ),
+          _productAddButton()
+        ],
+      )
     ]);
   }
 
@@ -295,8 +305,8 @@ class _ShowReceiptPageState extends State<ShowReceiptPage> {
 
   Widget _productListWidget() {
     if (_currentRicetta.id != null) {
-      return StreamBuilder<List<Product>>(
-          stream: DatabaseService.instance.getProductsByRecipt(
+      return FutureBuilder<List<Product>>(
+          future: DatabaseService.instance.getProductsByRecipt(
               _currentRicetta.menuIdRef, _currentRicetta.id),
           builder: (context, _snapshot) {
             //se trovo prodotti
@@ -321,6 +331,18 @@ class _ShowReceiptPageState extends State<ShowReceiptPage> {
           });
     }
     return Container();
+  }
+
+  Widget _searchProductButton() {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: CupertinoButton(
+        color: Color.fromRGBO(52, 52, 52, 1),
+        padding: EdgeInsets.all(2),
+        onPressed: () => _searchProduct(),
+        child: Icon(Icons.search, color: Colors.white24),
+      ),
+    );
   }
 
   Widget _productAddButton() {

@@ -11,12 +11,9 @@ class SingleProductReceiptsWidget extends StatelessWidget {
   final Product _product;
   final bool _isAddToSpesa;
   final Function _updateFromList;
-  final Function
-      _removeFromList; //funzione usata per cancellare quando il prodotto non è ancora inserito a db
-  //usato per identificare univocamente l'oggetto da cancellare
   final int _indexKey;
-  SingleProductReceiptsWidget(this._product, this._isAddToSpesa,
-      this._updateFromList, this._removeFromList, this._indexKey);
+  SingleProductReceiptsWidget(
+      this._product, this._isAddToSpesa, this._updateFromList, this._indexKey);
 
   void _singleProductDetailPage(Product _product) {
     NavigationService.instance.navigateToWithParameters(
@@ -25,71 +22,18 @@ class SingleProductReceiptsWidget extends StatelessWidget {
             _isAddToSpesa)); //key usata per poter aggiornare il prodotto se in fase di inserimento
   }
 
-  Future<void> _deleteProduct() async {
-    _removeFromList(_product);
-  }
-
-  Future<bool> _confirmDismiss(BuildContext context) async {
-    return await showCupertinoDialog(
-        context: context,
-        builder: (ctx) {
-          return CupertinoAlertDialog(
-            title: Text("Confermi di cancellare questo elemento?"),
-            actions: [
-              CupertinoDialogAction(
-                child: Text("si"),
-                onPressed: () {
-                  Navigator.of(
-                    ctx,
-                    // rootNavigator: true,
-                  ).pop(true);
-                },
-              ),
-              CupertinoDialogAction(
-                child: Text("no"),
-                onPressed: () {
-                  Navigator.of(
-                    ctx,
-                  ).pop(false);
-                },
-              )
-            ],
-          );
-        });
-  }
-
   @override
   Widget build(BuildContext context) {
     return Container(
-        clipBehavior: Clip.hardEdge,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.all(
-            Radius.circular(10),
-          ),
+      clipBehavior: Clip.hardEdge,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.all(
+          Radius.circular(10),
         ),
-        child: Dismissible(
-          child: _container(),
-          key: UniqueKey(),
-          onDismissed: (direction) => _deleteProduct(),
-          direction: DismissDirection.startToEnd,
-          dismissThresholds: {DismissDirection.startToEnd: 0.3},
-          confirmDismiss: (direction) => _confirmDismiss(context),
-          background: Container(
-            decoration: BoxDecoration(
-                color: Colors.red, borderRadius: BorderRadius.circular(10)),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Padding(
-                padding: const EdgeInsets.only(left: 10.0),
-                child: Icon(
-                  CupertinoIcons.delete,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ),
-        ));
+      ),
+      child: _container(),
+    );
   }
 
   Widget _container() {

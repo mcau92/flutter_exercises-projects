@@ -7,9 +7,9 @@ import 'package:market_organizer/models/product_model.dart';
 import 'package:market_organizer/models/ricetta.dart';
 import 'package:market_organizer/models/userdata_model.dart';
 import 'package:market_organizer/pages/menu/singleDay/receipt/new_receipt_input.dart';
+import 'package:market_organizer/pages/menu/singleDay/receipt/searchProduct/single_product_search_widget.dart';
 import 'package:market_organizer/pages/menu/singleDay/receipt/single_product_insert_widget.dart';
 import 'package:market_organizer/pages/menu/singleDay/receipt/single_product_receipts_widget.dart';
-import 'package:market_organizer/pages/menu/singleDay/single_day_page_model.dart';
 import 'package:market_organizer/service/navigation_service.dart';
 
 //creo nuova ricetta da zero
@@ -125,6 +125,14 @@ class _NewReceiptPageState extends State<NewReceiptPage> {
             );
           });
     }
+  }
+
+// search product
+  void _searchProduct() {
+    NavigationService.instance.navigateToWithParameters(
+        "singleProductSearchNewPage",
+        SingleProductSearchNewInput(
+            insertNewProduct, _receiptInput.singleDayPageInput.workspaceId));
   }
 
   //add new product
@@ -322,22 +330,61 @@ class _NewReceiptPageState extends State<NewReceiptPage> {
 
   //
   Widget _productTitle() {
-    return Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-      Align(
-        alignment: Alignment.centerLeft,
-        child: Text(
-          "Prodotti",
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 20,
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Text(
+            "Prodotti",
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+            ),
           ),
         ),
-      ),
-      _productAddButton()
-    ]);
+        Row(
+          children: [
+            _searchProductButton(),
+            SizedBox(
+              width: 10,
+            ),
+            _productAddButton()
+          ],
+        )
+      ],
+    );
   }
 
   //
+  Future<bool> _confirmDismiss(BuildContext context) async {
+    return await showCupertinoDialog(
+        context: context,
+        builder: (ctx) {
+          return CupertinoAlertDialog(
+            title: Text("Confermi di cancellare questo elemento?"),
+            actions: [
+              CupertinoDialogAction(
+                child: Text("si"),
+                onPressed: () {
+                  Navigator.of(
+                    ctx,
+                    // rootNavigator: true,
+                  ).pop(true);
+                },
+              ),
+              CupertinoDialogAction(
+                child: Text("no"),
+                onPressed: () {
+                  Navigator.of(
+                    ctx,
+                  ).pop(false);
+                },
+              )
+            ],
+          );
+        });
+  }
 
   Widget _productListWidget() {
     if (_newProductList.length > 0) {
@@ -354,17 +401,46 @@ class _NewReceiptPageState extends State<NewReceiptPage> {
         },
         itemCount: _prods.length,
         itemBuilder: (context, index) {
-          return SingleProductReceiptsWidget(
-              _prods[index],
-              _newProductList[_prods[index]],
-              removeProduct,
-              updateProduct,
-              index);
+          return Dismissible(
+            child: SingleProductReceiptsWidget(_prods[index],
+                _newProductList[_prods[index]], updateProduct, index),
+            key: UniqueKey(),
+            onDismissed: (direction) => removeProduct(_prods[index]),
+            direction: DismissDirection.startToEnd,
+            dismissThresholds: {DismissDirection.startToEnd: 0.3},
+            confirmDismiss: (direction) => _confirmDismiss(context),
+            background: Container(
+              decoration: BoxDecoration(
+                  color: Colors.red, borderRadius: BorderRadius.circular(10)),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 10.0),
+                  child: Icon(
+                    CupertinoIcons.delete,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+          );
         },
       );
     } else {
       return Container();
     }
+  }
+
+  Widget _searchProductButton() {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: CupertinoButton(
+        color: Color.fromRGBO(52, 52, 52, 1),
+        padding: EdgeInsets.all(2),
+        onPressed: () => _searchProduct(),
+        child: Icon(Icons.search, color: Colors.white24),
+      ),
+    );
   }
 
   Widget _productAddButton() {

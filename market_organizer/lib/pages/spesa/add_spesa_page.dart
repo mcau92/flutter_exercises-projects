@@ -250,8 +250,8 @@ class _AddSpesaPageState extends State<AddSpesaPage> {
           focusedBorder: UnderlineInputBorder(borderSide: BorderSide.none),
         ),
       ),
-      suggestionsCallback: (pattern) {
-        return DatabaseService.instance.getUserRepartiByInput(
+      suggestionsCallback: (pattern) async {
+        return await DatabaseService.instance.getUserRepartiByInput(
             pattern,
             _currentSpesa != null
                 ? _currentSpesa.ownerId

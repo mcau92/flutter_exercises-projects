@@ -185,6 +185,87 @@ class DatabaseService {
     return ricette;
   }
 
+  Future<void> insertNewProductInMenu(Product product,
+      SingleDayPageInput singleDayPageInput, bool isAddToSpesa) async {
+    String menuId = singleDayPageInput.menuIdRef;
+    if (menuId == null) {
+      //creo menu nuovo
+      DocumentReference docRef = await _db.collection(_menuCollection).add({
+        "name": "default",
+        "ownerId": product.ownerId,
+        "startWeek": singleDayPageInput.dateStart,
+        "endWeek": singleDayPageInput.dateEnd,
+        "workspaceIdRef": singleDayPageInput.workspaceId
+      });
+      //aggiorno il menu con il suo nuovo id
+      menuId = docRef.id;
+    }
+    String _color = await getUserColor(
+      singleDayPageInput.workspaceId,
+      product.ownerId,
+    );
+    _db.runTransaction((transaction) async {
+      Spesa currentSpesa = null;
+      if (isAddToSpesa) {
+        List<Spesa> spesaList = await getSpesaListFromIdAndDate(
+            singleDayPageInput.workspaceId,
+            singleDayPageInput.dateStart,
+            singleDayPageInput.dateEnd);
+        if (spesaList != null && spesaList.isNotEmpty) {
+          currentSpesa = spesaList.first;
+        } else {
+          currentSpesa = await createNewSpesa(new Spesa(
+              ownerId: UserDataModel.example.id,
+              startWeek: singleDayPageInput.dateStart,
+              endWeek: singleDayPageInput.dateEnd,
+              workspaceIdRef: singleDayPageInput.workspaceId));
+        }
+      }
+      CollectionReference prodRef = _db
+          .collection(_menuCollection)
+          .doc(menuId)
+          .collection(_productCollection);
+
+      transaction.set(prodRef.doc(), {
+        'ownerId': product.ownerId,
+        'ownerName': product.ownerName,
+        'color': product.color,
+        'name': product.name,
+        'description': product.description,
+        'measureUnit': product.measureUnit,
+        'quantity': product.quantity,
+        'image': product.image,
+        'spesaIdRef': currentSpesa != null ? currentSpesa.id : null,
+        'menuIdRef': menuId,
+        //'productIdSpesa': _productIdSpesa,
+      });
+      if (isAddToSpesa) {
+        //insert on spesa and update CONTINUARE A SALVARE I PRODOTTI IN SPESA SE SONO A TRUE
+        CollectionReference dcref = _db
+            .collection(_spesaCollection)
+            .doc(currentSpesa.id)
+            .collection(_productCollection);
+        transaction.set(dcref.doc(), {
+          "color": _color,
+          "description": product.description,
+          "image": "",
+          "measureUnit": product.measureUnit,
+          "name": product.name,
+          "ownerId": product.ownerId,
+          "ownerName": product.ownerName,
+          "quantity": product.quantity,
+          "reparto": product.reparto,
+          "spesaIdRef": currentSpesa.id, //c'è per forza
+          "currency": product.price != null ? "€" : null,
+          "price": product.price
+        });
+        transaction.update(
+            _db.collection(_spesaCollection).doc(currentSpesa.id),
+            {"ammount": FieldValue.increment(product.price)});
+      }
+    });
+  }
+
   /**
    * metodo per inserire una ricetta da zero tramite il pulsante di add nella pagina di aggiunta ricetta
    */
@@ -268,7 +349,7 @@ class DatabaseService {
           'measureUnit': p.measureUnit,
           'quantity': p.quantity,
           'image': p.image,
-          'spesaIdRef': currentSpesa.id,
+          'spesaIdRef': entry.value ? currentSpesa.id : null,
           'ricettaIdRef': p.ricettaIdRef,
           //'productIdSpesa': _productIdSpesa,
         });
@@ -461,26 +542,15 @@ class DatabaseService {
     if (pattern == null || pattern.isEmpty) {
       return mergedReparti;
     }
-    var _ref =
-        _db.collection(_spesaCollection).where("ownerId", isEqualTo: userId);
-    await _ref.get().then((qs) => qs.docs.forEach((doc) {
-          doc.reference
-              .collection(_productCollection)
-              //.where("reparto", isGreaterThanOrEqualTo: pattern)
-              .get()
-              .then((prodQuery) => prodQuery.docs.forEach((product) {
-                    if (product["reparto"]
-                            .toString()
-                            .toLowerCase()
-                            .startsWith(pattern.toLowerCase()) &&
-                        mergedReparti.indexWhere((element) =>
-                                element.toLowerCase() ==
-                                product["reparto"].toString().toLowerCase()) ==
-                            -1) {
-                      mergedReparti.add(product["reparto"]);
-                    }
-                  }));
-        }));
+    List<Product> prods = await _db
+        .collectionGroup(_productCollection)
+        .where("ownerId", isEqualTo: UserDataModel.example.id)
+        .where("reparto", isGreaterThanOrEqualTo: pattern.toUpperCase())
+        .where("reparto", isLessThanOrEqualTo: pattern.toLowerCase() + '\uf8ff')
+        .get()
+        .then((_qs) =>
+            _qs.docs.map((_ds) => Product.fromFirestore(_ds)).toList());
+    mergedReparti = prods.map((p) => p.reparto).toList();
     return mergedReparti;
   }
 

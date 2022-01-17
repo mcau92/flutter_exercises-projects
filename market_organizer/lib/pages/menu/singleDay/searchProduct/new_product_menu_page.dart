@@ -60,8 +60,7 @@ class NewProductForMenuPageState extends State<NewProductForMenuPage> {
     _formKey.currentState.save();
     if (_formKey.currentState.validate()) {
       String _color = await DatabaseService.instance.getUserColor(
-          widget.input.singleDayPageInput.workspaceId,
-          UserDataModel.example.id);
+          input.singleDayPageInput.workspaceId, UserDataModel.example.id);
       print(_color);
       Product _product = new Product();
       _product.ownerId = UserDataModel.example.id;
@@ -74,7 +73,8 @@ class NewProductForMenuPageState extends State<NewProductForMenuPage> {
       _product.currency = _currency;
       _product.price = _price;
       _product.color = _color;
-      widget.input.insertNewProduct(_product, _isAddToSpesa);
+      DatabaseService.instance.insertNewProductInMenu(
+          _product, input.singleDayPageInput, _isAddToSpesa);
       NavigationService.instance.goBack();
     } else {
       return await showCupertinoDialog(

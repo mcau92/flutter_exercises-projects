@@ -102,7 +102,7 @@ class _SingleDayPageState extends State<SingleDayPage> {
             if (!snap.hasData || snap.data.isEmpty) {
               return Center(
                 child: Text(
-                  "nessuna ricetta inserita",
+                  "nessuna dato inserito",
                   style: TextStyle(
                     color: Colors.white,
                   ),

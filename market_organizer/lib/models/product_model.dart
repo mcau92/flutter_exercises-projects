@@ -11,6 +11,7 @@ class Product {
   double quantity;
   String image;
   String reparto;
+  String menuIdRef; //prodotto inserito singolo in menu
   String spesaIdRef;
   String ricettaIdRef;
   String currency;
@@ -27,6 +28,7 @@ class Product {
     this.quantity,
     this.image,
     this.reparto,
+    this.menuIdRef,
     this.spesaIdRef,
     this.ricettaIdRef,
     this.currency,
@@ -43,6 +45,7 @@ class Product {
       "quantity": quantity,
       "image": image,
       "reparto": reparto,
+      "menuIdRef": menuIdRef,
       "spesaIdRef": spesaIdRef,
       "ricettaIdRef": ricettaIdRef,
       "currency": currency,
@@ -66,6 +69,7 @@ class Product {
           : 0.0,
       image: _data["image"] == null ? "" : _data["image"],
       reparto: _data["reparto"],
+      menuIdRef: _data["menuIdRef"],
       spesaIdRef: _data["spesaIdRef"],
       ricettaIdRef: _data["ricettaIdRef"],
       currency: _data["currency"],

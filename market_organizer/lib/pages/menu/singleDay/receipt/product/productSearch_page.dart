@@ -1,29 +1,31 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:market_organizer/database/database_service.dart';
+import 'package:market_organizer/models/productOperationType.dart';
 import 'package:market_organizer/models/product_model.dart';
-import 'package:market_organizer/pages/menu/singleDay/receipt/selected/searchProduct/single_product_widget.dart';
-import 'package:market_organizer/pages/menu/singleDay/receipt/single_product_update_widget.dart';
+import 'package:market_organizer/pages/menu/singleDay/receipt/product/product_page.dart';
+import 'package:market_organizer/pages/menu/singleDay/receipt/product/product_widget.dart';
 import 'package:market_organizer/service/navigation_service.dart';
 
 //classe usata per mostrare inserimento di un prodotto da zero
-class SingleProductSearchInput {
-  Function
+class ProductSearchInput {
+  final Function
       insertNewProduct; //gestisco sia insert che update di prodotto NON ancora salvato a db
-  String workspaceId;
-  SingleProductSearchInput(this.insertNewProduct, this.workspaceId);
+  final String workspaceId;
+  final ProductOperationType operationType;
+  ProductSearchInput(
+      this.insertNewProduct, this.workspaceId, this.operationType);
 }
 
-class SingleProductSearchWidget extends StatefulWidget {
-  final SingleProductSearchInput input;
+class ProductSearchPage extends StatefulWidget {
+  final ProductSearchInput input;
 
-  const SingleProductSearchWidget(this.input);
+  const ProductSearchPage(this.input);
   @override
-  SingleProductSearchWidgetState createState() =>
-      SingleProductSearchWidgetState();
+  ProductSearchPageState createState() => ProductSearchPageState();
 }
 
-class SingleProductSearchWidgetState extends State<SingleProductSearchWidget> {
+class ProductSearchPageState extends State<ProductSearchPage> {
   TextEditingController _textController;
   List<Product> _products; //lista di prodotti trovati
 
@@ -90,6 +92,21 @@ class SingleProductSearchWidgetState extends State<SingleProductSearchWidget> {
     return _products != null ? Expanded(child: _productList()) : Container();
   }
 
+//show prod
+  void showProduct(Product product) {
+    NavigationService.instance
+        .navigateToWithParameters(
+            "productPageReceipt",
+            ProductReceiptInput(
+                widget.input.insertNewProduct,
+                widget.input.workspaceId,
+                null, //index nulla in fase di creazione
+                product, //prodotto nullo in fase di creazione
+                false, //default in fase di creazione
+                widget.input.operationType))
+        .then((value) => NavigationService.instance.goBack());
+  }
+
   Widget _productList() {
     return ListView.builder(
         shrinkWrap: true,
@@ -97,8 +114,21 @@ class SingleProductSearchWidgetState extends State<SingleProductSearchWidget> {
         itemBuilder: (context, index) {
           return Padding(
             padding: const EdgeInsets.all(8.0),
-            child: SingleProductWidget(
-                _products[index], widget.input.insertNewProduct),
+            child: GestureDetector(
+              onTap: () => showProduct(_products[index]),
+              child: Container(
+                clipBehavior: Clip.hardEdge,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.all(
+                    Radius.circular(10),
+                  ),
+                ),
+                child: ProductReceiptWidget(
+                  _products[index],
+                ),
+              ),
+            ),
           );
         });
   }

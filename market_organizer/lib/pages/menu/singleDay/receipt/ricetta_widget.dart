@@ -2,7 +2,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:market_organizer/database/database_service.dart';
 import 'package:market_organizer/models/ricetta.dart';
-import 'package:market_organizer/service/navigation_service.dart';
 import 'package:market_organizer/utils/color_costant.dart';
 
 class SingleRicetta extends StatelessWidget {
@@ -11,7 +10,6 @@ class SingleRicetta extends StatelessWidget {
 
   Future<void> _deleteReceipt() async {
     await DatabaseService.instance.deleteReceiptById(_ricetta);
-    NavigationService.instance.goBack();
   }
 
 // conferma eliminazione prodotto

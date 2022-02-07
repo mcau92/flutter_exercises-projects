@@ -8,31 +8,5 @@
 # aggiungere nella card la possibilità di visualizzare se quel prodotto è legato o meno ad un menu (non a quale altrimenti troppo complesso)
 
 -------MENU--------------
-# modellare modelli come base dati e sistemare codice
-# agganciare logica db
-# quando inserisco un prodotto in ricetta, posso mettere l'opzione di inserirlo in spesa, se selezionato allora chiedo i dati mancanti ovvero reparto e prezzo
-# valutare se creare funzione per gestire l'inserimento del prodotto in menu nella SPESA
-    - bottone che se cliccato aggiunge o rimuove prodotto in spesa 
-    - quando elimino prodotto dal menu lo tolgo direttamente o chiedo se l'utente vuole rimuoverlo? (idem per la spesa)
 
 
-
-
-
-
-8 dicembre
-    -sistemare ritorno indietro a volte salta e torna direttamente alla pagina della giornata
-    -sistemare refresh container dei menu che rimangono fermi con ricette vecchie
-    -sistemare aggiornamento riferimento prodotto menu quando cancello in spesa
-
-    * IDEALE AGGIUNGERE UN CALCOLATORE PER IL PREZZO IN MENU, IN QUESTO MODO HO LA POSSIBILITà DI CALCOLARE IL PREZZO PER UNA PORZIONE DI PRODOTTO:
-        AD ESEMPIO SE 500G DI FIOCCHI DI AVENA COSTANO 2 EURO , NEL MENU MAGARI NE INSERISCO SOLO 30G E QUI DOVRò DARE LA POSSIBILITà ALL'UTENTE DI FARE UN PICCOLO CALCOLO PER DETERMINARNE IL PREZZO
-        L'IDEEA è DI METTERE ANCHE UN PICCOLO SUGGERIMENTO TIPO: 2€ : 500g * quantità g= prezzo porzione
-        OPPURE ANCORA MEGLIO SAREBBE METTERE LA QUANTITà CHE LUI HA INSERITO E DIRE DI AGGIUNGERE IL PREZZO PER LA QUANTITà  CHE LUI CONOSCE E IN AUTOMATICO FARò IO LA DIFFERENZA. OVVIAMENTE PREZZO PER
-        TIPO DI UNITà DI MISURA INSERITA
-    * IDEALE AGGIUNGERE UN METODO CHE PRIMA DI INSERIRE UN PRODOTTO IN MENU VA A CONTROLLARE SE ESISTE GIA UN PRODOTTO IN SPESA, SE è PRESENTE POSSIAMO CHIEDERE ALL'UTENTE DI UNIRLI OPPURE SE INSERIRE SEPARATI 
-        PER MOTIVI DELL'UTENTE (ESEMPIO HO GIA FIOCCHI DI AVENA IN SPESA MA SONO GRAMMI MENTRE VOGLIO AGGIUNGERE UNA CONFEZIONE IN MENU, L'UTENTE MAGARI VUOLE SEPARARE I DUE PRODOTTI ALTRIMENTI DOVREBBE CAMBIARE IN UNO DEI DUE L'UNITà DI MISURA)
-
-    -NON REFRESHA:
-        QUANDO INSERISCO ricetta
-        QUANDO AGGIORNO P

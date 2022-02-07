@@ -4,8 +4,27 @@ import 'package:market_organizer/database/database_service.dart';
 import 'package:market_organizer/models/ricetta.dart';
 import 'package:market_organizer/pages/menu/singleDay/meal/meal_detail_model.dart';
 import 'package:market_organizer/pages/menu/singleDay/pasto_widget.dart';
-import 'package:market_organizer/pages/menu/singleDay/single_day_page_model.dart';
 import 'package:market_organizer/utils/utils.dart';
+
+//input
+
+class SingleDayPageInput {
+  final String workspaceId;
+  final String day;
+  final DateTime dateTimeDay; //giorno selezionato
+  final DateTime dateStart;
+  final DateTime dateEnd;
+  final String menuIdRef;
+
+  SingleDayPageInput(
+    this.workspaceId,
+    this.day,
+    this.dateTimeDay,
+    this.dateStart,
+    this.dateEnd,
+    this.menuIdRef,
+  );
+}
 
 class SingleDayPage extends StatefulWidget {
   const SingleDayPage({Key key}) : super(key: key);
@@ -19,12 +38,11 @@ class _SingleDayPageState extends State<SingleDayPage> {
 
   //navigo al dettaglio del pasto
   void _showMealDetailsPage(String pasto) {
-    Navigator.pushNamed(
+    Navigator.popAndPushNamed(
       context,
       "mealDetail",
-      arguments: MealDetailModel(singleDayPageInput, pasto),
+      arguments: MealDetailModel.fromSingleDayPage(singleDayPageInput, pasto),
     ).then((value) {
-      Navigator.pop(context);
       setState(() {});
     });
   }
@@ -95,8 +113,8 @@ class _SingleDayPageState extends State<SingleDayPage> {
 
   Widget _body(SingleDayPageInput _input) {
     if (singleDayPageInput.menuIdRef != null) {
-      return FutureBuilder<List<Ricetta>>(
-          future: DatabaseService.instance.getReciptsFromMenuIdAndDate(
+      return StreamBuilder<List<Ricetta>>(
+          stream: DatabaseService.instance.getReciptsFromMenuIdAndDate(
               singleDayPageInput.menuIdRef, singleDayPageInput.dateTimeDay),
           builder: (context, snap) {
             if (!snap.hasData || snap.data.isEmpty) {
@@ -124,10 +142,12 @@ class _SingleDayPageState extends State<SingleDayPage> {
                   itemBuilder: (context, index) {
                     //mostro il pasto corrente
                     return PastoWidget(
-                      singleDayPageInput.workspaceId,
-                      pasti[index],
-                      snap.data.where((r) => r.pasto == pasti[index]).toList(),
-                    );
+                        pasti[index],
+                        snap.data
+                            .where((r) => r.pasto == pasti[index])
+                            .toList(),
+                        MealDetailModel.fromSingleDayPage(
+                            singleDayPageInput, pasti[index]));
                   },
                 ),
               );

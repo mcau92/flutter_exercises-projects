@@ -1,9 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:market_organizer/database/database_service.dart';
+import 'package:market_organizer/pages/menu/singleDay/single_day_page.dart';
 import 'package:market_organizer/pages/widget/commons/appbar_custom_widget.dart';
 import 'package:market_organizer/pages/widget/commons/weekpicker_widget.dart';
-import 'package:market_organizer/pages/menu/singleDay/single_day_page_model.dart';
 import 'package:market_organizer/models/men%C3%B9.dart';
 import 'package:market_organizer/models/ricetta.dart';
 import 'package:market_organizer/provider/date_provider.dart';

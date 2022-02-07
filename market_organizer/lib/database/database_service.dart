@@ -6,7 +6,7 @@ import 'package:market_organizer/models/spesa.dart';
 import 'package:market_organizer/models/userdata_model.dart';
 import 'package:market_organizer/models/userworkspace.model.dart';
 import 'package:market_organizer/pages/menu/singleDay/meal/meal_detail_model.dart';
-import 'package:market_organizer/pages/menu/singleDay/single_day_page_model.dart';
+import 'package:market_organizer/pages/menu/singleDay/receipt/product/productInputForDb.dart';
 import 'package:market_organizer/provider/date_provider.dart';
 import 'package:market_organizer/utils/color_costant.dart';
 
@@ -117,15 +117,15 @@ class DatabaseService {
   }
   //recupero ricette in base al menu e al giorno specifico , questo metodo servirà per caricare le ricette del singolo giorno del menu
 
-  Future<List<Ricetta>> getReciptsFromMenuIdAndDate(
-      String menuIdRef, DateTime day) async {
-    return await _db
+  Stream<List<Ricetta>> getReciptsFromMenuIdAndDate(
+      String menuIdRef, DateTime day) {
+    return _db
         .collection(_menuCollection)
         .doc(menuIdRef)
         .collection(_ricettaCollection)
         .where("date", isEqualTo: day)
-        .get()
-        .then((value) =>
+        .snapshots()
+        .map((value) =>
             value.docs.map((ds) => Ricetta.fromFirestore(ds)).toList());
   }
 
@@ -185,58 +185,59 @@ class DatabaseService {
     return ricette;
   }
 
-  Future<void> insertNewProductInMenu(Product product,
-      SingleDayPageInput singleDayPageInput, bool isAddToSpesa) async {
-    String menuId = singleDayPageInput.menuIdRef;
-    if (menuId == null) {
+  Future<void> insertNewProductInMenu(
+      ProductInputForDb productInputForDb, bool isAddToSpesa) async {
+    Product _productToBeInserted = productInputForDb.product;
+    String _menuId = productInputForDb.product.menuIdRef;
+    if (_menuId == null) {
       //creo menu nuovo
       DocumentReference docRef = await _db.collection(_menuCollection).add({
         "name": "default",
-        "ownerId": product.ownerId,
-        "startWeek": singleDayPageInput.dateStart,
-        "endWeek": singleDayPageInput.dateEnd,
-        "workspaceIdRef": singleDayPageInput.workspaceId
+        "ownerId": _productToBeInserted.ownerId,
+        "startWeek": productInputForDb.dateStart,
+        "endWeek": productInputForDb.dateEnd,
+        "workspaceIdRef": productInputForDb.workspaceId
       });
       //aggiorno il menu con il suo nuovo id
-      menuId = docRef.id;
+      _menuId = docRef.id;
     }
     String _color = await getUserColor(
-      singleDayPageInput.workspaceId,
-      product.ownerId,
+      productInputForDb.workspaceId,
+      _productToBeInserted.ownerId,
     );
     _db.runTransaction((transaction) async {
       Spesa currentSpesa = null;
       if (isAddToSpesa) {
         List<Spesa> spesaList = await getSpesaListFromIdAndDate(
-            singleDayPageInput.workspaceId,
-            singleDayPageInput.dateStart,
-            singleDayPageInput.dateEnd);
+            productInputForDb.workspaceId,
+            productInputForDb.dateStart,
+            productInputForDb.dateEnd);
         if (spesaList != null && spesaList.isNotEmpty) {
           currentSpesa = spesaList.first;
         } else {
           currentSpesa = await createNewSpesa(new Spesa(
               ownerId: UserDataModel.example.id,
-              startWeek: singleDayPageInput.dateStart,
-              endWeek: singleDayPageInput.dateEnd,
-              workspaceIdRef: singleDayPageInput.workspaceId));
+              startWeek: productInputForDb.dateStart,
+              endWeek: productInputForDb.dateEnd,
+              workspaceIdRef: productInputForDb.workspaceId));
         }
       }
       CollectionReference prodRef = _db
           .collection(_menuCollection)
-          .doc(menuId)
+          .doc(_menuId)
           .collection(_productCollection);
 
       transaction.set(prodRef.doc(), {
-        'ownerId': product.ownerId,
-        'ownerName': product.ownerName,
-        'color': product.color,
-        'name': product.name,
-        'description': product.description,
-        'measureUnit': product.measureUnit,
-        'quantity': product.quantity,
-        'image': product.image,
+        'ownerId': _productToBeInserted.ownerId,
+        'ownerName': _productToBeInserted.ownerName,
+        'color': _productToBeInserted.color,
+        'name': _productToBeInserted.name,
+        'description': _productToBeInserted.description,
+        'measureUnit': _productToBeInserted.measureUnit,
+        'quantity': _productToBeInserted.quantity,
+        'image': _productToBeInserted.image,
         'spesaIdRef': currentSpesa != null ? currentSpesa.id : null,
-        'menuIdRef': menuId,
+        'menuIdRef': _menuId,
         //'productIdSpesa': _productIdSpesa,
       });
       if (isAddToSpesa) {
@@ -247,21 +248,21 @@ class DatabaseService {
             .collection(_productCollection);
         transaction.set(dcref.doc(), {
           "color": _color,
-          "description": product.description,
+          "description": _productToBeInserted.description,
           "image": "",
-          "measureUnit": product.measureUnit,
-          "name": product.name,
-          "ownerId": product.ownerId,
-          "ownerName": product.ownerName,
-          "quantity": product.quantity,
-          "reparto": product.reparto,
+          "measureUnit": _productToBeInserted.measureUnit,
+          "name": _productToBeInserted.name,
+          "ownerId": _productToBeInserted.ownerId,
+          "ownerName": _productToBeInserted.ownerName,
+          "quantity": _productToBeInserted.quantity,
+          "reparto": _productToBeInserted.reparto,
           "spesaIdRef": currentSpesa.id, //c'è per forza
-          "currency": product.price != null ? "€" : null,
-          "price": product.price
+          "currency": _productToBeInserted.price != null ? "€" : null,
+          "price": _productToBeInserted.price
         });
         transaction.update(
             _db.collection(_spesaCollection).doc(currentSpesa.id),
-            {"ammount": FieldValue.increment(product.price)});
+            {"ammount": FieldValue.increment(_productToBeInserted.price)});
       }
     });
   }
@@ -271,25 +272,24 @@ class DatabaseService {
    */
   Future<Ricetta> createNewReceiptFromScratch(
     Ricetta ricetta,
-    SingleDayPageInput singleDayPageInput,
-    String pasto,
+    MealDetailModel mealDetailModel,
     Map<Product, bool> products,
   ) async {
-    String menuId = singleDayPageInput.menuIdRef;
+    String menuId = mealDetailModel.menuIdRef;
     if (menuId == null) {
       //creo menu nuovo
       DocumentReference docRef = await _db.collection(_menuCollection).add({
         "name": "default",
         "ownerId": ricetta.ownerId,
-        "startWeek": singleDayPageInput.dateStart,
-        "endWeek": singleDayPageInput.dateEnd,
-        "workspaceIdRef": singleDayPageInput.workspaceId
+        "startWeek": mealDetailModel.dateStart,
+        "endWeek": mealDetailModel.dateEnd,
+        "workspaceIdRef": mealDetailModel.workspaceId
       });
       //aggiorno il menu con il suo nuovo id
       menuId = docRef.id;
     }
     String _color = await getUserColor(
-      singleDayPageInput.workspaceId,
+      mealDetailModel.workspaceId,
       ricetta.ownerId,
     );
     //inserisco ricetta
@@ -314,76 +314,84 @@ class DatabaseService {
     //transazione
     _db.runTransaction((transaction) async {
       Spesa currentSpesa = null;
-      if (products.values.any((element) => true)) {
+      if (products != null &&
+          products.isNotEmpty &&
+          products.values.any((element) => true)) {
         List<Spesa> spesaList = await getSpesaListFromIdAndDate(
-            singleDayPageInput.workspaceId,
-            singleDayPageInput.dateStart,
-            singleDayPageInput.dateEnd);
+            mealDetailModel.workspaceId,
+            mealDetailModel.dateStart,
+            mealDetailModel.dateEnd);
         if (spesaList != null && spesaList.isNotEmpty) {
           currentSpesa = spesaList.first;
         } else {
           currentSpesa = await createNewSpesa(new Spesa(
               ownerId: UserDataModel.example.id,
-              startWeek: singleDayPageInput.dateStart,
-              endWeek: singleDayPageInput.dateEnd,
-              workspaceIdRef: singleDayPageInput.workspaceId));
+              startWeek: mealDetailModel.dateStart,
+              endWeek: mealDetailModel.dateEnd,
+              workspaceIdRef: mealDetailModel.workspaceId));
         }
       }
-      products.entries.forEach((entry) async {
-        Product p = entry.key;
-        p.id = null;
-        p.ricettaIdRef = ricettaDocRef.id;
-        CollectionReference prodRef = _db
-            .collection(_menuCollection)
-            .doc(menuId)
-            .collection(_ricettaCollection)
-            .doc(ricettaDocRef.id)
-            .collection(_productCollection);
-
-        transaction.set(prodRef.doc(), {
-          'ownerId': p.ownerId,
-          'ownerName': p.ownerName,
-          'color': p.color,
-          'name': p.name,
-          'description': p.description,
-          'measureUnit': p.measureUnit,
-          'quantity': p.quantity,
-          'image': p.image,
-          'spesaIdRef': entry.value ? currentSpesa.id : null,
-          'ricettaIdRef': p.ricettaIdRef,
-          //'productIdSpesa': _productIdSpesa,
-        });
-        if (entry.value) {
-          //insert on spesa and update CONTINUARE A SALVARE I PRODOTTI IN SPESA SE SONO A TRUE
-          CollectionReference dcref = _db
-              .collection(_spesaCollection)
-              .doc(currentSpesa.id)
+      if (products != null && products.isNotEmpty) {
+        products.entries.forEach((entry) async {
+          Product p = entry.key;
+          p.id = null;
+          p.ricettaIdRef = ricettaDocRef.id;
+          CollectionReference prodRef = _db
+              .collection(_menuCollection)
+              .doc(menuId)
+              .collection(_ricettaCollection)
+              .doc(ricettaDocRef.id)
               .collection(_productCollection);
-          transaction.set(dcref.doc(), {
-            "color": _color,
-            "description": entry.key.description,
-            "image": "",
-            "measureUnit": entry.key.measureUnit,
-            "name": entry.key.name,
-            "ownerId": entry.key.ownerId,
-            "ownerName": entry.key.ownerName,
-            "quantity": entry.key.quantity,
-            "reparto": entry.key.reparto,
-            "spesaIdRef": currentSpesa.id,
-            "currency": entry.key.price != null ? "€" : null,
-            "price": entry.key.price
+
+          transaction.set(prodRef.doc(), {
+            'ownerId': p.ownerId,
+            'ownerName': p.ownerName,
+            'color': p.color,
+            'name': p.name,
+            'description': p.description,
+            'measureUnit': p.measureUnit,
+            'quantity': p.quantity,
+            'image': p.image,
+            'spesaIdRef': entry.value ? currentSpesa.id : null,
+            'ricettaIdRef': p.ricettaIdRef,
+            //'productIdSpesa': _productIdSpesa,
           });
-          transaction.update(
-              _db.collection(_spesaCollection).doc(currentSpesa.id),
-              {"ammount": FieldValue.increment(entry.key.price)});
-        }
-      });
+          if (entry.value) {
+            //insert on spesa and update CONTINUARE A SALVARE I PRODOTTI IN SPESA SE SONO A TRUE
+            CollectionReference dcref = _db
+                .collection(_spesaCollection)
+                .doc(currentSpesa.id)
+                .collection(_productCollection);
+            transaction.set(dcref.doc(), {
+              "color": _color,
+              "description": entry.key.description,
+              "image": "",
+              "measureUnit": entry.key.measureUnit,
+              "name": entry.key.name,
+              "ownerId": entry.key.ownerId,
+              "ownerName": entry.key.ownerName,
+              "quantity": entry.key.quantity,
+              "reparto": entry.key.reparto,
+              "spesaIdRef": currentSpesa.id,
+              "currency": entry.key.price != null ? "€" : null,
+              "price": entry.key.price
+            });
+            transaction.update(
+                _db.collection(_spesaCollection).doc(currentSpesa.id),
+                {"ammount": FieldValue.increment(entry.key.price)});
+          }
+        });
+      }
     });
     return ricetta;
   }
 
 /**metodo che aggiorna ricetta solo nome e descr*/
-  Future<void> updateRecipts(String workspaceId, Ricetta ricetta) async {
+  Future<void> updateRecipts(
+      String workspaceId,
+      Ricetta ricetta,
+      Map<Product, bool> productToBeInsertedOrUpdated,
+      List<Product> productsToBeDeleted) async {
     await _db
         .collection(_menuCollection)
         .doc(ricetta.menuIdRef)
@@ -393,19 +401,36 @@ class DatabaseService {
       "name": ricetta.name,
       "description": ricetta.description,
     });
+    //inserisco nuovi prodotti
+    if (productToBeInsertedOrUpdated != null &&
+        productToBeInsertedOrUpdated.isNotEmpty) {
+      productToBeInsertedOrUpdated.forEach((product, isAddToSpesa) async {
+        if (product.id == null) {
+          //inserisco
+          print("inserisco prod");
+          product.ricettaIdRef = ricetta.id;
+          await insertProductOnReceipt(
+              ricetta.menuIdRef, workspaceId, product, isAddToSpesa);
+        } else {
+          //aggiorno
+          await updateProductOnReceipt(product, ricetta.menuIdRef);
+        }
+      });
+    }
+    //cancello se presenti i prodotti
+    if (productsToBeDeleted != null && productsToBeDeleted.isNotEmpty) {
+      productsToBeDeleted.forEach((product) {
+        deleteProductRecipt(ricetta.menuIdRef, product);
+      });
+    }
   }
 
-  Future<void> insertProductOnReceipt(
-      String menuId,
-      String workspaceId,
-      Product product,
-      bool isAddToSpesa,
-      DateTime dateStart,
-      DateTime dateEnd) async {
+  Future<void> insertProductOnReceipt(String menuId, String workspaceId,
+      Product product, bool isAddToSpesa) async {
     Spesa currentSpesa = null;
     if (isAddToSpesa) {
-      List<Spesa> spesaList =
-          await getSpesaListFromIdAndDate(workspaceId, dateStart, dateEnd);
+      List<Spesa> spesaList = await getSpesaListFromIdAndDate(workspaceId,
+          DateProvider.instance.dateStart, DateProvider.instance.dateEnd);
       if (spesaList != null && spesaList.isNotEmpty) {
         currentSpesa = spesaList.first;
       } else {
@@ -518,8 +543,32 @@ class DatabaseService {
         );
   }
 
-  //recupero prodotti dato id spesa
-  Future<List<Product>> getProductsByRecipt(String menuId, String ricettaId) {
+  Future<Map<Product, bool>> getProductsByReceiptWithDefaultFalseInSpesa(
+      String menuId, String ricettaId) async {
+    List<Product> productsFetched = await _db
+        .collection(_menuCollection)
+        .doc(menuId)
+        .collection(_ricettaCollection)
+        .doc(ricettaId)
+        .collection(_productCollection)
+        .get()
+        .then(
+          (qs) => qs.docs.map(
+            (_d) {
+              return Product.fromFirestore(_d);
+            },
+          ).toList(),
+        );
+    Map<Product, bool> prods = {};
+    productsFetched.forEach((element) {
+      prods.putIfAbsent(element, () => false);
+    });
+    return prods;
+  }
+
+  //recupero prodotti dato id ricetta
+  Future<List<Product>> getProductsByRecipt(
+      String menuId, String ricettaId) async {
     return _db
         .collection(_menuCollection)
         .doc(menuId)
@@ -545,24 +594,15 @@ class DatabaseService {
     List<Product> prods = await _db
         .collectionGroup(_productCollection)
         .where("ownerId", isEqualTo: UserDataModel.example.id)
-        .where("reparto", isGreaterThanOrEqualTo: pattern.toUpperCase())
-        .where("reparto", isLessThanOrEqualTo: pattern.toLowerCase() + '\uf8ff')
+        .where("reparto", isGreaterThanOrEqualTo: pattern)
+        .where("reparto", isLessThanOrEqualTo: pattern + '\uf8ff')
         .get()
         .then((_qs) =>
             _qs.docs.map((_ds) => Product.fromFirestore(_ds)).toList());
-    mergedReparti = prods.map((p) => p.reparto).toList();
+    prods.forEach((p) => {
+          if (!mergedReparti.contains(p.reparto)) {mergedReparti.add(p.reparto)}
+        });
     return mergedReparti;
-  }
-
-  Future<void> deleteProductOnSpesa(
-      String _spesaId, String _receiptId, String _reciptId) async {
-    await _db
-        .collection(_spesaCollection)
-        .doc(_spesaId)
-        .collection(_productCollection)
-        .doc(_reciptId)
-        .delete();
-    //più avanti elimino riferimento al prodotto in menu
   }
 
   Future<void> insertProductOnSpesa(
@@ -667,21 +707,6 @@ class DatabaseService {
 
     spesa.id = docRef.id;
     return spesa;
-  }
-
-  Future<void> deleteProductOnRecipts(String menuId, Product product) async {
-    await _db
-        .collection(_menuCollection)
-        .doc(menuId)
-        .collection(_spesaCollection)
-        .doc(product.ricettaIdRef)
-        .collection(_productCollection)
-        .doc(product.id)
-        .delete();
-    await _db
-        .collection(_spesaCollection)
-        .doc(product.spesaIdRef)
-        .update({"ammount": FieldValue.increment(0 - product.price)});
   }
 
   Future<void> deleteProduct(Product product) async {

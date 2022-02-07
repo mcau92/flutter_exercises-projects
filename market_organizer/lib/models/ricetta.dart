@@ -33,8 +33,7 @@ class Ricetta {
       ownerName: _data["ownerName"],
       color: _data["color"],
       name: _data["name"] != null ? _data["name"] : "default",
-      description:
-          _data["description"] != null ? _data["description"] : "default",
+      description: _data["description"] != null ? _data["description"] : "",
       pasto: _data["pasto"],
       date: _data["date"].toDate(),
       image: _data["image"],

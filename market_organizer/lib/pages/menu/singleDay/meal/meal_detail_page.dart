@@ -1,13 +1,14 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:market_organizer/database/database_service.dart';
+import 'package:market_organizer/models/productOperationType.dart';
+import 'package:market_organizer/models/receiptOperationType.dart';
 import 'package:market_organizer/models/product_model.dart';
 import 'package:market_organizer/models/ricetta.dart';
 import 'package:market_organizer/pages/menu/singleDay/meal/meal_detail_model.dart';
 import 'package:market_organizer/pages/menu/singleDay/meal/single_ricetta_search.dart';
-import 'package:market_organizer/pages/menu/singleDay/receipt/new_receipt_input.dart';
-import 'package:market_organizer/pages/menu/singleDay/receipt/selected/new_selected_receipt_input.dart';
-import 'package:market_organizer/pages/menu/singleDay/searchProduct/new_product_menu_page.dart';
+import 'package:market_organizer/pages/menu/singleDay/receipt/product/product_page.dart';
+import 'package:market_organizer/pages/menu/singleDay/receipt/receipt_page.dart';
 import 'package:market_organizer/service/navigation_service.dart';
 
 class MealDetailPage extends StatefulWidget {
@@ -73,29 +74,32 @@ class _MealDetailPageState extends State<MealDetailPage> {
 //inserisco prodotto nuovo
   void _insertNewProduct() {
     //ricetta può essere nulla se sono in fase di creazione da zero altrimenti è valorizzata con quella selezionata
-    NewProductMenuInput receiptInput =
-        new NewProductMenuInput(mealInput.singleDayPageInput, mealInput.pasto);
+    ProductReceiptInput productReceiptInput = new ProductReceiptInput(
+      null,
+      mealInput.workspaceId,
+      null,
+      null,
+      true,
+      ProductOperationType.INSERT,
+    );
+    Navigator.pop(context);
     NavigationService.instance
-        .navigateToWithParameters("addProductPageForMenu", receiptInput)
-        .then((value) {
-      Navigator.pop(context);
-      setState(() {});
-    });
-    ;
+        .navigateToWithParameters("productPageReceipt", productReceiptInput);
   }
 
 /** metodo che ci porta ad una nuova pagina dove andiamo a gestire l'inserimento, modifica e conferma della ricetta per poi essere salvata */
   void _insertNewRecipt() {
-    //ricetta può essere nulla se sono in fase di creazione da zero altrimenti è valorizzata con quella selezionata
-    NewReceiptInput receiptInput =
-        new NewReceiptInput(mealInput.singleDayPageInput, mealInput.pasto);
+    //pagina di inserimento ricetta generale
+    NewSelectedReceiptInput receiptInput = new NewSelectedReceiptInput(
+      ReceiptOperationType.INSERT,
+      null,
+      null,
+      mealInput,
+      mealInput.pasto,
+    );
+    Navigator.pop(context);
     NavigationService.instance
-        .navigateToWithParameters("addReceiptPage", receiptInput)
-        .then((value) {
-      Navigator.pop(context);
-      setState(() {});
-    });
-    ;
+        .navigateToWithParameters("receiptPage", receiptInput);
   }
 
   @override
@@ -151,16 +155,20 @@ class _MealDetailPageState extends State<MealDetailPage> {
 //metodo che ci porta nella pagina di inserimento che è la stessa che si visualizza quando si crea la ricetta da zero solo che in questo caso ci saranno i prodotti della ricetta caricati
   void _showRicettaDetailForInsert(Ricetta _ricetta) async {
     //ricetta può essere nulla se sono in fase di creazione da zero altrimenti è valorizzata con quella selezionata
-    List<Product> productsFetched = await DatabaseService.instance
-        .getProductsByRecipt(_ricetta.menuIdRef, _ricetta.id);
-    Map<Product, bool> prods = {};
-    productsFetched.forEach((element) {
-      prods.putIfAbsent(element, () => false);
-    });
+    Map<Product, bool> prods = await DatabaseService.instance
+        .getProductsByReceiptWithDefaultFalseInSpesa(
+            _ricetta.menuIdRef, _ricetta.id);
     NewSelectedReceiptInput receiptInput = new NewSelectedReceiptInput(
-        _ricetta, prods, mealInput.singleDayPageInput, mealInput.pasto);
-    NavigationService.instance
-        .navigateToWithParameters("addSelectedReceiptPage", receiptInput);
+      ReceiptOperationType.SEARCH,
+      _ricetta,
+      prods,
+      mealInput,
+      mealInput.pasto,
+    );
+    Navigator.pushNamed(context, "receiptPage",
+            arguments:
+                receiptInput) //cosi facendo quando nelle pagine successivo faccio pop e arrivo a questa fa il refresh
+        .then((value) => setState(() {}));
   }
 
   Widget _ricetteList() {

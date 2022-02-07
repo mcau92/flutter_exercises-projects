@@ -1,26 +1,36 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:market_organizer/database/database_service.dart';
+import 'package:market_organizer/models/receiptOperationType.dart';
+import 'package:market_organizer/models/product_model.dart';
 import 'package:market_organizer/models/ricetta.dart';
-import 'package:market_organizer/pages/menu/singleDay/receipt/show/show_recipt_input.dart';
-import 'package:market_organizer/pages/menu/singleDay/single_ricetta_widget.dart';
+import 'package:market_organizer/pages/menu/singleDay/meal/meal_detail_model.dart';
+import 'package:market_organizer/pages/menu/singleDay/receipt/receipt_page.dart';
+import 'package:market_organizer/pages/menu/singleDay/receipt/ricetta_widget.dart';
 
 class PastoWidget extends StatefulWidget {
-  final String _workspaceId;
   final String _pastoName;
   final List<Ricetta> _ricette;
-  PastoWidget(this._workspaceId, this._pastoName, this._ricette);
+  final MealDetailModel mealDetailModel;
+  PastoWidget(this._pastoName, this._ricette, this.mealDetailModel);
 
   @override
   State<PastoWidget> createState() => _PastoWidgetState();
 }
 
 class _PastoWidgetState extends State<PastoWidget> {
-  void _showReceiptDetails(Ricetta _ricetta) {
+  void _showReceiptDetails(Ricetta _ricetta) async {
     //ricetta può essere nulla se sono in fase di creazione da zero altrimenti è valorizzata con quella selezionata
-    ShowReceiptInput receiptInput =
-        new ShowReceiptInput(widget._workspaceId, _ricetta);
-    Navigator.pushNamed(context, "showReceiptPage",
+    Map<Product, bool> fetchedProd = await DatabaseService.instance
+        .getProductsByReceiptWithDefaultFalseInSpesa(
+            _ricetta.menuIdRef, _ricetta.id);
+    NewSelectedReceiptInput receiptInput = new NewSelectedReceiptInput(
+        ReceiptOperationType.UPDATE,
+        _ricetta,
+        fetchedProd,
+        widget.mealDetailModel,
+        widget._pastoName);
+    Navigator.pushNamed(context, "receiptPage",
             arguments:
                 receiptInput) //cosi facendo quando nelle pagine successivo faccio pop e arrivo a questa fa il refresh
         .then((value) => setState(() {}));
@@ -65,6 +75,7 @@ class _PastoWidgetState extends State<PastoWidget> {
         itemBuilder: (context, index) {
           return GestureDetector(
               onTap: () => _showReceiptDetails(widget._ricette[index]),
+              //spostare qui il dismissable in modo da eliminare anche il pasto
               child: SingleRicetta(widget._ricette[index]));
         });
   }

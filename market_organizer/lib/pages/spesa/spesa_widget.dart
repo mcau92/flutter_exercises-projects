@@ -2,12 +2,14 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:market_organizer/database/database_service.dart';
+import 'package:market_organizer/models/product_model.dart';
+import 'package:market_organizer/pages/spesa/singleproduct_widget.dart';
 import 'package:market_organizer/pages/widget/commons/appbar_custom_widget.dart';
 import 'package:market_organizer/pages/widget/commons/weekpicker_widget.dart';
-import 'package:market_organizer/pages/spesa/body_widget.dart';
 import 'package:market_organizer/models/spesa.dart';
 import 'package:market_organizer/provider/date_provider.dart';
 import 'package:market_organizer/service/navigation_service.dart';
+import 'package:market_organizer/utils/utils.dart';
 import 'package:provider/provider.dart';
 
 class SpesaWidget extends StatefulWidget {
@@ -33,19 +35,6 @@ class _SpesaWidgetState extends State<SpesaWidget> {
   }
 
   void _cloneSpesa() {}
-  void _newSpesa() {
-    //controllo se è la prima spesa o se esiste gia
-    _currentSpesa != null
-        ? NavigationService.instance
-            .navigateToWithParameters("addSpesaPage", _currentSpesa)
-        : _currentSpesa = new Spesa(
-            workspaceIdRef: widget.worksapceId,
-            startWeek: dateStart,
-            endWeek: dateEnd,
-            ownerId: "LMgqupuW0wVW4RZn3QyC0y9Xxrg1");
-    NavigationService.instance
-        .navigateToWithParameters("addSpesaPage", _currentSpesa);
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -76,10 +65,15 @@ class _SpesaWidgetState extends State<SpesaWidget> {
             return Column(
               children: [
                 _workspaceBar(_currentSpesa),
-                BodyWidget(_currentSpesa),
+                Expanded(child: _repartoList(_currentSpesa)),
               ],
             );
           } else {
+            _currentSpesa = new Spesa(
+                workspaceIdRef: widget.worksapceId,
+                startWeek: dateStart,
+                endWeek: dateEnd,
+                ownerId: "LMgqupuW0wVW4RZn3QyC0y9Xxrg1");
             return Center(
                 child: Column(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -102,9 +96,161 @@ class _SpesaWidgetState extends State<SpesaWidget> {
     );
   }
 
+/** REPARTO START */
+
+  Widget _repartoList(Spesa _spesa) {
+    return StreamBuilder<List<Product>>(
+        stream: DatabaseService.instance.getProductsBySpesa(_spesa.id),
+        builder: (context, _snapshot) {
+          if (_snapshot.hasData) {
+            if (_snapshot.data != null && _snapshot.data.isNotEmpty) {
+              List<Product> _products = _snapshot.data;
+              List<String> reparti = Utils.instance.getReparti(_products);
+              return ListView.separated(
+                  separatorBuilder: (context, index) {
+                    return SizedBox(
+                      height: 7,
+                    );
+                  },
+                  itemCount: reparti.length,
+                  itemBuilder: (context, index) {
+                    return reparto(
+                      _spesa.workspaceIdRef,
+                      reparti[index],
+                      _products
+                          .where((p) => p.reparto == reparti[index])
+                          .toList(),
+                    );
+                  });
+            } else {
+              return Center(
+                child: Text("nessuna spesa inserita"),
+              );
+            }
+          } else {
+            return Center(
+                child: CircularProgressIndicator(
+              backgroundColor: Colors.red,
+            ));
+          }
+        });
+  }
+
+  Widget reparto(
+      String _workspaceId, String repartoName, final List<Product> products) {
+    return Container(
+      padding: EdgeInsets.only(bottom: 5, top: 5, right: 15, left: 15),
+      child: Column(
+        children: [_titleReparto(repartoName), _productsList(products)],
+      ),
+    );
+  }
+
+  Widget _titleReparto(String repartoName) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 8.0),
+        child: Text(
+          repartoName,
+          style: TextStyle(
+              fontSize: 20, color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _deleteProduct(Product _product) async {
+    //check if spesa contains product
+    int spesaProdSize = await DatabaseService.instance
+        .getSpesaProductsSize(_product.spesaIdRef);
+    await DatabaseService.instance.deleteProduct(_product);
+
+    if (spesaProdSize == 1) {
+      //ask user if want to delete spesa with 0 prods
+      await DatabaseService.instance.deleteSpesa(_product.spesaIdRef);
+    }
+  }
+
+  Future<bool> _confirmDismiss(BuildContext context) async {
+    return await showCupertinoDialog(
+        context: context,
+        builder: (ctx) {
+          return CupertinoAlertDialog(
+            title: Text("Confermi di cancellare questo elemento?"),
+            actions: [
+              CupertinoDialogAction(
+                child: Text("si"),
+                onPressed: () {
+                  Navigator.of(
+                    ctx,
+                    // rootNavigator: true,
+                  ).pop(true);
+                },
+              ),
+              CupertinoDialogAction(
+                child: Text("no"),
+                onPressed: () {
+                  Navigator.of(
+                    ctx,
+                  ).pop(false);
+                },
+              )
+            ],
+          );
+        });
+  }
+
+  Widget _productsList(List<Product> products) {
+    return ListView.separated(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        separatorBuilder: (context, index) {
+          return Divider(
+            height: 20,
+            thickness: 0,
+          );
+        },
+        itemCount: products.length,
+        itemBuilder: (context, index) {
+          return Container(
+            clipBehavior: Clip.hardEdge,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.all(
+                Radius.circular(10),
+              ),
+            ),
+            child: Dismissible(
+              child: SingleProductWidget(widget.worksapceId, products[index]),
+              key: Key(index.toString()),
+              onDismissed: (direction) => _deleteProduct(products[index]),
+              direction: DismissDirection.startToEnd,
+              dismissThresholds: {DismissDirection.startToEnd: 0.3},
+              confirmDismiss: (direction) => _confirmDismiss(context),
+              background: Container(
+                decoration: BoxDecoration(
+                    color: Colors.red, borderRadius: BorderRadius.circular(10)),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 10.0),
+                    child: Icon(
+                      CupertinoIcons.delete,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+        });
+  }
+
+/** REPARTO END */
   Widget _addSpesaButton() {
     return CupertinoButton(
-      onPressed: () => _newSpesa(),
+      onPressed: () => _addToSpesa(),
       child: Container(
           padding: EdgeInsets.all(15),
           decoration: BoxDecoration(

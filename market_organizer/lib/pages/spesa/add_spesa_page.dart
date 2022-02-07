@@ -4,10 +4,8 @@ import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:market_organizer/database/database_service.dart';
 import 'package:market_organizer/models/spesa.dart';
 import 'package:market_organizer/models/userdata_model.dart';
-import 'package:market_organizer/provider/date_provider.dart';
 import 'package:market_organizer/service/navigation_service.dart';
 import 'package:market_organizer/utils/measure_unit_list.dart';
-import 'package:provider/provider.dart';
 
 class AddSpesaPage extends StatefulWidget {
   @override
@@ -231,6 +229,7 @@ class _AddSpesaPageState extends State<AddSpesaPage> {
     );
   }
 
+//valutare in futuro di farlo customizzato in modo da poter introdurre più funzionalità come l'autoselezione in fase di enter dell utente
   Widget _productRepartoForm() {
     return TypeAheadFormField(
       textFieldConfiguration: TextFieldConfiguration(
@@ -262,6 +261,7 @@ class _AddSpesaPageState extends State<AddSpesaPage> {
           title: Text(suggestion),
         );
       },
+      getImmediateSuggestions: true,
       onSuggestionSelected: (suggestion) {
         this._typeAheadController.text = suggestion;
         setState(() {

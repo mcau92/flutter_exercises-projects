@@ -38,7 +38,10 @@ class _HomePageState extends State<HomePage> {
             focusedWorkspace = workspaces.where((w) => w.focused).first;
             return _bodySelection();
           } else {
-            return CircularProgressIndicator();
+            return Center(
+                child: CircularProgressIndicator(
+              color: Colors.red,
+            ));
           }
         },
       ),

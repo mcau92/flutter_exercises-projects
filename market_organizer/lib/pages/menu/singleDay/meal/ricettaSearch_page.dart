@@ -1,25 +1,23 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:market_organizer/database/database_service.dart';
-import 'package:market_organizer/models/productOperationType.dart';
-import 'package:market_organizer/models/receiptOperationType.dart';
 import 'package:market_organizer/models/product_model.dart';
+import 'package:market_organizer/models/receiptOperationType.dart';
 import 'package:market_organizer/models/ricetta.dart';
 import 'package:market_organizer/pages/menu/singleDay/meal/meal_detail_model.dart';
-import 'package:market_organizer/pages/menu/singleDay/meal/single_ricetta_search.dart';
-import 'package:market_organizer/pages/menu/singleDay/receipt/product/product_page.dart';
+import 'package:market_organizer/pages/menu/singleDay/meal/ricettaSearch_widget.dart';
 import 'package:market_organizer/pages/menu/singleDay/receipt/receipt_page.dart';
 import 'package:market_organizer/service/navigation_service.dart';
 
-class MealDetailPage extends StatefulWidget {
-  const MealDetailPage({Key key}) : super(key: key);
+class RicettaSearchPage extends StatefulWidget {
+  const RicettaSearchPage({Key key}) : super(key: key);
 
   @override
-  _MealDetailPageState createState() => _MealDetailPageState();
+  _RicettaSearchPageState createState() => _RicettaSearchPageState();
 }
 
-class _MealDetailPageState extends State<MealDetailPage> {
-  MealDetailModel mealInput;
+class _RicettaSearchPageState extends State<RicettaSearchPage> {
+  RicettaManagementInput mealInput;
   TextEditingController _textController;
   List<Ricetta> _ricette; //lista di ricette trovate
 
@@ -43,50 +41,6 @@ class _MealDetailPageState extends State<MealDetailPage> {
     }
   }
 
-  //mostro all'utente se inserire prodotto o ricetta e in base a quello smisto
-  void _insertProdOrReceipt(BuildContext ctx) {
-    showCupertinoModalPopup(
-        context: ctx,
-        builder: (_) => Container(
-              child: CupertinoActionSheet(
-                message: Text("Seleziona cosa creare"),
-                actions: [
-                  CupertinoActionSheetAction(
-                      onPressed: () {
-                        _insertNewProduct();
-                      },
-                      child: Text("Prodotto")),
-                  CupertinoActionSheetAction(
-                      onPressed: () => _insertNewRecipt(),
-                      child: Text("Ricetta")),
-                ],
-                cancelButton: CupertinoActionSheetAction(
-                  child: Text(
-                    "Cancella",
-                    style: TextStyle(color: Colors.red),
-                  ),
-                  onPressed: () => Navigator.pop(context),
-                ),
-              ),
-            ));
-  }
-
-//inserisco prodotto nuovo
-  void _insertNewProduct() {
-    //ricetta può essere nulla se sono in fase di creazione da zero altrimenti è valorizzata con quella selezionata
-    ProductReceiptInput productReceiptInput = new ProductReceiptInput(
-      null,
-      mealInput.workspaceId,
-      null,
-      null,
-      true,
-      ProductOperationType.INSERT,
-    );
-    Navigator.pop(context);
-    NavigationService.instance
-        .navigateToWithParameters("productPageReceipt", productReceiptInput);
-  }
-
 /** metodo che ci porta ad una nuova pagina dove andiamo a gestire l'inserimento, modifica e conferma della ricetta per poi essere salvata */
   void _insertNewRecipt() {
     //pagina di inserimento ricetta generale
@@ -97,14 +51,18 @@ class _MealDetailPageState extends State<MealDetailPage> {
       mealInput,
       mealInput.pasto,
     );
-    Navigator.pop(context);
+    setState(() {
+      _textController.text = "";
+      _ricette = [];
+    });
     NavigationService.instance
         .navigateToWithParameters("receiptPage", receiptInput);
   }
 
   @override
   Widget build(BuildContext context) {
-    mealInput = ModalRoute.of(context).settings.arguments as MealDetailModel;
+    mealInput =
+        ModalRoute.of(context).settings.arguments as RicettaManagementInput;
     return Scaffold(
       backgroundColor: Color.fromRGBO(43, 43, 43, 1),
       appBar: AppBar(
@@ -117,13 +75,13 @@ class _MealDetailPageState extends State<MealDetailPage> {
             ),
             onPressed: () => NavigationService.instance.goBack()),
         title: Text(
-          mealInput.pasto,
+          "Ricetta",
           style: TextStyle(color: Colors.white),
         ),
         actions: [
           IconButton(
             icon: Icon(CupertinoIcons.add, color: Colors.white),
-            onPressed: () => _insertProdOrReceipt(context),
+            onPressed: () => _insertNewRecipt(),
           ),
         ],
       ),
@@ -179,7 +137,7 @@ class _MealDetailPageState extends State<MealDetailPage> {
           return Padding(
             padding: const EdgeInsets.all(8.0),
             child: GestureDetector(
-                child: SingleRicettaSearch(_ricette[index]),
+                child: RicettaSearchWidget(_ricette[index]),
                 onTap: () => _showRicettaDetailForInsert(_ricette[index])),
           );
         });

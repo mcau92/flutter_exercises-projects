@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:market_organizer/models/men%C3%B9.dart';
 import 'package:market_organizer/models/product_model.dart';
+import 'package:market_organizer/models/reciptsAndProducts.dart';
 import 'package:market_organizer/models/ricetta.dart';
 import 'package:market_organizer/models/spesa.dart';
 import 'package:market_organizer/models/userdata_model.dart';
@@ -106,6 +107,16 @@ class DatabaseService {
         );
   }
 
+  Future<List<Product>> getProductsInMenu(String menuId) async {
+    return await _db
+        .collection(_menuCollection)
+        .doc(menuId)
+        .collection(_productCollection)
+        .get()
+        .then((value) =>
+            value.docs.map((ds) => Product.fromFirestore(ds)).toList());
+  }
+
   Future<List<Ricetta>> getReciptsFromMenuId(String menuId) async {
     return await _db
         .collection(_menuCollection)
@@ -117,13 +128,27 @@ class DatabaseService {
   }
   //recupero ricette in base al menu e al giorno specifico , questo metodo servirà per caricare le ricette del singolo giorno del menu
 
-  Stream<List<Ricetta>> getReciptsFromMenuIdAndDate(
-      String menuIdRef, DateTime day) {
+  Stream<List<Product>> getProductsFromMenuIdAndDateAndPasto(
+      String menuIdRef, DateTime day, String pasto) {
+    return _db
+        .collection(_menuCollection)
+        .doc(menuIdRef)
+        .collection(_productCollection)
+        .where("date", isEqualTo: day)
+        .where("pasto", isEqualTo: pasto)
+        .snapshots()
+        .map((value) =>
+            value.docs.map((ds) => Product.fromFirestore(ds)).toList());
+  }
+
+  Stream<List<Ricetta>> getReciptsFromMenuIdAndDateAndPasto(
+      String menuIdRef, DateTime day, String pasto) {
     return _db
         .collection(_menuCollection)
         .doc(menuIdRef)
         .collection(_ricettaCollection)
         .where("date", isEqualTo: day)
+        .where("pasto", isEqualTo: pasto)
         .snapshots()
         .map((value) =>
             value.docs.map((ds) => Ricetta.fromFirestore(ds)).toList());
@@ -188,18 +213,29 @@ class DatabaseService {
   Future<void> insertNewProductInMenu(
       ProductInputForDb productInputForDb, bool isAddToSpesa) async {
     Product _productToBeInserted = productInputForDb.product;
-    String _menuId = productInputForDb.product.menuIdRef;
-    if (_menuId == null) {
+    DateTime dateStart = DateProvider.instance.dateStart;
+    DateTime dateEnd = DateProvider.instance.dateEnd;
+    List<Menu> currentMenuList =
+        await getMenuFromDate(productInputForDb.workspaceId, dateStart, dateEnd)
+            .elementAt(0);
+    Menu currenMenu = currentMenuList != null && currentMenuList.isNotEmpty
+        ? currentMenuList.first
+        : null;
+    ;
+    String _menuId;
+    if (currenMenu == null) {
       //creo menu nuovo
       DocumentReference docRef = await _db.collection(_menuCollection).add({
         "name": "default",
         "ownerId": _productToBeInserted.ownerId,
-        "startWeek": productInputForDb.dateStart,
-        "endWeek": productInputForDb.dateEnd,
+        "startWeek": dateStart,
+        "endWeek": dateEnd,
         "workspaceIdRef": productInputForDb.workspaceId
       });
       //aggiorno il menu con il suo nuovo id
       _menuId = docRef.id;
+    } else {
+      _menuId = currenMenu.id;
     }
     String _color = await getUserColor(
       productInputForDb.workspaceId,
@@ -209,16 +245,14 @@ class DatabaseService {
       Spesa currentSpesa = null;
       if (isAddToSpesa) {
         List<Spesa> spesaList = await getSpesaListFromIdAndDate(
-            productInputForDb.workspaceId,
-            productInputForDb.dateStart,
-            productInputForDb.dateEnd);
+            productInputForDb.workspaceId, dateStart, dateEnd);
         if (spesaList != null && spesaList.isNotEmpty) {
           currentSpesa = spesaList.first;
         } else {
           currentSpesa = await createNewSpesa(new Spesa(
               ownerId: UserDataModel.example.id,
-              startWeek: productInputForDb.dateStart,
-              endWeek: productInputForDb.dateEnd,
+              startWeek: dateStart,
+              endWeek: dateEnd,
               workspaceIdRef: productInputForDb.workspaceId));
         }
       }
@@ -238,6 +272,9 @@ class DatabaseService {
         'image': _productToBeInserted.image,
         'spesaIdRef': currentSpesa != null ? currentSpesa.id : null,
         'menuIdRef': _menuId,
+        'pasto': _productToBeInserted.pasto,
+        'date': _productToBeInserted.date,
+
         //'productIdSpesa': _productIdSpesa,
       });
       if (isAddToSpesa) {
@@ -272,7 +309,7 @@ class DatabaseService {
    */
   Future<Ricetta> createNewReceiptFromScratch(
     Ricetta ricetta,
-    MealDetailModel mealDetailModel,
+    RicettaManagementInput mealDetailModel,
     Map<Product, bool> products,
   ) async {
     String menuId = mealDetailModel.menuIdRef;
@@ -407,7 +444,6 @@ class DatabaseService {
       productToBeInsertedOrUpdated.forEach((product, isAddToSpesa) async {
         if (product.id == null) {
           //inserisco
-          print("inserisco prod");
           product.ricettaIdRef = ricetta.id;
           await insertProductOnReceipt(
               ricetta.menuIdRef, workspaceId, product, isAddToSpesa);
@@ -625,7 +661,7 @@ class DatabaseService {
         .set({
       "color": _color,
       "description": (productDescription == null || productDescription.isEmpty)
-          ? "nessuna descrizione"
+          ? ""
           : productDescription,
       "image": "",
       "measureUnit": measureUnit,
@@ -660,6 +696,19 @@ class DatabaseService {
     });
   }
 
+  Future<void> updateProductBoughtOnSpesa(Product _product) async {
+    await _db
+        .collection(_spesaCollection)
+        .doc(_product.spesaIdRef)
+        .collection(_productCollection)
+        .doc(_product.id)
+        .update(
+      {
+        "bought": _product.bought,
+      },
+    );
+  }
+
   Future<void> updateProductOnSpesa(
       String productId,
       String spesaIdRef,
@@ -680,7 +729,7 @@ class DatabaseService {
         .update({
       "name": productName,
       "description": (productDescription == null || productDescription.isEmpty)
-          ? "nessuna descrizione"
+          ? ""
           : productDescription,
       "image": "",
       "measureUnit": measureUnit,
@@ -743,5 +792,47 @@ class DatabaseService {
         .collection(_ricettaCollection)
         .doc(ricetta.id)
         .delete();
+  }
+
+  Future<void> deleteProductInMenu(Product product) async {
+    return await _db
+        .collection(_menuCollection)
+        .doc(product.menuIdRef)
+        .collection(_productCollection)
+        .doc(product.id)
+        .delete();
+  }
+
+  Future<void> updateProductOnMenu(ProductInputForDb productInputForDb) async {
+    await _db
+        .collection(_menuCollection)
+        .doc(productInputForDb.product.menuIdRef)
+        .collection(_productCollection)
+        .doc(productInputForDb.product.id)
+        .update({
+      "name": productInputForDb.product.name,
+      "description": (productInputForDb.product.description == null ||
+              productInputForDb.product.description.isEmpty)
+          ? ""
+          : productInputForDb.product.description,
+      "image": "",
+      "measureUnit": productInputForDb.product.measureUnit,
+      "quantity": productInputForDb.product.quantity,
+      "reparto": productInputForDb.product.reparto,
+      "currency": productInputForDb.product.price != null ? "€" : null,
+      "price": productInputForDb.product.price
+    });
+  }
+
+//recupero tutto per il menu
+  Future<ReciptsAndProducts> getReciptsAndProductForMenu(String menuId) async {
+    List<Ricetta> ricette = await getReciptsFromMenuId(menuId);
+    List<Product> products = await getProductsInMenu(menuId);
+
+    return new ReciptsAndProducts(ricette, products);
+  }
+
+  Future<void> deleteAllProductsOnSpesa(String id) async {
+    await _db.collection(_spesaCollection).doc(id).delete();
   }
 }

@@ -5,6 +5,7 @@ import 'package:market_organizer/database/database_service.dart';
 import 'package:market_organizer/models/productOperationType.dart';
 import 'package:market_organizer/models/product_model.dart';
 import 'package:market_organizer/models/userdata_model.dart';
+import 'package:market_organizer/pages/menu/singleDay/receipt/product/productInputForDb.dart';
 import 'package:market_organizer/service/navigation_service.dart';
 import 'package:market_organizer/utils/measure_unit_list.dart';
 
@@ -18,8 +19,18 @@ class ProductReceiptInput {
   bool isAddToSpesa; //valorizzato se sto ancora inserendo il prodotto
   final ProductOperationType
       operationType; // specifico quale operazione sto per effettuare
-  ProductReceiptInput(this.manageNewProductAction, this.workspaceId,
-      this.indexKey, this.product, this.isAddToSpesa, this.operationType);
+  final String
+      pasto; //valorizzati e usati se devo inserire prodotto direttamente in menu
+  final DateTime date; //valorizzato e usato se devo inserire prodotto in menu
+  ProductReceiptInput(
+      this.manageNewProductAction,
+      this.workspaceId,
+      this.indexKey,
+      this.product,
+      this.isAddToSpesa,
+      this.operationType,
+      this.date,
+      this.pasto);
 }
 
 class ProductReceiptPage extends StatefulWidget {
@@ -125,8 +136,20 @@ class ProductReceiptPageState extends State<ProductReceiptPage> {
       _product.price = _price;
       _product.color = _color;
 
-      widget.input.manageNewProductAction(
-          _product, widget.input.isAddToSpesa); //sto inserendo
+//inserisco direttamente in menu
+      if (widget.input.operationType == ProductOperationType.INSERT) {
+        _product.pasto = widget.input.pasto;
+        _product.date = widget.input.date;
+        await DatabaseService.instance.insertNewProductInMenu(
+            ProductInputForDb(_product, widget.input.workspaceId),
+            widget.input.isAddToSpesa);
+        NavigationService.instance.goBackUntil("singleDay");
+      } else {
+        widget.input.manageNewProductAction(
+            _product, widget.input.isAddToSpesa); //sto inserendo
+
+        NavigationService.instance.goBack();
+      }
     } else {
       widget.input.product.name = _productName;
       widget.input.product.description = _productDescription;
@@ -135,11 +158,17 @@ class ProductReceiptPageState extends State<ProductReceiptPage> {
       widget.input.product.quantity = _quantity;
       widget.input.product.price = _price;
 
-      widget.input.manageNewProductAction(widget.input.product,
-          widget.input.isAddToSpesa, widget.input.indexKey); //sto aggiornando
+      if (widget.input.operationType == ProductOperationType.UPDATE) {
+        await DatabaseService.instance.updateProductOnMenu(
+            ProductInputForDb(widget.input.product, widget.input.workspaceId));
+        NavigationService.instance.goBackUntil("singleDay");
+      } else {
+        widget.input.manageNewProductAction(widget.input.product,
+            widget.input.isAddToSpesa, widget.input.indexKey); //sto aggiornando
 
+        NavigationService.instance.goBack();
+      }
     }
-    NavigationService.instance.goBack();
   }
 
   @override
@@ -253,6 +282,7 @@ class ProductReceiptPageState extends State<ProductReceiptPage> {
           return null;
         }
       },
+      textCapitalization: TextCapitalization.sentences,
       style: TextStyle(color: Colors.white),
       onChanged: (text) {
         if (_isInsertSelected) _formKey.currentState.validate();
@@ -294,6 +324,7 @@ class ProductReceiptPageState extends State<ProductReceiptPage> {
           _productDescription = text;
         });
       }),
+      textCapitalization: TextCapitalization.sentences,
       style: TextStyle(color: Colors.white),
       decoration: InputDecoration(
         contentPadding: EdgeInsets.all(10),
@@ -327,6 +358,7 @@ class ProductReceiptPageState extends State<ProductReceiptPage> {
         style: TextStyle(
           color: Colors.white,
         ),
+        textCapitalization: TextCapitalization.sentences,
         decoration: InputDecoration(
           contentPadding: EdgeInsets.all(10),
           fillColor: Colors.white,
@@ -398,7 +430,6 @@ class ProductReceiptPageState extends State<ProductReceiptPage> {
           widget.input.product != null && widget.input.product.quantity != null
               ? widget.input.product.quantity.toString()
               : "",
-      keyboardType: TextInputType.numberWithOptions(decimal: true),
       validator: (value) {
         if (value == null ||
             value.isEmpty ||
@@ -527,7 +558,6 @@ class ProductReceiptPageState extends State<ProductReceiptPage> {
           widget.input.product != null && widget.input.product.price != null
               ? widget.input.product.price.toString()
               : null,
-      keyboardType: TextInputType.numberWithOptions(decimal: true),
       validator: (value) {
         if (value == null ||
             value.isEmpty ||

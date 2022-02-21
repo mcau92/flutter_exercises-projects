@@ -1,15 +1,16 @@
 class MeasureUnitList {
   static final Map<String, String> units = {
     "nessun valore": "",
-    "grammi": "gr.",
-    "etti": "et.",
+    "milligrammi": "mg",
+    "grammi": "gr",
+    "etti": "hg",
     "kg": "kg",
-    "litri": "lt.",
     "millilitri": "ml",
+    "litri": "lt",
     "elemento": "elem.",
     "confezione": "conf.",
-    "mista": "mista",
+    "mista": "mix",
     "scatolone": "scat.",
-    "pacco": "pacco",
+    "pacco": "pac.",
   };
 }

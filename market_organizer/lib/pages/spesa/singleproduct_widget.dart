@@ -19,67 +19,75 @@ class SingleProductWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: ColorCostant.colorMap[_product.color].withOpacity(0.2),
-      child: _productCard(),
-    );
+    return _productCard();
   }
 
   Widget _productCard() {
-    return ListTile(
-      onTap: () => _singleProductDetailPage(_product),
-      contentPadding: EdgeInsets.symmetric(vertical: 0.0, horizontal: 11.0),
-      dense: true,
-      leading: Container(
-        margin: EdgeInsets.symmetric(vertical: 10),
-        width: 27,
-        decoration: BoxDecoration(
-          color: ColorCostant.colorMap[_product.color],
-          borderRadius: BorderRadius.circular(25),
-        ),
-        child: Center(
-          child: Text(
-            _product.ownerName[0].toUpperCase(),
-            style: TextStyle(fontSize: 18, color: Colors.white),
+    return Container(
+      color: ColorCostant.colorMap[_product.color].withOpacity(0.2),
+      child: ListTile(
+        onTap: () => _singleProductDetailPage(_product),
+        contentPadding: EdgeInsets.symmetric(vertical: 0.0, horizontal: 11.0),
+        dense: true,
+        leading: Container(
+          margin: EdgeInsets.symmetric(vertical: 10),
+          width: 27,
+          decoration: BoxDecoration(
+            color: ColorCostant.colorMap[_product.color],
+            borderRadius: BorderRadius.circular(25),
+          ),
+          child: Center(
+            child: Text(
+              _product.ownerName[0].toUpperCase(),
+              style: TextStyle(fontSize: 18, color: Colors.white),
+            ),
           ),
         ),
-      ),
-      title: Text(_product.name,
+        title: Text(
+            _product.name.length > 17
+                ? "${_product.name.substring(0, 14)}..."
+                : _product.name,
+            style: TextStyle(
+                color: Colors.black,
+                fontWeight: FontWeight.bold,
+                fontSize: 16)),
+        subtitle: Text(
+          _product.description == null || _product.description.isEmpty
+              ? "(nessuna descrizione)"
+              : _product.description,
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
-              color: Colors.black, fontWeight: FontWeight.bold, fontSize: 16)),
-      subtitle: Text(
-        _product.description,
-        overflow: TextOverflow.ellipsis,
-        style: TextStyle(
-          color: Colors.black.withOpacity(0.7),
+            color: Colors.black.withOpacity(0.7),
+          ),
         ),
+        trailing: _trailingWidget(),
       ),
-      trailing: _trailingWidget(),
     );
   }
 
   Widget _trailingWidget() {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: [
         Text(
           MeasureConverterUtility.quantityMeasureUnitStringCreation(
               _product.quantity, _product.measureUnit),
+          textAlign: TextAlign.right,
           style: TextStyle(
             color: Colors.black,
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
           ),
         ),
-        SizedBox(width: 30),
         Text(
-          _product.price.toString() + _product.currency,
+          _product.price.toString() + " " + _product.currency,
+          textAlign: TextAlign.right,
           style: TextStyle(
             color: Colors.red,
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.bold,
+            fontSize: 12,
           ),
         ),
-        SizedBox(width: 20),
       ],
     );
   }

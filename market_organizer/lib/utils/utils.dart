@@ -28,6 +28,8 @@ class Utils {
     "Sabato",
     "Domenica"
   ];
+
+  List pasti = ["Colazione", "Pranzo", "Spuntino", "Cena"];
   List<String> getReparti(List<Product> products) {
     List<String> reparti = [];
     products.forEach((element) {

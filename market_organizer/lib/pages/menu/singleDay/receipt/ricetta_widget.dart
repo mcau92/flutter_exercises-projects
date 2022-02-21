@@ -82,18 +82,20 @@ class SingleRicetta extends StatelessWidget {
 
   Widget _productCard() {
     return ListTile(
-      contentPadding: EdgeInsets.symmetric(vertical: 0.0, horizontal: 16.0),
+      contentPadding: EdgeInsets.symmetric(vertical: 0.0, horizontal: 11.0),
       dense: true,
       title: Text(_ricetta.name,
           style: TextStyle(
               color: Colors.black, fontWeight: FontWeight.bold, fontSize: 16)),
       subtitle: Text(
-        _ricetta.description,
+        _ricetta.description == null || _ricetta.description.isEmpty
+            ? "(nessuna descrizione)"
+            : _ricetta.description,
         style: TextStyle(
           color: Colors.black.withOpacity(0.7),
         ),
       ),
-      trailing: _trailingWidget(),
+      leading: _trailingWidget(),
     );
   }
 

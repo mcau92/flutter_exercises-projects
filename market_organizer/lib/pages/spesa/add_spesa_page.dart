@@ -1,5 +1,9 @@
+import 'dart:ffi';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:market_organizer/database/database_service.dart';
 import 'package:market_organizer/models/spesa.dart';
@@ -175,6 +179,7 @@ class _AddSpesaPageState extends State<AddSpesaPage> {
           if (_isInsertSelected) _formKey.currentState.validate();
         }
       },
+      textCapitalization: TextCapitalization.sentences,
       decoration: InputDecoration(
         contentPadding: EdgeInsets.all(10),
         fillColor: Colors.white,
@@ -203,6 +208,7 @@ class _AddSpesaPageState extends State<AddSpesaPage> {
           _productDescription = text;
         });
       },
+      textCapitalization: TextCapitalization.sentences,
       style: TextStyle(color: Colors.white),
       decoration: InputDecoration(
         contentPadding: EdgeInsets.all(10),
@@ -237,6 +243,7 @@ class _AddSpesaPageState extends State<AddSpesaPage> {
         style: TextStyle(
           color: Colors.white,
         ),
+        textCapitalization: TextCapitalization.sentences,
         decoration: InputDecoration(
           contentPadding: EdgeInsets.all(10),
           fillColor: Colors.white,
@@ -312,7 +319,6 @@ class _AddSpesaPageState extends State<AddSpesaPage> {
 
   Widget _productQuantity() {
     return TextFormField(
-      keyboardType: TextInputType.numberWithOptions(decimal: true),
       validator: (value) {
         if (value == null ||
             value.isEmpty ||
@@ -434,7 +440,6 @@ class _AddSpesaPageState extends State<AddSpesaPage> {
 
   Widget _priceSection() {
     return TextFormField(
-      keyboardType: TextInputType.numberWithOptions(decimal: true),
       validator: (value) {
         if (value == null ||
             value.isEmpty ||

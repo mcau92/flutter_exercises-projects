@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:market_organizer/models/ricetta.dart';
 
-class SingleRicettaSearch extends StatelessWidget {
- final Ricetta _ricetta;
-  SingleRicettaSearch(this._ricetta);
+class RicettaSearchWidget extends StatelessWidget {
+  final Ricetta _ricetta;
+  RicettaSearchWidget(this._ricetta);
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -14,16 +14,14 @@ class SingleRicettaSearch extends StatelessWidget {
           Radius.circular(10),
         ),
       ),
-      child:  _productCard(),
-      
+      child: _ricettaCard(),
     );
   }
 
-  Widget _productCard() {
+  Widget _ricettaCard() {
     return ListTile(
       contentPadding: EdgeInsets.symmetric(vertical: 0.0, horizontal: 16.0),
       dense: true,
-      
       title: Text(_ricetta.name,
           style: TextStyle(
               color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),

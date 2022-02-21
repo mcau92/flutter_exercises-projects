@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:market_organizer/database/database_service.dart';
 import 'package:market_organizer/models/productOperationType.dart';
 import 'package:market_organizer/models/product_model.dart';
+import 'package:market_organizer/pages/menu/singleDay/receipt/product/productInputForDb.dart';
 import 'package:market_organizer/pages/menu/singleDay/receipt/product/product_page.dart';
 import 'package:market_organizer/pages/menu/singleDay/receipt/product/product_widget.dart';
 import 'package:market_organizer/service/navigation_service.dart';
@@ -13,8 +14,10 @@ class ProductSearchInput {
       insertNewProduct; //gestisco sia insert che update di prodotto NON ancora salvato a db
   final String workspaceId;
   final ProductOperationType operationType;
-  ProductSearchInput(
-      this.insertNewProduct, this.workspaceId, this.operationType);
+  final String pasto;
+  final DateTime date;
+  ProductSearchInput(this.insertNewProduct, this.workspaceId,
+      this.operationType, this.pasto, this.date);
 }
 
 class ProductSearchPage extends StatefulWidget {
@@ -49,6 +52,28 @@ class ProductSearchPageState extends State<ProductSearchPage> {
     }
   }
 
+  void _insertNewProduct() {
+    //pagina di inserimento ricetta generale
+    setState(() {
+      _textController.text = "";
+      _products = [];
+    });
+    NavigationService.instance.navigateToWithParameters(
+      "productPageReceipt",
+      ProductReceiptInput(
+        widget.input
+            .insertNewProduct, //nulla se sto inserendo un prodotto direttamente nel menu questo perchè poi gestisco l'inserimento direttamente dopo aggiornando il prodotto
+        widget.input.workspaceId,
+        null, //index nulla in fase di creazione
+        null, //prodotto nullo in fase di creazione
+        false, //default in fase di creazione
+        widget.input.operationType,
+        widget.input.date,
+        widget.input.pasto,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -63,9 +88,15 @@ class ProductSearchPageState extends State<ProductSearchPage> {
             ),
             onPressed: () => NavigationService.instance.goBack()),
         title: Text(
-          "Cerca Prodotto",
+          "Prodotto",
           style: TextStyle(color: Colors.white),
         ),
+        actions: [
+          IconButton(
+            icon: Icon(CupertinoIcons.add, color: Colors.white),
+            onPressed: () => _insertNewProduct(),
+          ),
+        ],
       ),
       body: _body(),
     );
@@ -94,17 +125,22 @@ class ProductSearchPageState extends State<ProductSearchPage> {
 
 //show prod
   void showProduct(Product product) {
-    NavigationService.instance
-        .navigateToWithParameters(
-            "productPageReceipt",
-            ProductReceiptInput(
-                widget.input.insertNewProduct,
-                widget.input.workspaceId,
-                null, //index nulla in fase di creazione
-                product, //prodotto nullo in fase di creazione
-                false, //default in fase di creazione
-                widget.input.operationType))
-        .then((value) => NavigationService.instance.goBack());
+    setState(() {
+      _textController.text = "";
+      _products = [];
+    });
+    NavigationService.instance.navigateToWithParameters(
+        "productPageReceipt",
+        ProductReceiptInput(
+          widget.input.insertNewProduct,
+          widget.input.workspaceId,
+          null, //index nulla in fase di creazione
+          product, //prodotto nullo in fase di creazione
+          false, //default in fase di creazione
+          widget.input.operationType,
+          widget.input.date,
+          widget.input.pasto,
+        ));
   }
 
   Widget _productList() {

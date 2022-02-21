@@ -1,9 +1,13 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:market_organizer/database/database_service.dart';
+import 'package:market_organizer/models/productOperationType.dart';
+import 'package:market_organizer/models/product_model.dart';
 import 'package:market_organizer/models/ricetta.dart';
 import 'package:market_organizer/pages/menu/singleDay/meal/meal_detail_model.dart';
 import 'package:market_organizer/pages/menu/singleDay/pasto_widget.dart';
+import 'package:market_organizer/pages/menu/singleDay/receipt/product/productSearch_page.dart';
+import 'package:market_organizer/service/navigation_service.dart';
 import 'package:market_organizer/utils/utils.dart';
 
 //input
@@ -15,15 +19,10 @@ class SingleDayPageInput {
   final DateTime dateStart;
   final DateTime dateEnd;
   final String menuIdRef;
+  final Map<DateTime, Map<String, bool>> isToExpandPastoMap;
 
-  SingleDayPageInput(
-    this.workspaceId,
-    this.day,
-    this.dateTimeDay,
-    this.dateStart,
-    this.dateEnd,
-    this.menuIdRef,
-  );
+  SingleDayPageInput(this.workspaceId, this.day, this.dateTimeDay,
+      this.dateStart, this.dateEnd, this.menuIdRef, this.isToExpandPastoMap);
 }
 
 class SingleDayPage extends StatefulWidget {
@@ -36,54 +35,36 @@ class SingleDayPage extends StatefulWidget {
 class _SingleDayPageState extends State<SingleDayPage> {
   SingleDayPageInput singleDayPageInput;
 
-  //navigo al dettaglio del pasto
-  void _showMealDetailsPage(String pasto) {
-    Navigator.popAndPushNamed(
-      context,
-      "mealDetail",
-      arguments: MealDetailModel.fromSingleDayPage(singleDayPageInput, pasto),
-    ).then((value) {
-      setState(() {});
-    });
-  }
-
-  void _showMenu(BuildContext ctx) {
-    showCupertinoModalPopup(
-        context: ctx,
-        builder: (_) => Container(
-              child: CupertinoActionSheet(
-                message: Text("Seleziona un pasto"),
-                actions: [
-                  CupertinoActionSheetAction(
-                      onPressed: () {
-                        _showMealDetailsPage("Colazione");
-                      },
-                      child: Text("Colazione")),
-                  CupertinoActionSheetAction(
-                      onPressed: () => _showMealDetailsPage("Spuntino"),
-                      child: Text("Spuntino")),
-                  CupertinoActionSheetAction(
-                      onPressed: () => _showMealDetailsPage("Pranzo"),
-                      child: Text("Pranzo")),
-                  CupertinoActionSheetAction(
-                      onPressed: () => _showMealDetailsPage("Cena"),
-                      child: Text("Cena")),
-                ],
-                cancelButton: CupertinoActionSheetAction(
-                  child: Text(
-                    "Cancella",
-                    style: TextStyle(color: Colors.red),
-                  ),
-                  onPressed: () => Navigator.pop(context),
-                ),
-              ),
-            ));
+  //navigo al dettaglio del pasto , se isRicetta false allora inserisco prodotto
+  void _showMealDetailsPage(String pasto, bool isRicetta) {
+    if (isRicetta) {
+      Navigator.pushNamed(
+        context,
+        "ricettaSearchPage",
+        arguments:
+            RicettaManagementInput.fromSingleDayPage(singleDayPageInput, pasto),
+      ).then((value) {
+        setState(() {});
+      });
+    } else {
+      NavigationService.instance.navigateToWithParameters(
+        "productSearchPage",
+        ProductSearchInput(
+          null,
+          singleDayPageInput.workspaceId,
+          ProductOperationType.INSERT,
+          pasto,
+          singleDayPageInput.dateTimeDay,
+        ),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     singleDayPageInput =
         ModalRoute.of(context).settings.arguments as SingleDayPageInput;
+
     return Scaffold(
       backgroundColor: Color.fromRGBO(43, 43, 43, 1),
       appBar: AppBar(
@@ -100,68 +81,37 @@ class _SingleDayPageState extends State<SingleDayPage> {
           singleDayPageInput.day,
           style: TextStyle(color: Colors.white),
         ),
-        actions: [
-          IconButton(
-            icon: Icon(CupertinoIcons.add, color: Colors.white),
-            onPressed: () => _showMenu(context),
-          ),
-        ],
       ),
-      body: _body(singleDayPageInput),
+      body: _showReparti(),
     );
   }
 
-  Widget _body(SingleDayPageInput _input) {
-    if (singleDayPageInput.menuIdRef != null) {
-      return StreamBuilder<List<Ricetta>>(
-          stream: DatabaseService.instance.getReciptsFromMenuIdAndDate(
-              singleDayPageInput.menuIdRef, singleDayPageInput.dateTimeDay),
-          builder: (context, snap) {
-            if (!snap.hasData || snap.data.isEmpty) {
-              return Center(
-                child: Text(
-                  "nessuna dato inserito",
-                  style: TextStyle(
-                    color: Colors.white,
-                  ),
-                ),
-              );
-            } else {
-              List<String> pasti = Utils.instance.getPasti(snap.data);
-              return Padding(
-                padding: const EdgeInsets.only(top: 15.0),
-                child: ListView.separated(
-                  shrinkWrap: true,
-                  physics: NeverScrollableScrollPhysics(),
-                  separatorBuilder: (context, index) {
-                    return SizedBox(
-                      height: 7,
-                    );
-                  },
-                  itemCount: pasti.length,
-                  itemBuilder: (context, index) {
-                    //mostro il pasto corrente
-                    return PastoWidget(
-                        pasti[index],
-                        snap.data
-                            .where((r) => r.pasto == pasti[index])
-                            .toList(),
-                        MealDetailModel.fromSingleDayPage(
-                            singleDayPageInput, pasti[index]));
-                  },
-                ),
-              );
-            }
-          });
-    } else {
-      return Center(
-        child: Text(
-          "nessuna ricetta inserita",
-          style: TextStyle(
-            color: Colors.white,
-          ),
-        ),
-      );
-    }
+//da aggiungere anche prodotti
+  Widget _showReparti() {
+    return Padding(
+      padding: const EdgeInsets.only(top: 5.0),
+      child: ListView.builder(
+        shrinkWrap: true,
+        itemCount: Utils.instance.pasti.length,
+        itemBuilder: (context, index) {
+          return PastoWidget(
+              Utils.instance.pasti[index],
+              RicettaManagementInput.fromSingleDayPage(
+                singleDayPageInput,
+                Utils.instance.pasti[index],
+              ),
+              _showMealDetailsPage,
+              singleDayPageInput.isToExpandPastoMap
+                          .containsKey(singleDayPageInput.dateTimeDay) &&
+                      singleDayPageInput
+                          .isToExpandPastoMap[singleDayPageInput.dateTimeDay]
+                          .containsKey(Utils.instance.pasti[index])
+                  ? singleDayPageInput
+                          .isToExpandPastoMap[singleDayPageInput.dateTimeDay]
+                      [Utils.instance.pasti[index]]
+                  : false);
+        },
+      ),
+    );
   }
 }

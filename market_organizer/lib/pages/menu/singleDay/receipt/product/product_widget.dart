@@ -1,9 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:market_organizer/models/productOperationType.dart';
 import 'package:market_organizer/models/product_model.dart';
-import 'package:market_organizer/pages/menu/singleDay/receipt/product/product_page.dart';
-import 'package:market_organizer/service/navigation_service.dart';
 import 'package:market_organizer/utils/color_costant.dart';
 import 'package:market_organizer/utils/measure_converter_utility.dart';
 
@@ -15,13 +12,18 @@ class ProductReceiptWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _container();
-  }
-
-  Widget _container() {
     return Container(
-      color: ColorCostant.colorMap[_product.color].withOpacity(0.2),
-      child: _productCard(),
+      clipBehavior: Clip.hardEdge,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.all(
+          Radius.circular(10),
+        ),
+      ),
+      child: Container(
+        color: ColorCostant.colorMap[_product.color].withOpacity(0.2),
+        child: _productCard(),
+      ),
     );
   }
 
@@ -48,7 +50,9 @@ class ProductReceiptWidget extends StatelessWidget {
           style: TextStyle(
               color: Colors.black, fontWeight: FontWeight.bold, fontSize: 16)),
       subtitle: Text(
-        _product.description,
+        _product.description == null || _product.description.isEmpty
+            ? "(nessuna descrizione)"
+            : _product.description,
         overflow: TextOverflow.ellipsis,
         style: TextStyle(
           color: Colors.black.withOpacity(0.7),

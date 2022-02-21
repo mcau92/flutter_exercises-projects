@@ -1,6 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:market_organizer/database/database_service.dart';
+import 'package:market_organizer/models/product_model.dart';
+import 'package:market_organizer/models/reciptsAndProducts.dart';
 import 'package:market_organizer/pages/menu/singleDay/single_day_page.dart';
 import 'package:market_organizer/pages/widget/commons/appbar_custom_widget.dart';
 import 'package:market_organizer/pages/widget/commons/weekpicker_widget.dart';
@@ -57,36 +59,12 @@ class _MenuWidgetState extends State<MenuWidget> {
         if (_snap.hasData) {
           Menu _currentMenu = _snap.data.isEmpty ? null : _snap.data[0];
           //se menu non nullo recupero le ricette altrimenti iniziallizo con valori di default
-
-          if (_currentMenu != null) {
-            return FutureBuilder<List<Ricetta>>(
-                future: DatabaseService.instance
-                    .getReciptsFromMenuId(_currentMenu.id),
-                builder: (_context, _snap) {
-                  if (_snap.hasData) {
-                    List<Ricetta> _ricette = _snap.data;
-                    _weekDaysContainers = initWeekDaysContainers(
-                        _context, _currentMenu, _ricette);
-                    return GridView.count(
-                      shrinkWrap: true,
-                      crossAxisCount: 2,
-                      children: _weekDaysContainers,
-                    );
-                  } else {
-                    return Center(
-                        child: CircularProgressIndicator(
-                      backgroundColor: Colors.red,
-                    ));
-                  }
-                });
-          } else {
-            _weekDaysContainers = initWeekDaysContainers(_context, null, null);
-            return GridView.count(
-              shrinkWrap: true,
-              crossAxisCount: 2,
-              children: _weekDaysContainers,
-            );
-          }
+          _weekDaysContainers = initWeekDaysContainers(_context, _currentMenu);
+          return GridView.count(
+            shrinkWrap: true,
+            crossAxisCount: 2,
+            children: _weekDaysContainers,
+          );
         } else {
           return Center(
               child: CircularProgressIndicator(
@@ -114,52 +92,113 @@ class _MenuWidgetState extends State<MenuWidget> {
     return "0";
   }
 
-  String _countPast(List<Ricetta> recipts, String day) {
-    List<Ricetta> dayRecipts = recipts
+  String _countPasti(List<Product> product, String day) {
+    List<Product> dayProd = product
         .where(
           (element) =>
               element.date.weekday == Utils.instance.weekDays.indexOf(day) + 1,
         )
         .toList();
-    if (dayRecipts.isNotEmpty) {
-      List<Ricetta> _filterRecipts = [];
-      dayRecipts.forEach((eDay) {
-        if (_filterRecipts.isEmpty ||
-            !_filterRecipts.any((eFilter) => eFilter.pasto == eDay.pasto)) {
-          _filterRecipts.add(eDay);
-        }
-      });
-      print("arrivo");
-      return _filterRecipts.length.toString();
+    if (dayProd.isNotEmpty) {
+      return dayProd.length.toString();
     }
     return "0";
   }
 
-  void _showDay(BuildContext context, Menu menu, String day) {
+  Map<DateTime, Map<String, bool>> _buildMap(
+      ReciptsAndProducts reciptsAndProducts) {
+    Map<DateTime, Map<String, bool>> map = {};
+    reciptsAndProducts.products.forEach((element) {
+      if (!map.containsKey(element.date)) {
+        Map<String, bool> nestedMap = {};
+        nestedMap.putIfAbsent(element.pasto, () => true);
+        map.putIfAbsent(element.date, () => nestedMap);
+      } else {
+        Map<String, bool> nestedMap = map[element.date];
+        nestedMap.putIfAbsent(element.pasto, () => true);
+        map.remove(element.date);
+        map.putIfAbsent(element.date, () => nestedMap);
+      }
+    });
+    reciptsAndProducts.ricette.forEach((element) {
+      if (!map.containsKey(element.date)) {
+        Map<String, bool> nestedMap = {};
+        nestedMap.putIfAbsent(element.pasto, () => true);
+        map.putIfAbsent(element.date, () => nestedMap);
+      } else {
+        Map<String, bool> nestedMap = map[element.date];
+        nestedMap.putIfAbsent(element.pasto, () => true);
+        map.remove(element.date);
+        map.putIfAbsent(element.date, () => nestedMap);
+      }
+    });
+    return map;
+  }
+
+  void _showDay(BuildContext context, Menu menu, String day,
+      ReciptsAndProducts reciptsAndProducts) {
     NavigationService.instance
         .navigateToWithParameters(
           "singleDay",
           SingleDayPageInput(
-            widget.worksapceId, //mi serve per inserire il menu se non presente
-            day,
-            dateStart.add(Duration(days: Utils.instance.weekDays.indexOf(day))),
-            dateStart,
-            dateEnd,
-            menu != null ? menu.id : null, //può essere nullo
-          ),
+              widget
+                  .worksapceId, //mi serve per inserire il menu se non presente
+              day,
+              dateStart
+                  .add(Duration(days: Utils.instance.weekDays.indexOf(day))),
+              dateStart,
+              dateEnd,
+              menu != null ? menu.id : null,
+              _buildMap(reciptsAndProducts)),
         )
         .then((value) => setState(() {}));
   }
 
-  List<Widget> initWeekDaysContainers(
-      BuildContext context, Menu menu, List<Ricetta> recipts) {
+  Widget _showCounters(
+      Menu menu, String day, List<Ricetta> ricette, List<Product> products) {
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            Text(
+              menu != null
+                  ? _countRec(ricette != null ? ricette : [], day)
+                  : "0",
+              style: TextStyle(fontSize: 40, color: Colors.red),
+            ),
+            Text(
+              " ricette",
+              style: TextStyle(fontSize: 25, color: Colors.white),
+            )
+          ],
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            Text(
+              menu != null
+                  ? _countPasti(products != null ? products : [], day)
+                  : "0",
+              style: TextStyle(fontSize: 40, color: Colors.orange),
+            ),
+            Text(
+              " prodotti",
+              style: TextStyle(fontSize: 25, color: Colors.white),
+            )
+          ],
+        ),
+      ],
+    );
+  }
+
+  ReciptsAndProducts _reciptsAndProductsData;
+  List<Widget> initWeekDaysContainers(BuildContext context, Menu menu) {
     return Utils.instance.weekDays.map((day) {
       return GestureDetector(
-        onTap: () => _showDay(
-          context,
-          menu,
-          day,
-        ),
+        onTap: () => _reciptsAndProductsData == null
+            ? () {}
+            : _showDay(context, menu, day, _reciptsAndProductsData),
         child: Container(
           margin: EdgeInsets.all(20),
           padding: EdgeInsets.all(10),
@@ -192,36 +231,21 @@ class _MenuWidgetState extends State<MenuWidget> {
                           fontSize: 18, color: Colors.white.withOpacity(0.5))),
                 ],
               ),
-              Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      Text(
-                        menu != null ? _countPast(recipts, day) : "0",
-                        style: TextStyle(fontSize: 40, color: Colors.orange),
-                      ),
-                      Text(
-                        " pasti",
-                        style: TextStyle(fontSize: 25, color: Colors.white),
-                      )
-                    ],
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      Text(
-                        menu != null ? _countRec(recipts, day) : "0",
-                        style: TextStyle(fontSize: 40, color: Colors.red),
-                      ),
-                      Text(
-                        " ricette",
-                        style: TextStyle(fontSize: 25, color: Colors.white),
-                      )
-                    ],
-                  )
-                ],
-              ),
+              FutureBuilder<ReciptsAndProducts>(
+                  future: menu != null
+                      ? DatabaseService.instance
+                          .getReciptsAndProductForMenu(menu.id)
+                      : Future.value(new ReciptsAndProducts([], [])),
+                  builder: (_context, _snap) {
+                    if (_snap.connectionState == ConnectionState.waiting) {
+                      return Center(
+                        child: CircularProgressIndicator(color: Colors.red),
+                      );
+                    }
+                    _reciptsAndProductsData = _snap.data;
+                    return _showCounters(
+                        menu, day, _snap.data.ricette, _snap.data.products);
+                  }),
             ],
           ),
         ),

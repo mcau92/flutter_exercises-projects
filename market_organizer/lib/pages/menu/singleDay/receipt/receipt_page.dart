@@ -21,7 +21,7 @@ class NewSelectedReceiptInput {
   final Ricetta selectedRecipt;
   Map<Product, bool>
       productsFetched; //prodotti da usare per cancellare aggioranre ecc in fase di inserimento da ricerca di ricetta
-  final MealDetailModel
+  final RicettaManagementInput
       mealDetailModel; //nullo se in fase di aggiornamento/dettaglio ricetta
   final String pasto; //nullo se in fase di aggiornamento/dettaglio
 
@@ -76,7 +76,6 @@ class _NewSelectedReceiptPageState extends State<NewSelectedReceiptPage> {
       widget._input.productsFetched.putIfAbsent(prod, () => inSpesa);
       _countProductToBeInserted++;
     });
-    print(widget._input.productsFetched.length);
   }
 
   void removeProduct(Product product, int index) {
@@ -84,6 +83,7 @@ class _NewSelectedReceiptPageState extends State<NewSelectedReceiptPage> {
       _countProductToBeInserted--;
     } else {
       //salvo il prodotto nella lista dei prodotti da cancellare cosi una volta che l'utente conferma lo cancellerò definitivamente
+
       _productToBeDeleted.add(product);
     }
     //lo rimuovo dalla lista da visualizzare
@@ -205,24 +205,30 @@ class _NewSelectedReceiptPageState extends State<NewSelectedReceiptPage> {
 //search
   void _searchProduct() {
     NavigationService.instance.navigateToWithParameters(
-        "productSearchPage",
-        ProductSearchInput(
-            insertNewProduct,
-            widget._input.mealDetailModel.workspaceId,
-            ProductOperationType.INSERT_FROM_RECEIPT));
+      "productSearchPage",
+      ProductSearchInput(
+        insertNewProduct,
+        widget._input.mealDetailModel.workspaceId,
+        ProductOperationType.INSERT_FROM_RECEIPT,
+        widget._input.mealDetailModel.pasto,
+        widget._input.mealDetailModel.dateTimeDay,
+      ),
+    );
   }
 
   //add new product
   void _addProduct() {
     NavigationService.instance.navigateToWithParameters(
-        "productPageReceipt",
-        ProductReceiptInput(
-            insertNewProduct,
-            widget._input.mealDetailModel.workspaceId,
-            null, //index nulla in fase di creazione
-            null, //prodotto nullo in fase di creazione
-            true, //default in fase di creazione
-            ProductOperationType.INSERT_FROM_RECEIPT));
+      "productPageReceipt",
+      ProductReceiptInput(
+        insertNewProduct,
+        widget._input.mealDetailModel.workspaceId,
+        null, //index nulla in fase di creazione
+        null, //prodotto nullo in fase di creazione
+        true, //default in fase di creazione
+        ProductOperationType.INSERT_FROM_RECEIPT, null, null,
+      ),
+    );
   }
 
   // funzione che controlla se ci sono prodotti e se l'utente prova a tornare indietro gli chiede se vuole eliminarli
@@ -346,6 +352,7 @@ class _NewSelectedReceiptPageState extends State<NewSelectedReceiptPage> {
     return TextFormField(
       keyboardType: TextInputType.text,
       initialValue: _currentRicetta.name,
+      textCapitalization: TextCapitalization.sentences,
       validator: (value) {
         if (value == null || value.isEmpty) {
           return "Inserisci il nome della ricetta";
@@ -392,6 +399,7 @@ class _NewSelectedReceiptPageState extends State<NewSelectedReceiptPage> {
     return TextFormField(
       initialValue: _currentRicetta.description,
       style: TextStyle(color: Colors.white),
+      textCapitalization: TextCapitalization.sentences,
       onChanged: (text) {
         if (text != null && text.isNotEmpty) {
           setState(() {
@@ -479,12 +487,13 @@ class _NewSelectedReceiptPageState extends State<NewSelectedReceiptPage> {
     NavigationService.instance.navigateToWithParameters(
         "productPageReceipt",
         ProductReceiptInput(
-            updateProduct,
-            widget._input.mealDetailModel.workspaceId,
-            index,
-            product, //prodotto nullo in fase di creazione
-            isAddToSpesa, //default in fase di creazione
-            ProductOperationType.UPDATE_FROM_RECEIPT));
+          updateProduct,
+          widget._input.mealDetailModel.workspaceId,
+          index,
+          product, //prodotto nullo in fase di creazione
+          isAddToSpesa, //default in fase di creazione
+          ProductOperationType.UPDATE_FROM_RECEIPT, null, null,
+        ));
   }
 
   Widget _productListWidget() {

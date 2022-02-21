@@ -1,6 +1,6 @@
 import 'package:market_organizer/pages/menu/singleDay/single_day_page.dart';
 
-class MealDetailModel {
+class RicettaManagementInput {
   final String workspaceId;
   final String day;
   final DateTime dateTimeDay; //giorno selezionato
@@ -10,10 +10,10 @@ class MealDetailModel {
 
   final String pasto;
 
-  MealDetailModel(this.workspaceId, this.day, this.dateTimeDay, this.dateStart,
-      this.dateEnd, this.menuIdRef, this.pasto);
+  RicettaManagementInput(this.workspaceId, this.day, this.dateTimeDay,
+      this.dateStart, this.dateEnd, this.menuIdRef, this.pasto);
 
-  MealDetailModel.fromSingleDayPage(
+  RicettaManagementInput.fromSingleDayPage(
       SingleDayPageInput singleDayPageInput, String pasto)
       : this.workspaceId = singleDayPageInput.workspaceId,
         this.day = singleDayPageInput.day,

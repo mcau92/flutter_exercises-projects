@@ -1,7 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:market_organizer/pages/home_page.dart';
-import 'package:market_organizer/pages/menu/singleDay/meal/meal_detail_page.dart';
+import 'package:market_organizer/pages/menu/singleDay/meal/ricettaSearch_page.dart';
 import 'package:market_organizer/pages/menu/singleDay/receipt/product/productSearch_page.dart';
 import 'package:market_organizer/pages/menu/singleDay/receipt/product/product_page.dart';
 import 'package:market_organizer/pages/menu/singleDay/receipt/receipt_page.dart';
@@ -27,6 +27,7 @@ class MyApp extends StatelessWidget {
       title: 'spesa',
       navigatorKey: NavigationService.instance.navigatorKey,
       theme: ThemeData(
+        dividerColor: Colors.transparent,
         primaryColor: Colors.white,
         accentColor: Colors.black,
         cardColor: Color.fromRGBO(229, 229, 229, 1), //light grey
@@ -36,7 +37,7 @@ class MyApp extends StatelessWidget {
       routes: {
         "home": (BuildContext _contex) => HomePage(),
         "singleDay": (BuildContext _context) => SingleDayPage(),
-        "mealDetail": (BuildContext _context) => MealDetailPage(),
+        "ricettaSearchPage": (BuildContext _context) => RicettaSearchPage(),
         "addSpesaPage": (BuildContext _context) => AddSpesaPage(),
       },
       onGenerateRoute: (settings) {

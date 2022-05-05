@@ -4,22 +4,25 @@ import 'package:market_organizer/database/database_service.dart';
 import 'package:market_organizer/models/product_model.dart';
 import 'package:market_organizer/models/receiptOperationType.dart';
 import 'package:market_organizer/models/ricetta.dart';
+import 'package:market_organizer/models/userdata_model.dart';
 import 'package:market_organizer/pages/menu/singleDay/meal/meal_detail_model.dart';
 import 'package:market_organizer/pages/menu/singleDay/meal/ricettaSearch_widget.dart';
 import 'package:market_organizer/pages/menu/singleDay/receipt/receipt_page.dart';
+import 'package:market_organizer/provider/auth_provider.dart';
 import 'package:market_organizer/service/navigation_service.dart';
+import 'package:provider/provider.dart';
 
 class RicettaSearchPage extends StatefulWidget {
-  const RicettaSearchPage({Key key}) : super(key: key);
+  const RicettaSearchPage({Key? key}) : super(key: key);
 
   @override
   _RicettaSearchPageState createState() => _RicettaSearchPageState();
 }
 
 class _RicettaSearchPageState extends State<RicettaSearchPage> {
-  RicettaManagementInput mealInput;
-  TextEditingController _textController;
-  List<Ricetta> _ricette; //lista di ricette trovate
+  late RicettaManagementInput mealInput;
+  late TextEditingController _textController;
+  late List<Ricetta> _ricette = []; //lista di ricette trovate
 
   @override
   void initState() {
@@ -28,9 +31,11 @@ class _RicettaSearchPageState extends State<RicettaSearchPage> {
   }
 
   void _updateResearch(String string) async {
+    UserDataModel _currentUserData =
+        Provider.of<AuthProvider>(context, listen: false).userData!;
     if (string != null && string != "") {
-      List<Ricetta> _result =
-          await DatabaseService.instance.searchRicetteByName(string);
+      List<Ricetta> _result = await DatabaseService.instance
+          .searchRicetteByName(string, _currentUserData.id!);
       setState(() {
         _ricette = _result;
       });
@@ -49,7 +54,7 @@ class _RicettaSearchPageState extends State<RicettaSearchPage> {
       null,
       null,
       mealInput,
-      mealInput.pasto,
+      mealInput.pasto!,
     );
     setState(() {
       _textController.text = "";
@@ -62,7 +67,7 @@ class _RicettaSearchPageState extends State<RicettaSearchPage> {
   @override
   Widget build(BuildContext context) {
     mealInput =
-        ModalRoute.of(context).settings.arguments as RicettaManagementInput;
+        ModalRoute.of(context)!.settings.arguments as RicettaManagementInput;
     return Scaffold(
       backgroundColor: Color.fromRGBO(43, 43, 43, 1),
       appBar: AppBar(
@@ -115,13 +120,13 @@ class _RicettaSearchPageState extends State<RicettaSearchPage> {
     //ricetta può essere nulla se sono in fase di creazione da zero altrimenti è valorizzata con quella selezionata
     Map<Product, bool> prods = await DatabaseService.instance
         .getProductsByReceiptWithDefaultFalseInSpesa(
-            _ricetta.menuIdRef, _ricetta.id);
+            _ricetta.menuIdRef!, _ricetta.id!);
     NewSelectedReceiptInput receiptInput = new NewSelectedReceiptInput(
       ReceiptOperationType.SEARCH,
       _ricetta,
       prods,
       mealInput,
-      mealInput.pasto,
+      mealInput.pasto!,
     );
     Navigator.pushNamed(context, "receiptPage",
             arguments:
@@ -132,13 +137,13 @@ class _RicettaSearchPageState extends State<RicettaSearchPage> {
   Widget _ricetteList() {
     return ListView.builder(
         shrinkWrap: true,
-        itemCount: _ricette.length,
+        itemCount: _ricette!.length,
         itemBuilder: (context, index) {
           return Padding(
             padding: const EdgeInsets.all(8.0),
             child: GestureDetector(
-                child: RicettaSearchWidget(_ricette[index]),
-                onTap: () => _showRicettaDetailForInsert(_ricette[index])),
+                child: RicettaSearchWidget(_ricette![index]),
+                onTap: () => _showRicettaDetailForInsert(_ricette![index])),
           );
         });
   }

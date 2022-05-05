@@ -3,14 +3,17 @@ import 'package:flutter/material.dart';
 import 'package:market_organizer/database/database_service.dart';
 import 'package:market_organizer/models/productOperationType.dart';
 import 'package:market_organizer/models/product_model.dart';
+import 'package:market_organizer/models/userdata_model.dart';
 import 'package:market_organizer/pages/menu/singleDay/receipt/product/productInputForDb.dart';
 import 'package:market_organizer/pages/menu/singleDay/receipt/product/product_page.dart';
-import 'package:market_organizer/pages/menu/singleDay/receipt/product/product_widget.dart';
+import 'package:market_organizer/pages/menu/singleDay/receipt/product/product_search_widget.dart';
+import 'package:market_organizer/provider/auth_provider.dart';
 import 'package:market_organizer/service/navigation_service.dart';
+import 'package:provider/provider.dart';
 
 //classe usata per mostrare inserimento di un prodotto da zero
 class ProductSearchInput {
-  final Function
+  final Function?
       insertNewProduct; //gestisco sia insert che update di prodotto NON ancora salvato a db
   final String workspaceId;
   final ProductOperationType operationType;
@@ -29,8 +32,8 @@ class ProductSearchPage extends StatefulWidget {
 }
 
 class ProductSearchPageState extends State<ProductSearchPage> {
-  TextEditingController _textController;
-  List<Product> _products; //lista di prodotti trovati
+  late TextEditingController _textController;
+  List<Product>? _products; //lista di prodotti trovati
 
   @override
   void initState() {
@@ -39,9 +42,11 @@ class ProductSearchPageState extends State<ProductSearchPage> {
   }
 
   void _updateResearch(String string) async {
-    if (string != null && string != "") {
-      List<Product> _result =
-          await DatabaseService.instance.searchProductByName(string);
+    UserDataModel _currentUserData =
+        Provider.of<AuthProvider>(context, listen: false).userData!;
+    if (string != "") {
+      List<Product> _result = await DatabaseService.instance
+          .searchProductByName(string, _currentUserData.id!);
       setState(() {
         _products = _result;
       });
@@ -146,12 +151,12 @@ class ProductSearchPageState extends State<ProductSearchPage> {
   Widget _productList() {
     return ListView.builder(
         shrinkWrap: true,
-        itemCount: _products.length,
+        itemCount: _products!.length,
         itemBuilder: (context, index) {
           return Padding(
             padding: const EdgeInsets.all(8.0),
             child: GestureDetector(
-              onTap: () => showProduct(_products[index]),
+              onTap: () => showProduct(_products![index]),
               child: Container(
                 clipBehavior: Clip.hardEdge,
                 decoration: BoxDecoration(
@@ -160,8 +165,8 @@ class ProductSearchPageState extends State<ProductSearchPage> {
                     Radius.circular(10),
                   ),
                 ),
-                child: ProductReceiptWidget(
-                  _products[index],
+                child: ProductSearchWidget(
+                  _products![index],
                 ),
               ),
             ),

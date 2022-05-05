@@ -7,10 +7,10 @@ class MeasureUnitList {
     "kg": "kg",
     "millilitri": "ml",
     "litri": "lt",
-    "elemento": "elem.",
-    "confezione": "conf.",
+    "elemento": "elem",
+    "confezione": "conf",
     "mista": "mix",
-    "scatolone": "scat.",
-    "pacco": "pac.",
+    "scatolone": "scat",
+    "pacco": "pac",
   };
 }

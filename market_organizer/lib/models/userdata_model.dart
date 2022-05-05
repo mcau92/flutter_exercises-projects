@@ -1,51 +1,31 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:market_organizer/models/workspace_shared.model.dart';
 
 class UserDataModel {
-  String id;
-  String email;
-  String password;
-  String name;
-  String surname;
-  List<WorkspaceShared> workspaceShared;
+  String? id;
+  String? email;
+  String? image;
+  String? password;
+  String? name;
+  List<String>? workspacesIdRef;
 
   UserDataModel({
     this.id,
     this.email,
+    this.image,
     this.password,
     this.name,
-    this.surname,
-    this.workspaceShared,
+    this.workspacesIdRef,
   });
-  static UserDataModel example = new UserDataModel(
-    id: "LMgqupuW0wVW4RZn3QyC0y9Xxrg1",
-    email: "92mika@gmail.com",
-    password: "testtest",
-    name: "michael",
-    surname: "cauduro",
-    workspaceShared: [],
-  );
 
   factory UserDataModel.fromFirestore(DocumentSnapshot _snapshot) {
-    var _data = _snapshot.data();
-    List _wks = _data["workspaceShared"];
-    if (_wks != null && _wks != []) {
-      _wks = _wks.map((_w) {
-        return WorkspaceShared(
-            ownerId: _w["ownerId"],
-            permissions: _w["permissions"],
-            workspaceId: _w["workspaceId"]);
-      }).toList();
-    } else {
-      _wks = [];
-    }
+    var _data = _snapshot.data() as Map;
     return UserDataModel(
       id: _snapshot.id,
       email: _data["email"],
+      image: _data["image"],
       password: _data["password"],
       name: _data["name"],
-      surname: _data["surname"],
-      workspaceShared: _wks,
+      workspacesIdRef: _data["workspacesIdRef"].cast<String>(),
     );
   }
 }

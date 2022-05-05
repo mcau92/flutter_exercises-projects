@@ -6,22 +6,25 @@ import 'package:market_organizer/models/productOperationType.dart';
 import 'package:market_organizer/models/product_model.dart';
 import 'package:market_organizer/models/userdata_model.dart';
 import 'package:market_organizer/pages/menu/singleDay/receipt/product/productInputForDb.dart';
+import 'package:market_organizer/provider/auth_provider.dart';
+import 'package:market_organizer/provider/date_provider.dart';
 import 'package:market_organizer/service/navigation_service.dart';
 import 'package:market_organizer/utils/measure_unit_list.dart';
+import 'package:provider/provider.dart';
 
 //classe usata per mostrare inserimento di un prodotto da zero
 class ProductReceiptInput {
-  final Function
+  final Function?
       manageNewProductAction; //gestisco sia insert che update di prodotto NON ancora salvato a db
-  final String workspaceId; //nullo se in fase di aggiornamento
-  final int indexKey;
-  final Product product; //valorizzato in fase di aggiornamento
+  final String? workspaceId; //nullo se in fase di aggiornamento
+  final int? indexKey;
+  final Product? product; //valorizzato in fase di aggiornamento
   bool isAddToSpesa; //valorizzato se sto ancora inserendo il prodotto
   final ProductOperationType
       operationType; // specifico quale operazione sto per effettuare
-  final String
+  final String?
       pasto; //valorizzati e usati se devo inserire prodotto direttamente in menu
-  final DateTime date; //valorizzato e usato se devo inserire prodotto in menu
+  final DateTime? date; //valorizzato e usato se devo inserire prodotto in menu
   ProductReceiptInput(
       this.manageNewProductAction,
       this.workspaceId,
@@ -42,17 +45,17 @@ class ProductReceiptPage extends StatefulWidget {
 }
 
 class ProductReceiptPageState extends State<ProductReceiptPage> {
-  GlobalKey<FormState> _formKey;
-  TextEditingController _measureController;
-  TextEditingController _typeAheadController;
+  late GlobalKey<FormState> _formKey;
+  late TextEditingController _measureController;
+  late TextEditingController _typeAheadController;
 
   String _productName = "";
   String _productDescription = "nessuna descrizione";
-  String _productReparto;
+  String? _productReparto;
   double _quantity = 0.0;
   String _measureUnit = "";
   bool _isInsertSelected = false;
-  double _price = 0;
+  double? _price = 0;
   String _currency = "€";
 
   @override
@@ -66,10 +69,10 @@ class ProductReceiptPageState extends State<ProductReceiptPage> {
   void initState() {
     _formKey = GlobalKey<FormState>();
     _measureController = widget.input.product != null
-        ? TextEditingController(text: widget.input.product.measureUnit)
+        ? TextEditingController(text: widget.input.product!.measureUnit!)
         : TextEditingController();
     _typeAheadController = widget.input.product != null
-        ? TextEditingController(text: widget.input.product.reparto)
+        ? TextEditingController(text: widget.input.product!.reparto)
         : TextEditingController();
 
     initProd();
@@ -78,18 +81,18 @@ class ProductReceiptPageState extends State<ProductReceiptPage> {
 
   void initProd() {
     if (widget.input.product != null) {
-      _productName = widget.input.product.name;
-      _productDescription = widget.input.product.description;
-      _productReparto = widget.input.product.reparto;
-      _price = widget.input.product.price;
-      _quantity = widget.input.product.quantity;
-      _measureUnit = widget.input.product.measureUnit;
+      _productName = widget.input.product!.name!;
+      _productDescription = widget.input.product!.description!;
+      _productReparto = widget.input.product!.reparto;
+      _price = widget.input.product!.price;
+      _quantity = widget.input.product!.quantity!;
+      _measureUnit = widget.input.product!.measureUnit!;
     }
   }
 
   bool _isSaveValid() {
-    _formKey.currentState.save();
-    return _formKey.currentState.validate();
+    _formKey.currentState!.save();
+    return _formKey.currentState!.validate();
   }
 
   void _showNoUpdateDialog() async {
@@ -117,16 +120,18 @@ class ProductReceiptPageState extends State<ProductReceiptPage> {
   }
 
   void _saveProduct() async {
+    UserDataModel _currentUserData =
+        Provider.of<AuthProvider>(context, listen: false).userData!;
     if (widget.input.operationType == ProductOperationType.INSERT ||
         widget.input.operationType ==
             ProductOperationType.INSERT_FROM_RECEIPT) {
       //retrive the color for the new product
       String _color = await DatabaseService.instance
-          .getUserColor(widget.input.workspaceId, UserDataModel.example.id);
+          .getUserColor(widget.input.workspaceId, _currentUserData.id);
       print(_color);
       Product _product = new Product();
-      _product.ownerId = UserDataModel.example.id;
-      _product.ownerName = UserDataModel.example.name;
+      _product.ownerId = _currentUserData.id;
+      _product.ownerName = _currentUserData.name;
       _product.name = _productName;
       _product.description = _productDescription;
       _product.reparto = _productReparto;
@@ -140,30 +145,38 @@ class ProductReceiptPageState extends State<ProductReceiptPage> {
       if (widget.input.operationType == ProductOperationType.INSERT) {
         _product.pasto = widget.input.pasto;
         _product.date = widget.input.date;
+        DateTime dateStart =
+            Provider.of<DateProvider>(context, listen: false).dateStart;
+        DateTime dateEnd =
+            Provider.of<DateProvider>(context, listen: false).dateEnd;
+
         await DatabaseService.instance.insertNewProductInMenu(
-            ProductInputForDb(_product, widget.input.workspaceId),
-            widget.input.isAddToSpesa);
+            ProductInputForDb(_product, widget.input.workspaceId!),
+            widget.input.isAddToSpesa,
+            dateStart,
+            dateEnd,
+            _currentUserData.id!);
         NavigationService.instance.goBackUntil("singleDay");
       } else {
-        widget.input.manageNewProductAction(
+        widget.input.manageNewProductAction!(
             _product, widget.input.isAddToSpesa); //sto inserendo
 
         NavigationService.instance.goBack();
       }
     } else {
-      widget.input.product.name = _productName;
-      widget.input.product.description = _productDescription;
-      widget.input.product.reparto = _productReparto;
-      widget.input.product.measureUnit = _measureUnit;
-      widget.input.product.quantity = _quantity;
-      widget.input.product.price = _price;
+      widget.input.product!.name = _productName;
+      widget.input.product!.description = _productDescription;
+      widget.input.product!.reparto = _productReparto;
+      widget.input.product!.measureUnit = _measureUnit;
+      widget.input.product!.quantity = _quantity;
+      widget.input.product!.price = _price;
 
       if (widget.input.operationType == ProductOperationType.UPDATE) {
-        await DatabaseService.instance.updateProductOnMenu(
-            ProductInputForDb(widget.input.product, widget.input.workspaceId));
+        await DatabaseService.instance.updateProductOnMenu(ProductInputForDb(
+            widget.input.product!, widget.input.workspaceId!));
         NavigationService.instance.goBackUntil("singleDay");
       } else {
-        widget.input.manageNewProductAction(widget.input.product,
+        widget.input.manageNewProductAction!(widget.input.product,
             widget.input.isAddToSpesa, widget.input.indexKey); //sto aggiornando
 
         NavigationService.instance.goBack();
@@ -200,7 +213,9 @@ class ProductReceiptPageState extends State<ProductReceiptPage> {
             )
           ],
           title: Text(
-            "Aggiorna Prodotto",
+            widget.input.product != null
+                ? "Aggiorna Prodotto"
+                : "Inserisci Prodotto",
             style: TextStyle(color: Colors.white),
           ),
         ),
@@ -217,7 +232,9 @@ class ProductReceiptPageState extends State<ProductReceiptPage> {
         key: _formKey,
         child: Column(
           children: <Widget>[
-            _toSpesaSwitch(),
+            if (widget.input.product == null ||
+                widget.input.product!.spesaIdRef == null)
+              _toSpesaSwitch(),
             SizedBox(height: 10),
             _descriptionContainer(),
             widget.input.isAddToSpesa ? SizedBox(height: 50) : Container(),
@@ -228,6 +245,29 @@ class ProductReceiptPageState extends State<ProductReceiptPage> {
             _quantityContainer(),
             SizedBox(height: 50),
             widget.input.isAddToSpesa ? _priceContainer() : Container(),
+            if ((widget.input.product != null &&
+                widget.input.product!.spesaIdRef != null))
+              Container(
+                padding: EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withOpacity(0.7),
+                ),
+                child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      Text(
+                        "Attenzione, il Prodotto è presente nella Spesa!",
+                        style: TextStyle(color: Colors.white),
+                      ),
+                      SizedBox(
+                        height: 5,
+                      ),
+                      Text(
+                        "Modificando i dati non saranno pià allineati",
+                        style: TextStyle(color: Colors.white),
+                      )
+                    ]),
+              ),
           ],
         ),
       ),
@@ -274,7 +314,7 @@ class ProductReceiptPageState extends State<ProductReceiptPage> {
   Widget _productNameWidget() {
     return TextFormField(
       initialValue:
-          widget.input.product != null ? widget.input.product.name : "",
+          widget.input.product != null ? widget.input.product!.name : "",
       validator: (value) {
         if (value == null || value.isEmpty) {
           return "Inserisci il nome del prodotto";
@@ -285,11 +325,11 @@ class ProductReceiptPageState extends State<ProductReceiptPage> {
       textCapitalization: TextCapitalization.sentences,
       style: TextStyle(color: Colors.white),
       onChanged: (text) {
-        if (_isInsertSelected) _formKey.currentState.validate();
+        if (_isInsertSelected) _formKey.currentState!.validate();
       },
       onSaved: ((text) {
         setState(() {
-          _productName = text;
+          _productName = text!;
         });
       }),
       decoration: InputDecoration(
@@ -316,12 +356,12 @@ class ProductReceiptPageState extends State<ProductReceiptPage> {
   Widget _productDescriptionWidget() {
     return TextFormField(
       initialValue: widget.input.product != null &&
-              widget.input.product.description != null
-          ? widget.input.product.description
+              widget.input.product!.description != null
+          ? widget.input.product!.description
           : "",
       onSaved: ((text) {
         setState(() {
-          _productDescription = text;
+          _productDescription = text!;
         });
       }),
       textCapitalization: TextCapitalization.sentences,
@@ -372,22 +412,22 @@ class ProductReceiptPageState extends State<ProductReceiptPage> {
         ),
       ),
       suggestionsCallback: (pattern) {
+        UserDataModel _currentUserData =
+            Provider.of<AuthProvider>(context, listen: false).userData!;
         return DatabaseService.instance
-            .getUserRepartiByInput(pattern, UserDataModel.example.id);
+            .getUserRepartiByInput(pattern, _currentUserData.id!);
       },
       itemBuilder: (context, suggestion) {
-        return ListTile(
-          title: Text(suggestion),
-        );
+        return ListTile(title: Text(suggestion as String));
       },
       onSuggestionSelected: (suggestion) {
-        this._typeAheadController.text = suggestion;
+        this._typeAheadController.text = suggestion as String;
       },
       transitionBuilder: (context, suggestionsBox, animationController) =>
           FadeTransition(
         child: suggestionsBox,
         opacity: CurvedAnimation(
-            parent: animationController, curve: Curves.fastOutSlowIn),
+            parent: animationController!, curve: Curves.fastOutSlowIn),
       ),
       hideOnEmpty: true,
       hideOnLoading: true,
@@ -404,7 +444,7 @@ class ProductReceiptPageState extends State<ProductReceiptPage> {
         setState(() {
           _productReparto = text;
         });
-        if (_isInsertSelected) _formKey.currentState.validate();
+        if (_isInsertSelected) _formKey.currentState!.validate();
       },
     );
   }
@@ -427,8 +467,8 @@ class ProductReceiptPageState extends State<ProductReceiptPage> {
   Widget _productQuantity() {
     return TextFormField(
       initialValue:
-          widget.input.product != null && widget.input.product.quantity != null
-              ? widget.input.product.quantity.toString()
+          widget.input.product != null && widget.input.product!.quantity != null
+              ? widget.input.product!.quantity.toString()
               : "",
       validator: (value) {
         if (value == null ||
@@ -440,7 +480,7 @@ class ProductReceiptPageState extends State<ProductReceiptPage> {
           return null;
       },
       onChanged: (text) {
-        if (_isInsertSelected) _formKey.currentState.validate();
+        if (_isInsertSelected) _formKey.currentState!.validate();
       },
       onSaved: (text) {
         if (text != null && text.isNotEmpty && double.tryParse(text) != null) {
@@ -502,7 +542,7 @@ class ProductReceiptPageState extends State<ProductReceiptPage> {
                     });
                   }
 
-                  if (_isInsertSelected) _formKey.currentState.validate();
+                  if (_isInsertSelected) _formKey.currentState!.validate();
                 },
                 children: MeasureUnitList.units.keys.map((v) {
                   return Center(child: Text(v));
@@ -555,27 +595,22 @@ class ProductReceiptPageState extends State<ProductReceiptPage> {
   Widget _priceSection() {
     return TextFormField(
       initialValue:
-          widget.input.product != null && widget.input.product.price != null
-              ? widget.input.product.price.toString()
+          widget.input.product != null && widget.input.product!.price != null
+              ? widget.input.product!.price.toString()
               : null,
-      validator: (value) {
-        if (value == null ||
-            value.isEmpty ||
-            double.tryParse(value) == null ||
-            double.parse(value) == 0) {
-          return "Inserisci una quantità valida";
-        } else
-          return null;
-      },
       onChanged: (text) {
-        if (_isInsertSelected) _formKey.currentState.validate();
+        if (_isInsertSelected) _formKey.currentState!.validate();
       },
       onSaved: (text) {
         if (text != null && text.isNotEmpty && double.tryParse(text) != null) {
           setState(() {
             _price = double.parse(text);
           });
-          if (_isInsertSelected) _formKey.currentState.validate();
+          if (_isInsertSelected) _formKey.currentState!.validate();
+        } else {
+          setState(() {
+            _price = 0;
+          });
         }
       },
       style: TextStyle(color: Colors.white),

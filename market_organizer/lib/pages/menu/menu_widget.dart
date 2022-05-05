@@ -22,11 +22,11 @@ class MenuWidget extends StatefulWidget {
 }
 
 class _MenuWidgetState extends State<MenuWidget> {
-  DateTime dateStart;
+  late DateTime dateStart;
 
-  DateTime dateEnd;
+  late DateTime dateEnd;
 
-  DateProvider _dateProvider;
+  late DateProvider _dateProvider;
 
   void _addMenu() {}
 
@@ -36,8 +36,8 @@ class _MenuWidgetState extends State<MenuWidget> {
     dateStart = _dateProvider.dateStart;
     dateEnd = _dateProvider.dateEnd;
     return Column(children: [
-      AppBarCustom(
-          1, _addMenu, false), //TODO controllare se i dati sono fetchati
+      AppBarCustom(1, _addMenu, false,
+          widget.worksapceId), //TODO controllare se i dati sono fetchati
       WeekPickerWidget(),
       Expanded(
         child: Padding(
@@ -57,7 +57,7 @@ class _MenuWidgetState extends State<MenuWidget> {
         //if (_snap.hasData && _snap.data.isNotEmpty) {
         //il controllo lo faccio quando devo popolare l'anteprima
         if (_snap.hasData) {
-          Menu _currentMenu = _snap.data.isEmpty ? null : _snap.data[0];
+          Menu? _currentMenu = _snap.data!.isEmpty ? null : _snap.data![0];
           //se menu non nullo recupero le ricette altrimenti iniziallizo con valori di default
           _weekDaysContainers = initWeekDaysContainers(_context, _currentMenu);
           return GridView.count(
@@ -68,7 +68,7 @@ class _MenuWidgetState extends State<MenuWidget> {
         } else {
           return Center(
               child: CircularProgressIndicator(
-            backgroundColor: Colors.red,
+            backgroundColor: Colors.orange,
           ));
         }
       },
@@ -83,7 +83,7 @@ class _MenuWidgetState extends State<MenuWidget> {
     List dayRecipts = recipts
         .where(
           (element) =>
-              element.date.weekday == Utils.instance.weekDays.indexOf(day) + 1,
+              element.date!.weekday == Utils.instance.weekDays.indexOf(day) + 1,
         )
         .toList();
     if (dayRecipts.isNotEmpty) {
@@ -96,7 +96,7 @@ class _MenuWidgetState extends State<MenuWidget> {
     List<Product> dayProd = product
         .where(
           (element) =>
-              element.date.weekday == Utils.instance.weekDays.indexOf(day) + 1,
+              element.date!.weekday == Utils.instance.weekDays.indexOf(day) + 1,
         )
         .toList();
     if (dayProd.isNotEmpty) {
@@ -105,66 +105,32 @@ class _MenuWidgetState extends State<MenuWidget> {
     return "0";
   }
 
-  Map<DateTime, Map<String, bool>> _buildMap(
-      ReciptsAndProducts reciptsAndProducts) {
-    Map<DateTime, Map<String, bool>> map = {};
-    reciptsAndProducts.products.forEach((element) {
-      if (!map.containsKey(element.date)) {
-        Map<String, bool> nestedMap = {};
-        nestedMap.putIfAbsent(element.pasto, () => true);
-        map.putIfAbsent(element.date, () => nestedMap);
-      } else {
-        Map<String, bool> nestedMap = map[element.date];
-        nestedMap.putIfAbsent(element.pasto, () => true);
-        map.remove(element.date);
-        map.putIfAbsent(element.date, () => nestedMap);
-      }
-    });
-    reciptsAndProducts.ricette.forEach((element) {
-      if (!map.containsKey(element.date)) {
-        Map<String, bool> nestedMap = {};
-        nestedMap.putIfAbsent(element.pasto, () => true);
-        map.putIfAbsent(element.date, () => nestedMap);
-      } else {
-        Map<String, bool> nestedMap = map[element.date];
-        nestedMap.putIfAbsent(element.pasto, () => true);
-        map.remove(element.date);
-        map.putIfAbsent(element.date, () => nestedMap);
-      }
-    });
-    return map;
-  }
-
-  void _showDay(BuildContext context, Menu menu, String day,
+  void _showDay(BuildContext context, Menu? menu, String day,
       ReciptsAndProducts reciptsAndProducts) {
     NavigationService.instance
         .navigateToWithParameters(
           "singleDay",
           SingleDayPageInput(
-              widget
-                  .worksapceId, //mi serve per inserire il menu se non presente
-              day,
-              dateStart
-                  .add(Duration(days: Utils.instance.weekDays.indexOf(day))),
-              dateStart,
-              dateEnd,
-              menu != null ? menu.id : null,
-              _buildMap(reciptsAndProducts)),
+            widget.worksapceId, //mi serve per inserire il menu se non presente
+            day,
+            dateStart.add(Duration(days: Utils.instance.weekDays.indexOf(day))),
+            dateStart,
+            dateEnd,
+            menu != null ? menu.id : null,
+          ),
         )
         .then((value) => setState(() {}));
   }
 
   Widget _showCounters(
-      Menu menu, String day, List<Ricetta> ricette, List<Product> products) {
+      Menu? menu, String day, List<Ricetta> ricette, List<Product> products) {
     return Column(
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
             Text(
-              menu != null
-                  ? _countRec(ricette != null ? ricette : [], day)
-                  : "0",
+              menu != null ? _countRec(ricette, day) : "0",
               style: TextStyle(fontSize: 40, color: Colors.red),
             ),
             Text(
@@ -177,9 +143,7 @@ class _MenuWidgetState extends State<MenuWidget> {
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
             Text(
-              menu != null
-                  ? _countPasti(products != null ? products : [], day)
-                  : "0",
+              menu != null ? _countPasti(products, day) : "0",
               style: TextStyle(fontSize: 40, color: Colors.orange),
             ),
             Text(
@@ -192,13 +156,11 @@ class _MenuWidgetState extends State<MenuWidget> {
     );
   }
 
-  ReciptsAndProducts _reciptsAndProductsData;
-  List<Widget> initWeekDaysContainers(BuildContext context, Menu menu) {
+  late ReciptsAndProducts _reciptsAndProductsData;
+  List<Widget> initWeekDaysContainers(BuildContext context, Menu? menu) {
     return Utils.instance.weekDays.map((day) {
       return GestureDetector(
-        onTap: () => _reciptsAndProductsData == null
-            ? () {}
-            : _showDay(context, menu, day, _reciptsAndProductsData),
+        onTap: () => _showDay(context, menu, day, _reciptsAndProductsData),
         child: Container(
           margin: EdgeInsets.all(20),
           padding: EdgeInsets.all(10),
@@ -234,17 +196,20 @@ class _MenuWidgetState extends State<MenuWidget> {
               FutureBuilder<ReciptsAndProducts>(
                   future: menu != null
                       ? DatabaseService.instance
-                          .getReciptsAndProductForMenu(menu.id)
+                          .getReciptsAndProductForMenu(menu.id!)
                       : Future.value(new ReciptsAndProducts([], [])),
                   builder: (_context, _snap) {
                     if (_snap.connectionState == ConnectionState.waiting) {
                       return Center(
-                        child: CircularProgressIndicator(color: Colors.red),
+                        child: CircularProgressIndicator(color: Colors.orange),
                       );
                     }
-                    _reciptsAndProductsData = _snap.data;
+                    _reciptsAndProductsData = _snap.data!;
                     return _showCounters(
-                        menu, day, _snap.data.ricette, _snap.data.products);
+                        menu,
+                        day,
+                        _reciptsAndProductsData.ricette,
+                        _reciptsAndProductsData.products);
                   }),
             ],
           ),

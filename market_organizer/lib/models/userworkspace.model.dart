@@ -1,15 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:market_organizer/models/men%C3%B9.dart';
-import 'package:market_organizer/models/spesa.dart';
 
 class UserWorkspace {
-  String id;
-  String name;
-  String ownerId;
-  Map<String, String>
+  String? id;
+  String? name;
+  String? ownerId;
+  Map<String, String>?
       userColors; //mappa che salva per ogni id utente il suo colore nel workspace sia per ricetta che per menu
-  List<String> contributorsId;
-  bool focused; //last user selected workspace on homepage
+  List<String>? contributorsId;
+  bool? focused; //last user selected workspace on homepage
 
   UserWorkspace({
     this.id,
@@ -21,14 +19,12 @@ class UserWorkspace {
   });
 
   factory UserWorkspace.fromFirestore(DocumentSnapshot _snapshot) {
-    var _data = _snapshot.data();
+    var _data = _snapshot.data() as Map;
 
     Map<String, String> userColors = {};
     if (_data["userColors"] != null) {
-      List.from(_data["userColors"]).forEach((map) {
-        Map.from(map).entries.forEach((element) {
-          userColors.putIfAbsent(element.key, () => element.value);
-        });
+      Map.from(_data["userColors"]).entries.forEach((element) {
+        userColors.putIfAbsent(element.key, () => element.value);
       });
     }
     return UserWorkspace(

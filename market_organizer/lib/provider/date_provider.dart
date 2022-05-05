@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:market_organizer/utils/utils.dart';
 
 class DateProvider with ChangeNotifier {
-  DateTime dateStart;
-  DateTime dateEnd;
-  String dateFormatted;
+  late DateTime dateStart;
+  late DateTime dateEnd;
+  late String dateFormatted;
 
   static DateProvider instance = DateProvider();
 
@@ -16,6 +16,16 @@ class DateProvider with ChangeNotifier {
             DateTime.now().year, DateTime.now().month, DateTime.now().day)
         .add(Duration(days: DateTime.daysPerWeek - DateTime.now().weekday));
     createString();
+  }
+  void resetToCurrentWeek() {
+    dateStart = new DateTime(
+            DateTime.now().year, DateTime.now().month, DateTime.now().day)
+        .subtract(Duration(days: DateTime.now().weekday - 1));
+    dateEnd = new DateTime(
+            DateTime.now().year, DateTime.now().month, DateTime.now().day)
+        .add(Duration(days: DateTime.daysPerWeek - DateTime.now().weekday));
+    createString();
+    notifyListeners();
   }
 
   void increaseWeek() {

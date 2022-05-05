@@ -22,11 +22,11 @@ class RicettaSearchWidget extends StatelessWidget {
     return ListTile(
       contentPadding: EdgeInsets.symmetric(vertical: 0.0, horizontal: 16.0),
       dense: true,
-      title: Text(_ricetta.name,
+      title: Text(_ricetta.name!,
           style: TextStyle(
               color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
       subtitle: Text(
-        _ricetta.description,
+        _ricetta.description!,
         style: TextStyle(
           color: Colors.white.withOpacity(0.7),
         ),

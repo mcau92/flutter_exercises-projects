@@ -6,11 +6,11 @@
 	<dict>
 		<key>Headers/IntegrationTestIosTest.h</key>
 		<data>
-		UsJuhVLkR1UDRASMSsHj+6ldgnI=
+		LiOp0xEaXe9KWIKXOKhgU9tXubI=
 		</data>
 		<key>Headers/IntegrationTestPlugin.h</key>
 		<data>
-		TMbCcoKuItE6wSN7cF7CR7DwEZQ=
+		O/yqXem6P3715GQG3YLTg/xAVw0=
 		</data>
 		<key>Headers/integration_test-umbrella.h</key>
 		<data>
@@ -18,7 +18,7 @@
 		</data>
 		<key>Info.plist</key>
 		<data>
-		Vv+Y1wet0W0Nit2Fy9GYWioSDZA=
+		KSIKIyEtxLMvMtiq0jx1oIf1Trg=
 		</data>
 		<key>Modules/module.modulemap</key>
 		<data>
@@ -29,20 +29,32 @@
 	<dict>
 		<key>Headers/IntegrationTestIosTest.h</key>
 		<dict>
+			<key>hash</key>
+			<data>
+			LiOp0xEaXe9KWIKXOKhgU9tXubI=
+			</data>
 			<key>hash2</key>
 			<data>
-			cTvEdAfM29KTn9R2KKjh/xxzWSnwF1+JfhCOOlJsU2s=
+			dnIO4BN6jqbZumIFxkjqy6W1iTgdBWpY+zC3MK6PI0g=
 			</data>
 		</dict>
 		<key>Headers/IntegrationTestPlugin.h</key>
 		<dict>
+			<key>hash</key>
+			<data>
+			O/yqXem6P3715GQG3YLTg/xAVw0=
+			</data>
 			<key>hash2</key>
 			<data>
-			2wIrN/+s9pJtZ9Z2twYJB7lbAOAsVCk/kn9RUjwWIYQ=
+			7nO67jkSRgG7ucQtXn+sDIyxpbeFr9GHKmZeUUm9F/0=
 			</data>
 		</dict>
 		<key>Headers/integration_test-umbrella.h</key>
 		<dict>
+			<key>hash</key>
+			<data>
+			fKAe9FfXlZ6wqheEtjhdkcZN9Ug=
+			</data>
 			<key>hash2</key>
 			<data>
 			qT4Zb6kMy1allsB/QcO6xHfRWvA3826/Qv6F8GRz2yY=
@@ -50,6 +62,10 @@
 		</dict>
 		<key>Modules/module.modulemap</key>
 		<dict>
+			<key>hash</key>
+			<data>
+			lhX7AimHYA+/5CXa0WPWUnGbuJU=
+			</data>
 			<key>hash2</key>
 			<data>
 			cfPP1SsIUz4kP75Q7JoPfRgsXtryb2q5OonL9wh39Jk=

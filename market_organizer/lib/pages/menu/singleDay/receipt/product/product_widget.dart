@@ -10,6 +10,11 @@ class ProductReceiptWidget extends StatelessWidget {
 
   ProductReceiptWidget(this._product);
 
+  // void _updateCheckBoxIntern(bool value) {
+  //   _product.checkedOnMenu = value;
+  //   _updateCheckBox(_product);
+  // }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -21,7 +26,7 @@ class ProductReceiptWidget extends StatelessWidget {
         ),
       ),
       child: Container(
-        color: ColorCostant.colorMap[_product.color].withOpacity(0.2),
+        color: ColorCostant.colorMap[_product.color]!.withOpacity(0.2),
         child: _productCard(),
       ),
     );
@@ -31,28 +36,15 @@ class ProductReceiptWidget extends StatelessWidget {
     return ListTile(
       contentPadding: EdgeInsets.symmetric(vertical: 0.0, horizontal: 11.0),
       dense: true,
-      leading: Container(
-        margin: EdgeInsets.symmetric(vertical: 10),
-        width: 27,
-        decoration: BoxDecoration(
-          color: ColorCostant.colorMap[_product.color],
-          borderRadius: BorderRadius.circular(25),
-        ),
-        child: Center(
-          child: Text(
-            _product.ownerName[0].toUpperCase(),
-            style: TextStyle(fontSize: 15, color: Colors.white),
-          ),
-        ),
-      ),
-      title: Text(_product.name,
+      horizontalTitleGap: 10,
+      title: Text(_product.name!,
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
               color: Colors.black, fontWeight: FontWeight.bold, fontSize: 16)),
       subtitle: Text(
-        _product.description == null || _product.description.isEmpty
+        _product.description == null || _product.description!.isEmpty
             ? "(nessuna descrizione)"
-            : _product.description,
+            : _product.description!,
         overflow: TextOverflow.ellipsis,
         style: TextStyle(
           color: Colors.black.withOpacity(0.7),
@@ -68,13 +60,27 @@ class ProductReceiptWidget extends StatelessWidget {
       children: [
         Text(
           MeasureConverterUtility.quantityMeasureUnitStringCreation(
-              _product.quantity, _product.measureUnit),
+              _product.quantity!, _product.measureUnit!),
           style: TextStyle(
             color: Colors.black,
             fontWeight: FontWeight.w600,
           ),
         ),
         SizedBox(width: 20),
+        Container(
+          margin: EdgeInsets.symmetric(vertical: 10),
+          width: 27,
+          decoration: BoxDecoration(
+            color: ColorCostant.colorMap[_product.color],
+            borderRadius: BorderRadius.circular(25),
+          ),
+          child: Center(
+            child: Text(
+              _product.ownerName![0].toUpperCase(),
+              style: TextStyle(fontSize: 15, color: Colors.white),
+            ),
+          ),
+        ),
       ],
     );
   }

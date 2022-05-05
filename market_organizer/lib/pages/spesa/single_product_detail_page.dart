@@ -21,9 +21,9 @@ class SingleProductDetailPage extends StatefulWidget {
 }
 
 class _SingleProductDetailPageState extends State<SingleProductDetailPage> {
-  GlobalKey<FormState> _formKey;
-  TextEditingController _measureController;
-  TextEditingController _typeAheadController;
+  late GlobalKey<FormState> _formKey;
+  late TextEditingController _measureController;
+  late TextEditingController _typeAheadController;
 
   String _productName = "";
   String _productDescription = "";
@@ -31,8 +31,8 @@ class _SingleProductDetailPageState extends State<SingleProductDetailPage> {
   double _quantity = 0.0;
   String _measureUnit = "";
   bool _isInsertSelected = false;
-  String _currency;
-  double _price;
+  late String _currency;
+  late double _price;
 
   @override
   void dispose() {
@@ -51,63 +51,23 @@ class _SingleProductDetailPageState extends State<SingleProductDetailPage> {
     super.initState();
   }
 
-  bool _isUpdateValid() {
-    print(_price != widget.input.product.price);
-    _formKey.currentState.save();
-    if (_formKey.currentState.validate()) {
-      return (_productName != widget.input.product.name ||
-          _productDescription != widget.input.product.description ||
-          _productReparto != widget.input.product.reparto ||
-          _quantity != widget.input.product.quantity ||
-          this._measureController.text != widget.input.product.measureUnit ||
-          _price != widget.input.product.price);
-    } else {
-      return false;
-    }
-  }
-
   void initProd() {
-    _productName = widget.input.product.name;
-    _productDescription = widget.input.product.description;
-    _productReparto = widget.input.product.reparto;
-    _quantity = widget.input.product.quantity;
-    _measureUnit = widget.input.product.measureUnit;
-    _currency = widget.input.product.currency;
-    _price = widget.input.product.price;
-  }
-
-  void _showNoUpdateDialog() async {
-    return await showCupertinoDialog(
-        context: context,
-        builder: (ctx) {
-          return CupertinoAlertDialog(
-            title: Text(
-                "Nessun cambiamento rillevato, aggiorna uno o più campi per procedere"),
-            actions: [
-              CupertinoDialogAction(
-                child: Text("Ho Capito"),
-                onPressed: () {
-                  setState(() {
-                    _isInsertSelected = true;
-                  });
-                  Navigator.of(
-                    ctx,
-                    // rootNavigator: true,
-                  ).pop(true);
-                },
-              ),
-            ],
-          );
-        });
+    _productName = widget.input.product.name!;
+    _productDescription = widget.input.product.description!;
+    _productReparto = widget.input.product.reparto!;
+    _quantity = widget.input.product.quantity!;
+    _measureUnit = widget.input.product.measureUnit!;
+    _currency = widget.input.product.currency!;
+    _price = widget.input.product.price!;
   }
 
   void _saveProduct() async {
-    print(_price - widget.input.product.price);
-    if (_formKey.currentState.validate()) {
+    _formKey.currentState!.save();
+    if (_formKey.currentState!.validate()) {
       await DatabaseService.instance.updateProductOnSpesa(
-          widget.input.product.id,
-          widget.input.product.spesaIdRef,
-          widget.input.product.ownerId,
+          widget.input.product.id!,
+          widget.input.product.spesaIdRef!,
+          widget.input.product.ownerId!,
           _productName,
           _productDescription,
           _productReparto,
@@ -115,7 +75,7 @@ class _SingleProductDetailPageState extends State<SingleProductDetailPage> {
           this._measureController.text,
           _currency,
           _price,
-          _price - widget.input.product.price);
+          _price - widget.input.product.price!);
       NavigationService.instance.goBack();
     } else {
       return await showCupertinoDialog(
@@ -162,8 +122,7 @@ class _SingleProductDetailPageState extends State<SingleProductDetailPage> {
           actions: [
             CupertinoButton(
               child: Text("Aggiorna"),
-              onPressed: () =>
-                  _isUpdateValid() ? _saveProduct() : _showNoUpdateDialog(),
+              onPressed: () => _saveProduct(),
             )
           ],
           title: Text(
@@ -224,11 +183,12 @@ class _SingleProductDetailPageState extends State<SingleProductDetailPage> {
       },
       style: TextStyle(color: Colors.white),
       onChanged: (text) {
-        if (_isInsertSelected) _formKey.currentState.validate();
+        if (_isInsertSelected) _formKey.currentState!.validate();
       },
       onSaved: ((text) {
+        print(text);
         setState(() {
-          _productName = text;
+          _productName = text!;
         });
       }),
       decoration: InputDecoration(
@@ -257,7 +217,7 @@ class _SingleProductDetailPageState extends State<SingleProductDetailPage> {
       initialValue: widget.input.product.description,
       onSaved: ((text) {
         setState(() {
-          _productDescription = text;
+          _productDescription = text as String;
         });
       }),
       style: TextStyle(color: Colors.white),
@@ -306,21 +266,22 @@ class _SingleProductDetailPageState extends State<SingleProductDetailPage> {
       ),
       suggestionsCallback: (pattern) {
         return DatabaseService.instance
-            .getUserRepartiByInput(pattern, widget.input.product.ownerId);
+            .getUserRepartiByInput(pattern, widget.input.product.ownerId!);
       },
       itemBuilder: (context, suggestion) {
         return ListTile(
-          title: Text(suggestion),
+          title: Text(suggestion as String),
         );
       },
       onSuggestionSelected: (suggestion) {
-        this._typeAheadController.text = suggestion;
+        this._typeAheadController.text = suggestion as String;
       },
       transitionBuilder: (context, suggestionsBox, animationController) =>
           FadeTransition(
         child: suggestionsBox,
         opacity: CurvedAnimation(
-            parent: animationController, curve: Curves.fastOutSlowIn),
+            parent: animationController as AnimationController,
+            curve: Curves.fastOutSlowIn),
       ),
       hideOnEmpty: true,
       hideOnLoading: true,
@@ -335,9 +296,9 @@ class _SingleProductDetailPageState extends State<SingleProductDetailPage> {
       },
       onSaved: (text) {
         setState(() {
-          _productReparto = text;
+          _productReparto = text as String;
         });
-        if (_isInsertSelected) _formKey.currentState.validate();
+        if (_isInsertSelected) _formKey.currentState!.validate();
       },
     );
   }
@@ -371,7 +332,7 @@ class _SingleProductDetailPageState extends State<SingleProductDetailPage> {
           return null;
       },
       onChanged: (text) {
-        if (_isInsertSelected) _formKey.currentState.validate();
+        if (_isInsertSelected) _formKey.currentState!.validate();
       },
       onSaved: (text) {
         if (text != null && text.isNotEmpty && double.tryParse(text) != null) {
@@ -433,7 +394,7 @@ class _SingleProductDetailPageState extends State<SingleProductDetailPage> {
                     });
                   }
 
-                  if (_isInsertSelected) _formKey.currentState.validate();
+                  if (_isInsertSelected) _formKey.currentState!.validate();
                 },
                 children: MeasureUnitList.units.keys.map((v) {
                   return Center(child: Text(v));
@@ -489,24 +450,19 @@ class _SingleProductDetailPageState extends State<SingleProductDetailPage> {
           ? widget.input.product.price.toString()
           : null,
       keyboardType: TextInputType.numberWithOptions(decimal: true),
-      validator: (value) {
-        if (value == null ||
-            value.isEmpty ||
-            double.tryParse(value) == null ||
-            double.parse(value) == 0) {
-          return "Inserisci una quantità valida";
-        } else
-          return null;
-      },
       onChanged: (text) {
-        if (_isInsertSelected) _formKey.currentState.validate();
+        if (_isInsertSelected) _formKey.currentState!.validate();
       },
       onSaved: (text) {
         if (text != null && text.isNotEmpty && double.tryParse(text) != null) {
           setState(() {
             _price = double.parse(text);
           });
-          if (_isInsertSelected) _formKey.currentState.validate();
+          if (_isInsertSelected) _formKey.currentState!.validate();
+        } else {
+          setState(() {
+            _price = 0;
+          });
         }
       },
       style: TextStyle(color: Colors.white),

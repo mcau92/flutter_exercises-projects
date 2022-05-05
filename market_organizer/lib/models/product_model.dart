@@ -1,28 +1,28 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Product {
-  String id;
-  String ownerId;
-  String ownerName;
-  String color;
-  String name;
-  String description;
-  String measureUnit;
-  double quantity;
-  String image;
+  String? id;
+  String? ownerId;
+  String? ownerName;
+  String? color;
+  String? name;
+  String? description;
+  String? measureUnit;
+  double? quantity;
+  String? image;
   //menu
-  String ricettaIdRef;
-  String menuIdRef; //prodotto inserito singolo in menu
-  String pasto; //pranzo colazione ecc se inserito in menu direttamente
-  DateTime date; // se inserito in menu direttamente
+  String? ricettaIdRef;
+  String? menuIdRef; //prodotto inserito singolo in menu
+  String? pasto; //pranzo colazione ecc se inserito in menu direttamente
+  DateTime? date; // se inserito in menu direttamente
   //spesa
-  String spesaIdRef;
-  String reparto;
-  String currency;
-  double price;
-  bool
+  String? spesaIdRef;
+  String? reparto;
+  String? currency;
+  double? price;
+  bool?
       bought; //indica se è comprato o meno per gestire la visualizzazione in spesa
-
+  bool? checkedOnMenu;
   Product({
     this.id,
     this.ownerId,
@@ -42,6 +42,7 @@ class Product {
     this.currency,
     this.price,
     this.bought,
+    this.checkedOnMenu,
   });
   Map<String, dynamic> toMap() {
     return {
@@ -62,11 +63,12 @@ class Product {
       "pasto": pasto,
       "date": date,
       "bought": bought,
+      "checkedOnMenu": checkedOnMenu,
     };
   }
 
   factory Product.fromFirestore(DocumentSnapshot _snapshot) {
-    var _data = _snapshot.data();
+    var _data = _snapshot.data() as Map;
 
     return Product(
         id: _snapshot.id,
@@ -90,6 +92,8 @@ class Product {
             : 0.0,
         pasto: _data["pasto"],
         date: _data["date"] != null ? _data["date"].toDate() : null,
-        bought: _data["bought"] != null ? _data["bought"] : false);
+        bought: _data["bought"] != null ? _data["bought"] : false,
+        checkedOnMenu:
+            _data["checkedOnMenu"] != null ? _data["checkedOnMenu"] : false);
   }
 }

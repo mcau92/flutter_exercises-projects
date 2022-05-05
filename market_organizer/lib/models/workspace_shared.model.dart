@@ -1,14 +1,14 @@
 class WorkspaceShared {
-  String ownerId;
-  String workspaceId;
-  String permissions;
+  String? ownerId;
+  String? workspaceId;
+  String? permissions;
 
   WorkspaceShared({
     this.ownerId,
     this.workspaceId,
     this.permissions,
   });
-  
+
   /* factory UserDataModel.fromFirestore(DocumentSnapshot _snapshot) {
     var _data = _snapshot.data();
 

@@ -8,8 +8,11 @@ import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:market_organizer/database/database_service.dart';
 import 'package:market_organizer/models/spesa.dart';
 import 'package:market_organizer/models/userdata_model.dart';
+import 'package:market_organizer/provider/auth_provider.dart';
 import 'package:market_organizer/service/navigation_service.dart';
+import 'package:market_organizer/utils/category_enum.dart';
 import 'package:market_organizer/utils/measure_unit_list.dart';
+import 'package:provider/provider.dart';
 
 class AddSpesaPage extends StatefulWidget {
   @override
@@ -17,18 +20,18 @@ class AddSpesaPage extends StatefulWidget {
 }
 
 class _AddSpesaPageState extends State<AddSpesaPage> {
-  GlobalKey<FormState> _formKey;
-  TextEditingController _controller;
-  TextEditingController _typeAheadController;
-  Spesa _currentSpesa;
-  String _productName = "";
+  late GlobalKey<FormState> _formKey;
+  late TextEditingController _controller;
+  late TextEditingController _typeAheadController;
+  late Spesa? _currentSpesa;
+  late String _productName = "";
   String _productDescription = "";
   String _productReparto = "";
   double _quantity = 0.0;
   String _measureUnit = "";
   bool _isInsertSelected = false;
-  String _currency;
-  double _price;
+  String _currency = "€";
+  late double _price;
 
   @override
   void dispose() {
@@ -46,17 +49,24 @@ class _AddSpesaPageState extends State<AddSpesaPage> {
   }
 
   void _saveProduct() async {
-    _formKey.currentState.save();
-    if (_formKey.currentState.validate()) {
-      if (_currentSpesa == null || _currentSpesa.id == null) {
+    _formKey.currentState!.save();
+    if (_formKey.currentState!.validate()) {
+      if (_currentSpesa == null || _currentSpesa!.id == null) {
         //create new spesa
+        _currentSpesa!.orderBy = CategoryOrder.category.toString();
+        _currentSpesa!.showPrice = true;
+        _currentSpesa!.showSelected = true;
         _currentSpesa =
-            await DatabaseService.instance.createNewSpesa(_currentSpesa);
+            await DatabaseService.instance.createNewSpesa(_currentSpesa!);
       }
+
+      UserDataModel _currentUserData =
+          Provider.of<AuthProvider>(context, listen: false).userData!;
       await DatabaseService.instance.insertProductOnSpesa(
-        _currentSpesa.workspaceIdRef,
-        _currentSpesa.id,
-        _currentSpesa.ownerId,
+        _currentSpesa!.workspaceIdRef!,
+        _currentSpesa!.id!,
+        _currentUserData.id!,
+        _currentUserData.name!,
         _productName,
         _productDescription,
         _productReparto,
@@ -93,7 +103,7 @@ class _AddSpesaPageState extends State<AddSpesaPage> {
 
   @override
   Widget build(BuildContext context) {
-    _currentSpesa = ModalRoute.of(context).settings.arguments as Spesa;
+    _currentSpesa = ModalRoute.of(context)!.settings.arguments as Spesa;
     return GestureDetector(
       onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
       child: Scaffold(
@@ -176,7 +186,7 @@ class _AddSpesaPageState extends State<AddSpesaPage> {
           setState(() {
             _productName = text;
           });
-          if (_isInsertSelected) _formKey.currentState.validate();
+          if (_isInsertSelected) _formKey.currentState!.validate();
         }
       },
       textCapitalization: TextCapitalization.sentences,
@@ -257,20 +267,20 @@ class _AddSpesaPageState extends State<AddSpesaPage> {
         ),
       ),
       suggestionsCallback: (pattern) async {
-        return await DatabaseService.instance.getUserRepartiByInput(
-            pattern,
-            _currentSpesa != null
-                ? _currentSpesa.ownerId
-                : UserDataModel.example.id);
+        UserDataModel _currentUserData =
+            Provider.of<AuthProvider>(context, listen: false).userData!;
+
+        return await DatabaseService.instance
+            .getUserRepartiByInput(pattern, _currentUserData.id!);
       },
       itemBuilder: (context, suggestion) {
         return ListTile(
-          title: Text(suggestion),
+          title: Text(suggestion as String),
         );
       },
       getImmediateSuggestions: true,
       onSuggestionSelected: (suggestion) {
-        this._typeAheadController.text = suggestion;
+        this._typeAheadController.text = suggestion as String;
         setState(() {
           _productReparto = suggestion;
         });
@@ -279,7 +289,8 @@ class _AddSpesaPageState extends State<AddSpesaPage> {
           FadeTransition(
         child: suggestionsBox,
         opacity: CurvedAnimation(
-            parent: animationController, curve: Curves.fastOutSlowIn),
+            parent: animationController as AnimationController,
+            curve: Curves.fastOutSlowIn),
       ),
       hideOnEmpty: true,
       hideOnLoading: true,
@@ -294,9 +305,9 @@ class _AddSpesaPageState extends State<AddSpesaPage> {
       },
       onSaved: (text) {
         setState(() {
-          _productReparto = text;
+          _productReparto = text as String;
         });
-        if (_isInsertSelected) _formKey.currentState.validate();
+        if (_isInsertSelected) _formKey.currentState!.validate();
       },
     );
   }
@@ -333,7 +344,7 @@ class _AddSpesaPageState extends State<AddSpesaPage> {
           setState(() {
             _quantity = double.parse(text);
           });
-          if (_isInsertSelected) _formKey.currentState.validate();
+          if (_isInsertSelected) _formKey.currentState!.validate();
         }
       },
       style: TextStyle(color: Colors.white),
@@ -365,34 +376,63 @@ class _AddSpesaPageState extends State<AddSpesaPage> {
         context: context,
         builder: (context) {
           return Container(
-            height: 200,
-            color: Colors.grey,
-            child: CupertinoPicker(
-                scrollController: FixedExtentScrollController(
-                    initialItem: _measureUnit == null || _measureUnit.isEmpty
-                        ? 0
-                        : MeasureUnitList.units.keys
-                            .toList()
-                            .indexOf(_measureUnit)),
-                itemExtent: 32.0,
-                onSelectedItemChanged: (int index) {
-                  setState(() {
-                    String key = MeasureUnitList.units.keys.toList()[index];
-                    if (key == "nessun valore") {
-                      _measureUnit = "";
-                      this._controller.text = _measureUnit;
-                    } else {
-                      _measureUnit = key;
-                      this._controller.text = _measureUnit;
-                    }
-                  });
+              height: 200,
+              color: Colors.white,
+              padding: EdgeInsets.only(bottom: 50),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                        border: Border(
+                            bottom:
+                                BorderSide(color: Colors.grey, width: 0.2))),
+                    padding: EdgeInsets.all(10),
+                    child: Center(
+                      child: Material(
+                        child: Text(
+                          "Seleziona l'unità di misura",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    height: 10,
+                  ),
+                  Expanded(
+                    child: CupertinoPicker(
+                        scrollController: FixedExtentScrollController(
+                            initialItem: _measureUnit.isEmpty
+                                ? 0
+                                : MeasureUnitList.units.keys
+                                    .toList()
+                                    .indexOf(_measureUnit)),
+                        itemExtent: 32.0,
+                        onSelectedItemChanged: (int index) {
+                          setState(() {
+                            String key =
+                                MeasureUnitList.units.keys.toList()[index];
+                            if (key == "nessun valore") {
+                              _measureUnit = "";
+                              this._controller.text = _measureUnit;
+                            } else {
+                              _measureUnit = key;
+                              this._controller.text = _measureUnit;
+                            }
+                          });
 
-                  if (_isInsertSelected) _formKey.currentState.validate();
-                },
-                children: MeasureUnitList.units.keys.map((v) {
-                  return Center(child: Text(v));
-                }).toList()),
-          );
+                          if (_isInsertSelected)
+                            _formKey.currentState!.validate();
+                        },
+                        children: MeasureUnitList.units.keys.map((v) {
+                          return Center(child: Text(v));
+                        }).toList()),
+                  ),
+                ],
+              ));
         });
   }
 
@@ -440,21 +480,19 @@ class _AddSpesaPageState extends State<AddSpesaPage> {
 
   Widget _priceSection() {
     return TextFormField(
-      validator: (value) {
-        if (value == null ||
-            value.isEmpty ||
-            double.tryParse(value) == null ||
-            double.parse(value) == 0) {
-          return "Inserisci una quantità valida";
-        } else
-          return null;
-      },
       onChanged: (text) {
+        if (_isInsertSelected) _formKey.currentState!.validate();
+      },
+      onSaved: (text) {
         if (text != null && text.isNotEmpty && double.tryParse(text) != null) {
           setState(() {
             _price = double.parse(text);
           });
-          if (_isInsertSelected) _formKey.currentState.validate();
+          if (_isInsertSelected) _formKey.currentState!.validate();
+        } else {
+          setState(() {
+            _price = 0;
+          });
         }
       },
       style: TextStyle(color: Colors.white),

@@ -12,14 +12,17 @@ import 'package:market_organizer/pages/menu/singleDay/meal/meal_detail_model.dar
 import 'package:market_organizer/pages/menu/singleDay/receipt/product/productSearch_page.dart';
 import 'package:market_organizer/pages/menu/singleDay/receipt/product/product_page.dart';
 import 'package:market_organizer/pages/menu/singleDay/receipt/product/product_widget.dart';
+import 'package:market_organizer/provider/auth_provider.dart';
+import 'package:market_organizer/provider/date_provider.dart';
 import 'package:market_organizer/service/navigation_service.dart';
+import 'package:provider/provider.dart';
 
 //input
 
 class NewSelectedReceiptInput {
   final ReceiptOperationType operationType;
-  final Ricetta selectedRecipt;
-  Map<Product, bool>
+  final Ricetta? selectedRecipt;
+  Map<Product, bool>?
       productsFetched; //prodotti da usare per cancellare aggioranre ecc in fase di inserimento da ricerca di ricetta
   final RicettaManagementInput
       mealDetailModel; //nullo se in fase di aggiornamento/dettaglio ricetta
@@ -40,8 +43,8 @@ class NewSelectedReceiptPage extends StatefulWidget {
 
 class _NewSelectedReceiptPageState extends State<NewSelectedReceiptPage> {
   //
-  GlobalKey<FormState> _formKey;
-  TextEditingController _controller;
+  late GlobalKey<FormState> _formKey;
+  late TextEditingController _controller;
   //
   bool _isValidationFormAlreadyCalled =
       false; //serve per refreshare le validation dopo che vengono mostrate
@@ -73,7 +76,7 @@ class _NewSelectedReceiptPageState extends State<NewSelectedReceiptPage> {
       if (widget._input.productsFetched == null) {
         widget._input.productsFetched = {};
       }
-      widget._input.productsFetched.putIfAbsent(prod, () => inSpesa);
+      widget._input.productsFetched!.putIfAbsent(prod, () => inSpesa);
       _countProductToBeInserted++;
     });
   }
@@ -89,11 +92,11 @@ class _NewSelectedReceiptPageState extends State<NewSelectedReceiptPage> {
     //lo rimuovo dalla lista da visualizzare
     //per cancellare devo creare una mappa di appoggio, per ogni prodotto in mappa lo aggiungo tranne quello con index in posizione
     Map<Product, bool> productsFetchedSupport = {};
-    for (int i = 0; i < widget._input.productsFetched.length; i++) {
+    for (int i = 0; i < widget._input.productsFetched!.length; i++) {
       if (i != index) {
         productsFetchedSupport.putIfAbsent(
-            widget._input.productsFetched.keys.toList()[i],
-            () => widget._input.productsFetched.values.toList()[i]);
+            widget._input.productsFetched!.keys.toList()[i],
+            () => widget._input.productsFetched!.values.toList()[i]);
       }
     }
     setState(() {
@@ -106,28 +109,30 @@ class _NewSelectedReceiptPageState extends State<NewSelectedReceiptPage> {
     setState(() {
       //prima rimuovo prodotto poichè non ho l'id devo cercarlo per index con cui è stato creato  (guardare in fondo )
       int i = 0;
-      for (var item in widget._input.productsFetched.entries) {
+      for (var item in widget._input.productsFetched!.entries) {
         if (i == index) {
-          widget._input.productsFetched.remove(item);
+          widget._input.productsFetched!.remove(item);
         } else {
           i++;
         }
       }
       //aggiungo
-      widget._input.productsFetched.putIfAbsent(product, () => isToInsert);
+      widget._input.productsFetched!.putIfAbsent(product, () => isToInsert);
     });
   }
 
   /** creazione ricetta di default  */
-  void _initRicetta(Ricetta _preloadedReceipt) {
+  void _initRicetta(Ricetta? _preloadedReceipt) {
     //se sono in fase di ricerca ricetta o creazione da zero inizializzo i dati di default,
     //se in fase di aggiornamento non devo far nulla
 
+    UserDataModel _currentUserData =
+        Provider.of<AuthProvider>(context, listen: false).userData!;
     if (widget._input.operationType == ReceiptOperationType.SEARCH) {
       _currentRicetta.id = null;
-      _currentRicetta.ownerId = UserDataModel.example.id;
-      _currentRicetta.ownerName = UserDataModel.example.name;
-      _currentRicetta.color = _preloadedReceipt.color;
+      _currentRicetta.ownerId = _currentUserData.id;
+      _currentRicetta.ownerName = _currentUserData.name;
+      _currentRicetta.color = _preloadedReceipt!.color;
       _currentRicetta.name = _preloadedReceipt.name;
       _currentRicetta.description = _preloadedReceipt.description;
       _currentRicetta.pasto = _preloadedReceipt.pasto;
@@ -139,13 +144,13 @@ class _NewSelectedReceiptPageState extends State<NewSelectedReceiptPage> {
     } else if (widget._input.operationType == ReceiptOperationType.INSERT) {
       _currentRicetta = new Ricetta();
       _currentRicetta.id = null;
-      _currentRicetta.ownerId = UserDataModel.example.id;
-      _currentRicetta.ownerName = UserDataModel.example.name;
+      _currentRicetta.ownerId = _currentUserData.id;
+      _currentRicetta.ownerName = _currentUserData.name;
       _currentRicetta.pasto = widget._input.pasto;
       _currentRicetta.date = widget._input.mealDetailModel.dateTimeDay;
     } else {
       //travaso i dati della ricetta in quella nuova cosi poi posso confrontarle
-      _currentRicetta.id = _preloadedReceipt.id;
+      _currentRicetta.id = _preloadedReceipt!.id;
       _currentRicetta.ownerId = _preloadedReceipt.ownerId;
       _currentRicetta.ownerName = _preloadedReceipt.name;
       _currentRicetta.color = _preloadedReceipt.color;
@@ -162,18 +167,30 @@ class _NewSelectedReceiptPageState extends State<NewSelectedReceiptPage> {
 
   //funzione per creare la ricetta
   void _saveRecipt() async {
-    _formKey.currentState.save();
-    if (_formKey.currentState.validate()) {
+    UserDataModel _currentUserData =
+        Provider.of<AuthProvider>(context, listen: false).userData!;
+    _formKey.currentState!.save();
+    if (_formKey.currentState!.validate()) {
       if (widget._input.operationType == ReceiptOperationType.UPDATE) {
+        DateTime dateTimeStart =
+            Provider.of<DateProvider>(context, listen: false).dateStart;
+        DateTime dateTimeEnd =
+            Provider.of<DateProvider>(context, listen: false).dateStart;
         DatabaseService.instance.updateRecipts(
-            widget._input.mealDetailModel.workspaceId,
+            widget._input.mealDetailModel.workspaceId!,
             _currentRicetta,
-            widget._input.productsFetched,
-            _productToBeDeleted);
+            widget._input.productsFetched!,
+            _productToBeDeleted,
+            dateTimeStart,
+            dateTimeEnd,
+            _currentUserData.id!);
       } else {
         _currentRicetta = await DatabaseService.instance
-            .createNewReceiptFromScratch(_currentRicetta,
-                widget._input.mealDetailModel, widget._input.productsFetched);
+            .createNewReceiptFromScratch(
+                _currentRicetta,
+                widget._input.mealDetailModel,
+                widget._input.productsFetched,
+                _currentUserData.id!);
       }
       NavigationService.instance.goBackUntil("singleDay");
     } else {
@@ -208,10 +225,10 @@ class _NewSelectedReceiptPageState extends State<NewSelectedReceiptPage> {
       "productSearchPage",
       ProductSearchInput(
         insertNewProduct,
-        widget._input.mealDetailModel.workspaceId,
+        widget._input.mealDetailModel.workspaceId!,
         ProductOperationType.INSERT_FROM_RECEIPT,
-        widget._input.mealDetailModel.pasto,
-        widget._input.mealDetailModel.dateTimeDay,
+        widget._input.mealDetailModel.pasto!,
+        widget._input.mealDetailModel.dateTimeDay!,
       ),
     );
   }
@@ -242,11 +259,11 @@ class _NewSelectedReceiptPageState extends State<NewSelectedReceiptPage> {
                 (_currentRicetta != null &&
                     _currentRicetta.name != null &&
                     _currentRicetta.name !=
-                        widget._input.selectedRecipt.name) ||
+                        widget._input.selectedRecipt!.name!) ||
                 (_currentRicetta != null &&
                     _currentRicetta.description != null &&
                     _currentRicetta.description !=
-                        widget._input.selectedRecipt.description)))) {
+                        widget._input.selectedRecipt!.description!)))) {
       await showCupertinoDialog(
           context: context,
           builder: (ctx) {
@@ -365,7 +382,7 @@ class _NewSelectedReceiptPageState extends State<NewSelectedReceiptPage> {
         setState(() {
           _currentRicetta.name = text;
         });
-        if (_isValidationFormAlreadyCalled) _formKey.currentState.validate();
+        if (_isValidationFormAlreadyCalled) _formKey.currentState!.validate();
       },
       onSaved: (text) {
         if (text != null && text.isNotEmpty) {
@@ -405,7 +422,7 @@ class _NewSelectedReceiptPageState extends State<NewSelectedReceiptPage> {
           setState(() {
             _currentRicetta.description = text;
           });
-          if (_isValidationFormAlreadyCalled) _formKey.currentState.validate();
+          if (_isValidationFormAlreadyCalled) _formKey.currentState!.validate();
         }
       },
       onSaved: (text) {
@@ -498,9 +515,9 @@ class _NewSelectedReceiptPageState extends State<NewSelectedReceiptPage> {
 
   Widget _productListWidget() {
     if (widget._input.productsFetched != null &&
-        widget._input.productsFetched.length > 0) {
+        widget._input.productsFetched!.length > 0) {
       //mostro solo i prodotti da inserire
-      List<Product> _prods = widget._input.productsFetched.keys.toList();
+      List<Product> _prods = widget._input.productsFetched!.keys.toList();
       if (_prods != null && _prods.isNotEmpty) {
         return ListView.separated(
           separatorBuilder: (context, index) {
@@ -513,7 +530,7 @@ class _NewSelectedReceiptPageState extends State<NewSelectedReceiptPage> {
           itemBuilder: (context, index) {
             return GestureDetector(
               onTap: () => showProduct(index, _prods[index],
-                  widget._input.productsFetched[_prods[index]]),
+                  widget._input.productsFetched![_prods[index]]!),
               child: Container(
                 clipBehavior: Clip.hardEdge,
                 decoration: BoxDecoration(

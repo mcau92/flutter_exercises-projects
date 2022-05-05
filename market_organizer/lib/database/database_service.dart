@@ -1,14 +1,17 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:market_organizer/models/men%C3%B9.dart';
+import 'package:market_organizer/models/notifiche.dart';
 import 'package:market_organizer/models/product_model.dart';
 import 'package:market_organizer/models/reciptsAndProducts.dart';
 import 'package:market_organizer/models/ricetta.dart';
+import 'package:market_organizer/models/settings.dart';
 import 'package:market_organizer/models/spesa.dart';
 import 'package:market_organizer/models/userdata_model.dart';
 import 'package:market_organizer/models/userworkspace.model.dart';
 import 'package:market_organizer/pages/menu/singleDay/meal/meal_detail_model.dart';
 import 'package:market_organizer/pages/menu/singleDay/receipt/product/productInputForDb.dart';
-import 'package:market_organizer/provider/date_provider.dart';
+import 'package:market_organizer/provider/auth_provider.dart';
+import 'package:market_organizer/utils/category_enum.dart';
 import 'package:market_organizer/utils/color_costant.dart';
 
 class DatabaseService {
@@ -20,14 +23,69 @@ class DatabaseService {
   String _userCollection = "users";
   String _workspaceCollection = "workspace";
   String _productCollection = "product";
+  String _notificheCollection = "notifiche";
+  String _settingsCollection = "settings";
 
-  FirebaseFirestore _db;
+  late FirebaseFirestore _db;
   var batch;
   DatabaseService() {
     _db = FirebaseFirestore.instance;
     batch = _db.batch();
   }
-  /* Future<bool> checkEmailIsAvailable(String _email) async {
+
+  Future<void> updateViewNotifications(String userId) async {
+    QuerySnapshot _qs = await _db
+        .collection(_userCollection)
+        .doc(userId)
+        .collection(_notificheCollection)
+        .get();
+    _qs.docs.forEach(
+      (document) => document.reference.update(
+        {"viewed": true},
+      ),
+    );
+  }
+
+  Future<List<Notifiche>> getUserNotifies(String userId) async {
+    return await _db
+        .collection(_userCollection)
+        .doc(userId)
+        .collection(_notificheCollection)
+        .get()
+        .then(
+          (_q) => _q.docs.map(
+            (_d) {
+              return Notifiche.fromFirestore(_d);
+            },
+          ).toList(),
+        );
+  }
+
+  Stream<List<UserSettings>> getUserSettings(String userId) {
+    return _db
+        .collection(_userCollection)
+        .doc(userId)
+        .collection(_settingsCollection)
+        .snapshots()
+        .map(
+          (_q) => _q.docs.map(
+            (_d) {
+              return UserSettings.fromFirestore(_d);
+            },
+          ).toList(),
+        );
+  }
+
+  Future<void> updateUserSettings(String userId, UserSettings settings) async {
+    return await _db
+        .collection(_userCollection)
+        .doc(userId)
+        .collection(_settingsCollection)
+        .doc(settings.id)
+        .update({"language": settings.language});
+  }
+
+  Future<bool> checkEmailIsAvailable(String _email) async {
     bool isValid = true;
     await _db
         .collection(_userCollection)
@@ -37,23 +95,20 @@ class DatabaseService {
               if (event.docs.isNotEmpty) {isValid = false}
             })
         .catchError((e) => print("error fetching data: $e"));
-    return isValid;
-  } */
 
-  /* Future<void> createUserInDb(
-      String _userId, String _email, String _username, String _password) async {
+    return isValid;
+  }
+
+  Future<void> createUserInDb(
+      String _userId, String _email, String _name) async {
     try {
       return await _db.collection(_userCollection).doc(_userId).set(
-        {
-          "username": _username,
-          "email": _email,
-          "password": _password,
-        },
+        {"name": _name, "email": _email, "workspacesIdRef": []},
       );
     } catch (e) {
-      print(e);
+      throw e;
     }
-  } */
+  }
 
   Future<UserDataModel> getUserData(String _userID) async {
     var _ref = _db.collection(_userCollection).doc(_userID);
@@ -62,12 +117,18 @@ class DatabaseService {
         );
   }
 
-  Future<List<UserWorkspace>> getUserWorkspace(String _userID) async {
-    var _ref = _db
+  Stream<List<UserWorkspace>> getUserWorkspace(List<String> _userWs) {
+    return _db
         .collection(_workspaceCollection)
-        .where("ownerId", isEqualTo: _userID);
-    return await _ref.get().then(
-        (_qs) => _qs.docs.map((e) => UserWorkspace.fromFirestore(e)).toList());
+        .where(FieldPath.documentId, whereIn: _userWs)
+        .snapshots()
+        .map(
+          (_q) => _q.docs.map(
+            (_d) {
+              return UserWorkspace.fromFirestore(_d);
+            },
+          ).toList(),
+        );
   }
 
   Future<UserWorkspace> getWorkspaceFromId(String _wsId) async {
@@ -92,7 +153,7 @@ class DatabaseService {
   }
 
   Future<List<Spesa>> getSpesaListFromIdAndDate(
-      String workspaceIdsRef, DateTime start, DateTime end) {
+      String? workspaceIdsRef, DateTime? start, DateTime? end) {
     var _ref = _db
         .collection(_spesaCollection)
         .where("workspaceIdRef", isEqualTo: workspaceIdsRef)
@@ -107,6 +168,18 @@ class DatabaseService {
         );
   }
 
+  Future<List<Product>> getProductsInMenuWhereDate(
+      String menuId, DateTime day) async {
+    return await _db
+        .collection(_menuCollection)
+        .doc(menuId)
+        .collection(_productCollection)
+        .where("date", isEqualTo: day)
+        .get()
+        .then((value) =>
+            value.docs.map((ds) => Product.fromFirestore(ds)).toList());
+  }
+
   Future<List<Product>> getProductsInMenu(String menuId) async {
     return await _db
         .collection(_menuCollection)
@@ -115,6 +188,18 @@ class DatabaseService {
         .get()
         .then((value) =>
             value.docs.map((ds) => Product.fromFirestore(ds)).toList());
+  }
+
+  Future<List<Ricetta>> getReciptsFromMenuIdWhereDate(
+      String menuId, DateTime day) async {
+    return await _db
+        .collection(_menuCollection)
+        .doc(menuId)
+        .collection(_ricettaCollection)
+        .where("date", isEqualTo: day)
+        .get()
+        .then((value) =>
+            value.docs.map((ds) => Ricetta.fromFirestore(ds)).toList());
   }
 
   Future<List<Ricetta>> getReciptsFromMenuId(String menuId) async {
@@ -172,11 +257,12 @@ class DatabaseService {
   }
 //ricerca prodotto per nome
 
-  Future<List<Product>> searchProductByName(String string) async {
+  Future<List<Product>> searchProductByName(
+      String string, String userId) async {
     //recupero tutti i prodotti in spesa o in ricetta creati dall'utente corrente che matchano la stringa richiesta
     List<Product> products = await _db
         .collectionGroup(_productCollection)
-        .where("ownerId", isEqualTo: UserDataModel.example.id)
+        .where("ownerId", isEqualTo: userId)
         .where("name", isGreaterThanOrEqualTo: string)
         .where("name", isLessThanOrEqualTo: string + '\uf8ff')
         .get()
@@ -184,7 +270,7 @@ class DatabaseService {
             _qs.docs.map((_ds) => Product.fromFirestore(_ds)).toList());
     //filtro i doppioni
     List<Product> filteredList = [];
-    await products.forEach((prod) {
+    products.forEach((prod) {
       if (filteredList.indexWhere((element) =>
               element.name == prod.name ||
               element.description == prod.description) <
@@ -196,12 +282,13 @@ class DatabaseService {
   }
 
   //metodo che ritorna la lista delle ricerche suggerite con il path utilizzato nell'input per l'utente corrente
-  Future<List<Ricetta>> searchRicetteByName(String string) async {
+  Future<List<Ricetta>> searchRicetteByName(
+      String string, String userId) async {
     //per ogni menu, aggiungo le ricette che non sono duplicate
     //vado quindi a cercare se una certa ricetta nel menu corrente è presente guardando il nome e la descrizione
     List<Ricetta> ricette = await _db
         .collectionGroup(_ricettaCollection)
-        .where("ownerId", isEqualTo: UserDataModel.example.id)
+        .where("ownerId", isEqualTo: userId)
         .where("name", isGreaterThanOrEqualTo: string)
         .where("name", isLessThanOrEqualTo: string + '\uf8ff')
         .get()
@@ -211,18 +298,19 @@ class DatabaseService {
   }
 
   Future<void> insertNewProductInMenu(
-      ProductInputForDb productInputForDb, bool isAddToSpesa) async {
+      ProductInputForDb productInputForDb,
+      bool isAddToSpesa,
+      DateTime dateStart,
+      DateTime dateEnd,
+      String userId) async {
     Product _productToBeInserted = productInputForDb.product;
-    DateTime dateStart = DateProvider.instance.dateStart;
-    DateTime dateEnd = DateProvider.instance.dateEnd;
     List<Menu> currentMenuList =
         await getMenuFromDate(productInputForDb.workspaceId, dateStart, dateEnd)
             .elementAt(0);
-    Menu currenMenu = currentMenuList != null && currentMenuList.isNotEmpty
-        ? currentMenuList.first
-        : null;
+    Menu? currenMenu =
+        currentMenuList.isNotEmpty ? currentMenuList.first : null;
     ;
-    String _menuId;
+    String? _menuId;
     if (currenMenu == null) {
       //creo menu nuovo
       DocumentReference docRef = await _db.collection(_menuCollection).add({
@@ -242,18 +330,24 @@ class DatabaseService {
       _productToBeInserted.ownerId,
     );
     _db.runTransaction((transaction) async {
-      Spesa currentSpesa = null;
+      Spesa? currentSpesa = null;
       if (isAddToSpesa) {
         List<Spesa> spesaList = await getSpesaListFromIdAndDate(
             productInputForDb.workspaceId, dateStart, dateEnd);
-        if (spesaList != null && spesaList.isNotEmpty) {
+        if (spesaList.isNotEmpty) {
           currentSpesa = spesaList.first;
         } else {
-          currentSpesa = await createNewSpesa(new Spesa(
-              ownerId: UserDataModel.example.id,
+          currentSpesa = await createNewSpesa(
+            new Spesa(
+              ownerId: userId,
               startWeek: dateStart,
               endWeek: dateEnd,
-              workspaceIdRef: productInputForDb.workspaceId));
+              workspaceIdRef: productInputForDb.workspaceId,
+              orderBy: CategoryOrder.category.toString(),
+              showSelected: true,
+              showPrice: true,
+            ),
+          );
         }
       }
       CollectionReference prodRef = _db
@@ -281,7 +375,7 @@ class DatabaseService {
         //insert on spesa and update CONTINUARE A SALVARE I PRODOTTI IN SPESA SE SONO A TRUE
         CollectionReference dcref = _db
             .collection(_spesaCollection)
-            .doc(currentSpesa.id)
+            .doc(currentSpesa?.id)
             .collection(_productCollection);
         transaction.set(dcref.doc(), {
           "color": _color,
@@ -293,13 +387,14 @@ class DatabaseService {
           "ownerName": _productToBeInserted.ownerName,
           "quantity": _productToBeInserted.quantity,
           "reparto": _productToBeInserted.reparto,
-          "spesaIdRef": currentSpesa.id, //c'è per forza
+          "spesaIdRef": currentSpesa?.id, //c'è per forza
           "currency": _productToBeInserted.price != null ? "€" : null,
           "price": _productToBeInserted.price
         });
         transaction.update(
-            _db.collection(_spesaCollection).doc(currentSpesa.id),
-            {"ammount": FieldValue.increment(_productToBeInserted.price)});
+            _db.collection(_spesaCollection).doc(currentSpesa?.id), {
+          "ammount": FieldValue.increment(_productToBeInserted.price as num)
+        });
       }
     });
   }
@@ -308,11 +403,11 @@ class DatabaseService {
    * metodo per inserire una ricetta da zero tramite il pulsante di add nella pagina di aggiunta ricetta
    */
   Future<Ricetta> createNewReceiptFromScratch(
-    Ricetta ricetta,
-    RicettaManagementInput mealDetailModel,
-    Map<Product, bool> products,
-  ) async {
-    String menuId = mealDetailModel.menuIdRef;
+      Ricetta ricetta,
+      RicettaManagementInput mealDetailModel,
+      Map<Product, bool>? products,
+      String userId) async {
+    String? menuId = mealDetailModel.menuIdRef;
     if (menuId == null) {
       //creo menu nuovo
       DocumentReference docRef = await _db.collection(_menuCollection).add({
@@ -325,7 +420,7 @@ class DatabaseService {
       //aggiorno il menu con il suo nuovo id
       menuId = docRef.id;
     }
-    String _color = await getUserColor(
+    String? _color = await getUserColor(
       mealDetailModel.workspaceId,
       ricetta.ownerId,
     );
@@ -350,7 +445,7 @@ class DatabaseService {
     //aggiorno i product e aggiungo il riferimento alla ricetta e metto a null l'id perchè cosi gestico anche il fatto che siano prodotti creati da zero o meno
     //transazione
     _db.runTransaction((transaction) async {
-      Spesa currentSpesa = null;
+      Spesa? currentSpesa = null;
       if (products != null &&
           products.isNotEmpty &&
           products.values.any((element) => true)) {
@@ -358,14 +453,19 @@ class DatabaseService {
             mealDetailModel.workspaceId,
             mealDetailModel.dateStart,
             mealDetailModel.dateEnd);
-        if (spesaList != null && spesaList.isNotEmpty) {
+        if (spesaList.isNotEmpty) {
           currentSpesa = spesaList.first;
         } else {
-          currentSpesa = await createNewSpesa(new Spesa(
-              ownerId: UserDataModel.example.id,
-              startWeek: mealDetailModel.dateStart,
-              endWeek: mealDetailModel.dateEnd,
-              workspaceIdRef: mealDetailModel.workspaceId));
+          currentSpesa = await createNewSpesa(
+            new Spesa(
+                ownerId: userId,
+                startWeek: mealDetailModel.dateStart,
+                endWeek: mealDetailModel.dateEnd,
+                workspaceIdRef: mealDetailModel.workspaceId,
+                orderBy: CategoryOrder.category.toString(),
+                showSelected: true,
+                showPrice: true),
+          );
         }
       }
       if (products != null && products.isNotEmpty) {
@@ -389,7 +489,7 @@ class DatabaseService {
             'measureUnit': p.measureUnit,
             'quantity': p.quantity,
             'image': p.image,
-            'spesaIdRef': entry.value ? currentSpesa.id : null,
+            'spesaIdRef': entry.value ? currentSpesa?.id : null,
             'ricettaIdRef': p.ricettaIdRef,
             //'productIdSpesa': _productIdSpesa,
           });
@@ -397,7 +497,7 @@ class DatabaseService {
             //insert on spesa and update CONTINUARE A SALVARE I PRODOTTI IN SPESA SE SONO A TRUE
             CollectionReference dcref = _db
                 .collection(_spesaCollection)
-                .doc(currentSpesa.id)
+                .doc(currentSpesa?.id)
                 .collection(_productCollection);
             transaction.set(dcref.doc(), {
               "color": _color,
@@ -409,13 +509,13 @@ class DatabaseService {
               "ownerName": entry.key.ownerName,
               "quantity": entry.key.quantity,
               "reparto": entry.key.reparto,
-              "spesaIdRef": currentSpesa.id,
+              "spesaIdRef": currentSpesa?.id,
               "currency": entry.key.price != null ? "€" : null,
               "price": entry.key.price
             });
             transaction.update(
-                _db.collection(_spesaCollection).doc(currentSpesa.id),
-                {"ammount": FieldValue.increment(entry.key.price)});
+                _db.collection(_spesaCollection).doc(currentSpesa?.id),
+                {"ammount": FieldValue.increment(entry.key.price as num)});
           }
         });
       }
@@ -428,7 +528,10 @@ class DatabaseService {
       String workspaceId,
       Ricetta ricetta,
       Map<Product, bool> productToBeInsertedOrUpdated,
-      List<Product> productsToBeDeleted) async {
+      List<Product> productsToBeDeleted,
+      DateTime dateStart,
+      DateTime dateEnd,
+      String userId) async {
     await _db
         .collection(_menuCollection)
         .doc(ricetta.menuIdRef)
@@ -445,8 +548,8 @@ class DatabaseService {
         if (product.id == null) {
           //inserisco
           product.ricettaIdRef = ricetta.id;
-          await insertProductOnReceipt(
-              ricetta.menuIdRef, workspaceId, product, isAddToSpesa);
+          await insertProductOnReceipt(ricetta.menuIdRef, workspaceId, product,
+              isAddToSpesa, dateStart, dateEnd, userId);
         } else {
           //aggiorno
           await updateProductOnReceipt(product, ricetta.menuIdRef);
@@ -461,20 +564,31 @@ class DatabaseService {
     }
   }
 
-  Future<void> insertProductOnReceipt(String menuId, String workspaceId,
-      Product product, bool isAddToSpesa) async {
-    Spesa currentSpesa = null;
+  Future<void> insertProductOnReceipt(
+      String? menuId,
+      String? workspaceId,
+      Product? product,
+      bool isAddToSpesa,
+      DateTime? dateStart,
+      DateTime? dateEnd,
+      String? userId) async {
+    Spesa? currentSpesa = null;
     if (isAddToSpesa) {
-      List<Spesa> spesaList = await getSpesaListFromIdAndDate(workspaceId,
-          DateProvider.instance.dateStart, DateProvider.instance.dateEnd);
-      if (spesaList != null && spesaList.isNotEmpty) {
+      List<Spesa> spesaList =
+          await getSpesaListFromIdAndDate(workspaceId, dateStart, dateEnd);
+      if (spesaList.isNotEmpty) {
         currentSpesa = spesaList.first;
       } else {
-        currentSpesa = await createNewSpesa(new Spesa(
-            ownerId: UserDataModel.example.id,
-            startWeek: DateProvider.instance.dateStart,
-            endWeek: DateProvider.instance.dateEnd,
-            workspaceIdRef: workspaceId));
+        currentSpesa = await createNewSpesa(
+          new Spesa(
+              ownerId: userId,
+              startWeek: dateStart,
+              endWeek: dateEnd,
+              workspaceIdRef: workspaceId,
+              orderBy: CategoryOrder.category.toString(),
+              showSelected: true,
+              showPrice: true),
+        );
       }
     }
     _db.runTransaction((transaction) async {
@@ -482,51 +596,51 @@ class DatabaseService {
           .collection(_menuCollection)
           .doc(menuId)
           .collection(_ricettaCollection)
-          .doc(product.ricettaIdRef)
+          .doc(product?.ricettaIdRef)
           .collection(_productCollection);
       transaction.set(prodRef.doc(), {
-        'ownerId': product.ownerId,
-        'ownerName': product.ownerName,
-        'color': product.color,
-        'name': product.name,
-        'description': product.description,
-        'measureUnit': product.measureUnit,
-        'quantity': product.quantity,
-        'image': product.image,
+        'ownerId': product?.ownerId,
+        'ownerName': product?.ownerName,
+        'color': product?.color,
+        'name': product?.name,
+        'description': product?.description,
+        'measureUnit': product?.measureUnit,
+        'quantity': product?.quantity,
+        'image': product?.image,
         'spesaIdRef': currentSpesa != null
             ? currentSpesa.id
             : null, //se ad esempio ho deciso di non inserirlo in spesa
-        'ricettaIdRef': product.ricettaIdRef,
+        'ricettaIdRef': product?.ricettaIdRef,
         //'productIdSpesa': _productIdSpesa,
       });
       if (isAddToSpesa) {
         //insert on spesa and update CONTINUARE A SALVARE I PRODOTTI IN SPESA SE SONO A TRUE
         CollectionReference dcref = _db
             .collection(_spesaCollection)
-            .doc(currentSpesa.id)
+            .doc(currentSpesa?.id)
             .collection(_productCollection);
         transaction.set(dcref.doc(), {
-          "color": product.color,
-          "description": product.description,
+          "color": product?.color,
+          "description": product?.description,
           "image": "",
-          "measureUnit": product.measureUnit,
-          "name": product.name,
-          "ownerId": product.ownerId,
-          "ownerName": product.ownerName,
-          "quantity": product.quantity,
-          "reparto": product.reparto,
-          "spesaIdRef": currentSpesa.id,
-          "currency": product.currency,
-          "price": product.price
+          "measureUnit": product?.measureUnit,
+          "name": product?.name,
+          "ownerId": product?.ownerId,
+          "ownerName": product?.ownerName,
+          "quantity": product?.quantity,
+          "reparto": product?.reparto,
+          "spesaIdRef": currentSpesa?.id,
+          "currency": product?.currency,
+          "price": product?.price
         });
         transaction.update(
-            _db.collection(_spesaCollection).doc(currentSpesa.id),
-            {"ammount": FieldValue.increment(product.price)});
+            _db.collection(_spesaCollection).doc(currentSpesa?.id),
+            {"ammount": FieldValue.increment(product?.price as num)});
       }
     });
   }
 
-  Future<void> deleteProductRecipt(String menuId, Product product) async {
+  Future<void> deleteProductRecipt(String? menuId, Product product) async {
     await _db
         .collection(_menuCollection)
         .doc(menuId)
@@ -537,31 +651,35 @@ class DatabaseService {
         .delete();
   }
 
-  Future<String> getUserColor(String workspaceId, String ownerId) async {
-    String color;
-    UserWorkspace workspaceData = await _db
-        .collection(_workspaceCollection)
-        .doc(workspaceId)
-        .get()
-        .then((d) => UserWorkspace.fromFirestore(d));
-    color =
-        workspaceData.userColors[ownerId]; //recupero il colore può essere nullo
+  Future<String> getUserColor(String? workspaceId, String? ownerId) async {
+    if (workspaceId != null && ownerId != null) {
+      String color;
+      UserWorkspace workspaceData = await _db
+          .collection(_workspaceCollection)
+          .doc(workspaceId)
+          .get()
+          .then((d) => UserWorkspace.fromFirestore(d));
+      color = workspaceData.userColors?[ownerId]
+          as String; //recupero il colore può essere nullo
 
-    if (color == null) {
-      List<String> colorsUsed = [];
-      workspaceData.userColors.values.forEach((color) {
-        colorsUsed.add(color);
-      });
-      if (colorsUsed.isNotEmpty) {
-        //filter color
-        color = ColorCostant.colorMap.keys
-            .where((c) => !colorsUsed.contains(c))
-            .first;
-      } else {
-        color = ColorCostant.colorMap.keys.first; //first product
+      if (color == null) {
+        List<String> colorsUsed = [];
+        workspaceData.userColors?.values.forEach((color) {
+          colorsUsed.add(color);
+        });
+        if (colorsUsed.isNotEmpty) {
+          //filter color
+          color = ColorCostant.colorMap.keys
+              .where((c) => !colorsUsed.contains(c))
+              .first;
+        } else {
+          color = ColorCostant.colorMap.keys.first; //first product
+        }
+        workspaceData.userColors?.putIfAbsent(ownerId, () => color);
       }
+      return color;
     }
-    return color;
+    return "green";
   }
 
 //
@@ -624,19 +742,20 @@ class DatabaseService {
   Future<List<String>> getUserRepartiByInput(
       String pattern, String userId) async {
     List<String> mergedReparti = [];
-    if (pattern == null || pattern.isEmpty) {
+    if (pattern.isEmpty) {
       return mergedReparti;
     }
     List<Product> prods = await _db
         .collectionGroup(_productCollection)
-        .where("ownerId", isEqualTo: UserDataModel.example.id)
+        .where("ownerId", isEqualTo: userId)
         .where("reparto", isGreaterThanOrEqualTo: pattern)
         .where("reparto", isLessThanOrEqualTo: pattern + '\uf8ff')
         .get()
         .then((_qs) =>
             _qs.docs.map((_ds) => Product.fromFirestore(_ds)).toList());
     prods.forEach((p) => {
-          if (!mergedReparti.contains(p.reparto)) {mergedReparti.add(p.reparto)}
+          if (!mergedReparti.contains(p.reparto))
+            {mergedReparti.add(p.reparto as String)}
         });
     return mergedReparti;
   }
@@ -645,6 +764,7 @@ class DatabaseService {
       String workspaceId,
       String spesaIdRef,
       String ownerId,
+      String ownerName,
       String productName,
       String productDescription,
       String productReparto,
@@ -660,18 +780,16 @@ class DatabaseService {
         .doc()
         .set({
       "color": _color,
-      "description": (productDescription == null || productDescription.isEmpty)
-          ? ""
-          : productDescription,
+      "description": (productDescription.isEmpty) ? "" : productDescription,
       "image": "",
       "measureUnit": measureUnit,
       "name": productName,
       "ownerId": ownerId,
-      "ownerName": "Michael",
+      "ownerName": ownerName,
       "quantity": quantity,
       "reparto": productReparto,
       "spesaIdRef": spesaIdRef,
-      "currency": price != null ? "€" : null,
+      "currency": "€",
       "price": price
     });
     await _db
@@ -680,7 +798,7 @@ class DatabaseService {
         .update({"ammount": FieldValue.increment(price)});
   }
 
-  Future<void> updateProductOnReceipt(Product product, String menuId) async {
+  Future<void> updateProductOnReceipt(Product product, String? menuId) async {
     _db
         .collection(_menuCollection)
         .doc(menuId)
@@ -709,6 +827,30 @@ class DatabaseService {
     );
   }
 
+  Future<void> updateShowSelected(Spesa currentSpesa) async {
+    await _db.collection(_spesaCollection).doc(currentSpesa.id).update(
+      {
+        "showSelected": currentSpesa.showSelected,
+      },
+    );
+  }
+
+  Future<void> updateShowPrice(Spesa currentSpesa) async {
+    await _db.collection(_spesaCollection).doc(currentSpesa.id).update(
+      {
+        "showPrice": currentSpesa.showPrice,
+      },
+    );
+  }
+
+  Future<void> updateSpesaOrder(Spesa currentSpesa) async {
+    await _db.collection(_spesaCollection).doc(currentSpesa.id).update(
+      {
+        "orderBy": currentSpesa.orderBy,
+      },
+    );
+  }
+
   Future<void> updateProductOnSpesa(
       String productId,
       String spesaIdRef,
@@ -728,14 +870,12 @@ class DatabaseService {
         .doc(productId)
         .update({
       "name": productName,
-      "description": (productDescription == null || productDescription.isEmpty)
-          ? ""
-          : productDescription,
+      "description": (productDescription.isEmpty) ? "" : productDescription,
       "image": "",
       "measureUnit": measureUnit,
       "quantity": quantity,
       "reparto": productReparto,
-      "currency": price != null ? "€" : null,
+      "currency": "€",
       "price": price
     });
     if (priceDifference != 0)
@@ -751,7 +891,10 @@ class DatabaseService {
       "startWeek": spesa.startWeek,
       "endWeek": spesa.endWeek,
       "ammount": 0.0,
-      "workspaceIdRef": spesa.workspaceIdRef
+      "workspaceIdRef": spesa.workspaceIdRef,
+      "orderBy": spesa.orderBy,
+      "showSelected": true,
+      "showPrice": true
     });
 
     spesa.id = docRef.id;
@@ -759,16 +902,29 @@ class DatabaseService {
   }
 
   Future<void> deleteProduct(Product product) async {
-    await _db
-        .collection(_spesaCollection)
-        .doc(product.spesaIdRef)
-        .collection(_productCollection)
-        .doc(product.id)
-        .delete();
-    await _db
-        .collection(_spesaCollection)
-        .doc(product.spesaIdRef)
-        .update({"ammount": FieldValue.increment(0 - product.price)});
+    _db.runTransaction((transaction) async {
+      // if(product.menuIdRef!=null){
+      //   //elimino prima nel prodotto del menu il riferimento alla spesa
+
+      //   if(product.ricettaIdRef!=null){
+      //     //in ricetta
+      //   }else{
+      //     //singolo
+      //   _db.collection(_menuCollection).doc(product.menuIdRef).collection(_productCollection).doc(product.id).update({""})
+
+      //   }
+      //   }
+      await transaction.delete(_db
+          .collection(_spesaCollection)
+          .doc(product.spesaIdRef)
+          .collection(_productCollection)
+          .doc(product.id));
+
+      await _db.collection(_spesaCollection).doc(product.spesaIdRef).update({
+        "ammount": FieldValue.increment(
+            0 - (product.price != null ? product.price as num : 0))
+      });
+    });
   }
 
   Future<int> getSpesaProductsSize(String spesaIdRef) async {
@@ -786,12 +942,30 @@ class DatabaseService {
   }
 
   Future<void> deleteReceiptById(Ricetta ricetta) async {
-    return await _db
-        .collection(_menuCollection)
-        .doc(ricetta.menuIdRef)
-        .collection(_ricettaCollection)
-        .doc(ricetta.id)
-        .delete();
+    _db.runTransaction((transaction) async {
+      //cancello spesa
+      await _db
+          .collection(_menuCollection)
+          .doc(ricetta.menuIdRef)
+          .collection(_ricettaCollection)
+          .doc(ricetta.id)
+          .collection(_productCollection)
+          .get()
+          .then(
+            (qs) => qs.docs.forEach(
+              (qd) {
+                //cancello prodotti in menu
+                //cancello spesa
+                transaction.delete(qd.reference);
+              },
+            ),
+          );
+      await transaction.delete(_db
+          .collection(_menuCollection)
+          .doc(ricetta.menuIdRef)
+          .collection(_ricettaCollection)
+          .doc(ricetta.id));
+    });
   }
 
   Future<void> deleteProductInMenu(Product product) async {
@@ -812,7 +986,7 @@ class DatabaseService {
         .update({
       "name": productInputForDb.product.name,
       "description": (productInputForDb.product.description == null ||
-              productInputForDb.product.description.isEmpty)
+              productInputForDb.product.description!.isEmpty)
           ? ""
           : productInputForDb.product.description,
       "image": "",
@@ -834,5 +1008,461 @@ class DatabaseService {
 
   Future<void> deleteAllProductsOnSpesa(String id) async {
     await _db.collection(_spesaCollection).doc(id).delete();
+  }
+
+  Future<void> cloneSpesa(Spesa currentSpesa, DateTime dateStart,
+      DateTime dateEnd, String userId) async {
+    //controllo se per l'intervallo di date esiste gia una spesa
+    Spesa existingSpesa;
+    List<Spesa> spesaList = await getSpesaListFromIdAndDate(
+        currentSpesa.workspaceIdRef, dateStart, dateEnd);
+    if (spesaList != null && spesaList.isNotEmpty) {
+      existingSpesa = spesaList.first;
+    } else {
+      existingSpesa = await createNewSpesa(
+        new Spesa(
+          ownerId: userId,
+          startWeek: dateStart,
+          endWeek: dateEnd,
+          workspaceIdRef: currentSpesa.workspaceIdRef,
+          orderBy: CategoryOrder.category.toString(),
+          showSelected: true,
+          showPrice: true,
+        ),
+      );
+    }
+    List<Product> productToBeInsert =
+        await getProductsBySpesa(currentSpesa.id!).first;
+    //clone prod
+    double price = 0.0;
+    for (Product product in productToBeInsert) {
+      if (product.price != null) {
+        price += product.price!;
+      }
+      _db
+          .collection(_spesaCollection)
+          .doc(existingSpesa.id)
+          .collection(_productCollection)
+          .add({
+        "color": product.color,
+        "description": product.description,
+        "image": "",
+        "measureUnit": product.measureUnit,
+        "name": product.name,
+        "ownerId": product.ownerId,
+        "ownerName": product.ownerName,
+        "quantity": product.quantity,
+        "reparto": product.reparto,
+        "spesaIdRef": existingSpesa.id,
+        "currency": product.currency,
+        "price": product.price,
+        "bought": false,
+      });
+    }
+    _db.collection(_spesaCollection).doc(existingSpesa.id).update(
+      {
+        "ammount": FieldValue.increment(price),
+      },
+    );
+  }
+
+  Future<void> cloneMenuInSpecificDay(
+      String menuIdRef,
+      DateTime dayTimeFrom, //giorno da cui prendo i dati
+      DateTime dateStartLoop, //inizio settimana dove travaso i dati
+      DateTime dateEndLoop, //fine settimana dove travaso i dati
+      DateTime dayTimeTo, //giorni in cui verso i dati
+      String userId,
+      String userName) async {
+    Menu _currentMenuRef = await _db
+        .collection(_menuCollection)
+        .doc(menuIdRef)
+        .get()
+        .then((ds) => Menu.fromFirestore(ds));
+    List<Menu> _menus = await getMenuFromDate(
+            _currentMenuRef.workspaceIdRef!, dateStartLoop, dateEndLoop)
+        .first;
+    Menu _newMenuRef;
+    if (_menus == null || _menus.isEmpty) {
+      //creo menu nuovo
+      DocumentReference docRef = await _db.collection(_menuCollection).add({
+        "name": "default",
+        "ownerId": userId,
+        "startWeek": dateStartLoop,
+        "endWeek": dateEndLoop,
+        "workspaceIdRef": _currentMenuRef.workspaceIdRef
+      });
+      _newMenuRef = await docRef.get().then((ds) => Menu.fromFirestore(ds));
+    } else {
+      _newMenuRef = _menus.first;
+    }
+    //recupero prodotti
+    List<Product> prods =
+        await getProductsInMenuWhereDate(menuIdRef, dayTimeFrom);
+    if (prods != null && prods.isNotEmpty) {
+      for (Product prod in prods) {
+        prod.menuIdRef = _newMenuRef.id;
+        prod.ownerId = userId;
+        prod.ownerName = userName;
+        prod.color = await getUserColor(
+          _currentMenuRef.workspaceIdRef,
+          userId,
+        );
+        prod.bought = false;
+        prod.checkedOnMenu = false;
+        prod.date = dayTimeTo;
+        prod.id = null;
+        prod.spesaIdRef = null;
+        prod.ricettaIdRef = null;
+
+        insertNewProductInMenu(
+            new ProductInputForDb(prod, _currentMenuRef.workspaceIdRef!),
+            false,
+            dateStartLoop,
+            dateEndLoop,
+            userId);
+      }
+    }
+
+    //recupero ricette
+    List<Ricetta> ricette =
+        await getReciptsFromMenuIdWhereDate(menuIdRef, dayTimeFrom);
+    if (ricette != null && ricette.isNotEmpty) {
+      for (Ricetta ricetta in ricette) {
+        List<Product> prodRic =
+            await getProductsByRecipt(menuIdRef, ricetta.id!);
+        ricetta.id = null;
+        ricetta.menuIdRef = _newMenuRef.id;
+        ricetta.ownerId = userId;
+        ricetta.ownerName = userName;
+        ricetta.date = dayTimeTo;
+        ricetta.color =
+            await getUserColor(_currentMenuRef.workspaceIdRef, userId);
+        DocumentReference ricRef = await _db
+            .collection(_menuCollection)
+            .doc(_newMenuRef.id)
+            .collection(_ricettaCollection)
+            .add({
+          "ownerId": ricetta.ownerId,
+          "ownerName": ricetta.ownerName,
+          "color": ricetta.color,
+          "name": ricetta.name,
+          "description": ricetta.description,
+          "pasto": ricetta.pasto,
+          "date": ricetta.date,
+          "image": "",
+          "menuIdRef": _newMenuRef.id,
+        });
+        if (prodRic != null && prodRic.isNotEmpty) {
+          for (Product prod in prodRic) {
+            prod.menuIdRef = _newMenuRef.id;
+            prod.ownerId = userId;
+            prod.ownerName = userName;
+            prod.color = await getUserColor(
+              _currentMenuRef.workspaceIdRef,
+              userId,
+            );
+            prod.bought = false;
+            prod.checkedOnMenu = false;
+            prod.date = dayTimeTo;
+            prod.id = null;
+            prod.spesaIdRef = null;
+            prod.ricettaIdRef = ricRef.id;
+
+            insertProductOnReceipt(
+                _currentMenuRef.id,
+                _currentMenuRef.workspaceIdRef,
+                prod,
+                false,
+                dateStartLoop,
+                dateEndLoop,
+                userId);
+          }
+        }
+      }
+    }
+  }
+
+  Future<void> cloneEntireMenu(String menuIdRef, DateTime dateStartLoop,
+      DateTime dateEndLoop, String userId, String userName) async {
+    Menu _currentMenuRef = await _db
+        .collection(_menuCollection)
+        .doc(menuIdRef)
+        .get()
+        .then((ds) => Menu.fromFirestore(ds));
+    List<Menu> _menus = await getMenuFromDate(
+            _currentMenuRef.workspaceIdRef!, dateStartLoop, dateEndLoop)
+        .first;
+    Menu _newMenuRef;
+    if (_menus == null || _menus.isEmpty) {
+      //creo menu nuovo
+      DocumentReference docRef = await _db.collection(_menuCollection).add({
+        "name": "default",
+        "ownerId": userId,
+        "startWeek": dateStartLoop,
+        "endWeek": dateEndLoop,
+        "workspaceIdRef": _currentMenuRef.workspaceIdRef
+      });
+      _newMenuRef = await docRef.get().then((ds) => Menu.fromFirestore(ds));
+    } else {
+      _newMenuRef = _menus.first;
+    }
+    //recupero prodotti
+    List<Product> prods = await getProductsInMenu(menuIdRef);
+    if (prods != null && prods.isNotEmpty) {
+      for (Product prod in prods) {
+        prod.menuIdRef = _newMenuRef.id;
+        prod.ownerId = userId;
+        prod.ownerName = userName;
+        prod.color = await getUserColor(
+          _currentMenuRef.workspaceIdRef,
+          userId,
+        );
+        prod.bought = false;
+        prod.checkedOnMenu = false;
+        prod.date = prod.date!.add(Duration(
+            days: dateStartLoop.difference(_currentMenuRef.startWeek!).inDays));
+        prod.id = null;
+        prod.spesaIdRef = null;
+        prod.ricettaIdRef = null;
+
+        insertNewProductInMenu(
+            new ProductInputForDb(prod, _currentMenuRef.workspaceIdRef!),
+            false,
+            dateStartLoop,
+            dateEndLoop,
+            userId);
+      }
+    }
+
+    //recupero ricette
+    List<Ricetta> ricette = await getReciptsFromMenuId(menuIdRef);
+    if (ricette != null && ricette.isNotEmpty) {
+      for (Ricetta ricetta in ricette) {
+        List<Product> prodRic =
+            await getProductsByRecipt(menuIdRef, ricetta.id!);
+        ricetta.id = null;
+        ricetta.menuIdRef = _newMenuRef.id;
+        ricetta.ownerId = userId;
+        ricetta.ownerName = userName;
+        ricetta.date = ricetta.date!.add(Duration(
+            days: dateStartLoop.difference(_currentMenuRef.startWeek!).inDays));
+        ricetta.color = await getUserColor(
+          _currentMenuRef.workspaceIdRef,
+          userId,
+        );
+        DocumentReference ricRef = await _db
+            .collection(_menuCollection)
+            .doc(_newMenuRef.id)
+            .collection(_ricettaCollection)
+            .add({
+          "ownerId": ricetta.ownerId,
+          "ownerName": ricetta.ownerName,
+          "color": ricetta.color,
+          "name": ricetta.name,
+          "description": ricetta.description,
+          "pasto": ricetta.pasto,
+          "date": ricetta.date,
+          "image": "",
+          "menuIdRef": ricetta.menuIdRef,
+        });
+        if (prodRic != null && prodRic.isNotEmpty) {
+          for (Product prod in prodRic) {
+            prod.menuIdRef = _newMenuRef.id;
+            prod.ownerId = userId;
+            prod.ownerName = userName;
+            prod.color = await getUserColor(
+              _currentMenuRef.workspaceIdRef,
+              userId,
+            );
+            prod.bought = false;
+            prod.checkedOnMenu = false;
+            prod.date = prod.date!.add(Duration(
+                days: dateStartLoop
+                    .difference(_currentMenuRef.startWeek!)
+                    .inDays));
+            prod.id = null;
+            prod.spesaIdRef = null;
+            prod.ricettaIdRef = ricRef.id;
+
+            insertProductOnReceipt(
+                _currentMenuRef.id,
+                _currentMenuRef.workspaceIdRef,
+                prod,
+                false,
+                dateStartLoop,
+                dateEndLoop,
+                userId);
+          }
+        }
+      }
+    }
+  }
+
+  Future<void> deleteAllInMenu(String menuId) async {
+    await _db.collection(_menuCollection).doc(menuId).delete();
+  }
+
+  Future<void> updateWorkspaceFocus(String id, bool bool) async {
+    await _db.collection(_workspaceCollection).doc(id).update(
+      {"focused": bool},
+    );
+  }
+
+  Future<void> saveWorkspace(
+      UserWorkspace currentWorkspace, AuthProvider provider) async {
+    if (currentWorkspace.id != null) {
+      //aggiorna
+      await _db
+          .collection(_workspaceCollection)
+          .doc(currentWorkspace.id)
+          .update(
+        {"name": currentWorkspace.name},
+      );
+    } else {
+      //inserisci
+      Map<String, String> firstColorWithUser = {
+        currentWorkspace.ownerId!: ColorCostant.colorMap.keys.first
+      };
+      DocumentReference docRef =
+          await _db.collection(_workspaceCollection).add({
+        "name": currentWorkspace.name,
+        "ownerId": currentWorkspace.ownerId,
+        "contributorsId": [],
+        "focused": false,
+        "userColors": firstColorWithUser
+      });
+      await _db
+          .collection(_userCollection)
+          .doc(currentWorkspace.ownerId)
+          .update({
+        "workspacesIdRef": FieldValue.arrayUnion([docRef.id])
+      });
+      //refresh userData
+      //refresh userdata
+      UserDataModel _userData = await getUserData(currentWorkspace.ownerId!);
+      provider.refreshUserData(_userData);
+    }
+  }
+
+  Future<void> deleteWorkspace(UserWorkspace workspacesWidget) async {
+    _db.runTransaction(
+      (transaction) async {
+        //cancello spesa
+        await _db
+            .collection(_spesaCollection)
+            .where("workspaceIdRef", isEqualTo: workspacesWidget.id)
+            .get()
+            .then(
+              (qs) => qs.docs.forEach(
+                (qd) {
+                  //cancello prodotti in spesa
+                  qd.reference.collection(_productCollection).get().then(
+                        (qs) => qs.docs.forEach(
+                          (qd) {
+                            transaction.delete(qd.reference);
+                          },
+                        ),
+                      );
+                  //cancello spesa
+                  transaction.delete(qd.reference);
+                },
+              ),
+            );
+
+        //cancello menu
+        await _db
+            .collection(_menuCollection)
+            .where("workspaceIdRef", isEqualTo: workspacesWidget.id)
+            .get()
+            .then(
+              (qs) => qs.docs.forEach(
+                (qd) {
+                  //cancello prodotti singoli in menu
+                  qd.reference.collection(_productCollection).get().then(
+                        (qs) => qs.docs.forEach(
+                          (qd) {
+                            transaction.delete(qd.reference);
+                          },
+                        ),
+                      );
+                  //gestisco cancellazione ricette
+                  qd.reference.collection(_ricettaCollection).get().then(
+                        (qs) => qs.docs.forEach(
+                          (qd) {
+                            //cancello prodotti in ricetta
+                            qd.reference
+                                .collection(_productCollection)
+                                .get()
+                                .then(
+                                  (qs) => qs.docs.forEach(
+                                    (qd) {
+                                      transaction.delete(qd.reference);
+                                    },
+                                  ),
+                                );
+                            //cancello la ricetta
+                            transaction.delete(qd.reference);
+                          },
+                        ),
+                      );
+                  //cancello menu
+                  transaction.delete(qd.reference);
+                },
+              ),
+            );
+
+        //cancello workspace
+        await transaction.delete(
+            _db.collection(_workspaceCollection).doc(workspacesWidget.id));
+      },
+    );
+  }
+
+  Future<void> acceptWorkspaceWork(
+      Notifiche notifica, String userId, AuthProvider provider) async {
+    await _db
+        .collection(_userCollection)
+        .doc(userId)
+        .collection(_notificheCollection)
+        .doc(notifica.id)
+        .update(
+      {"accepted": 1},
+    );
+    await _db.collection(_userCollection).doc(userId).update({
+      "workspacesIdRef": FieldValue.arrayUnion([notifica.workspaceIdRef])
+    });
+    //update workspace
+    String _color = await getUserColor(
+      notifica.workspaceIdRef,
+      userId,
+    );
+    UserWorkspace _workspace =
+        await getWorkspaceFromId(notifica.workspaceIdRef!);
+    Map<String, String> _wsColors = _workspace.userColors!;
+    _wsColors.putIfAbsent(userId, () => _color);
+
+    await _db
+        .collection(_workspaceCollection)
+        .doc(notifica.workspaceIdRef)
+        .update({
+      "contributorsId": FieldValue.arrayUnion([userId]),
+      "userColors": _wsColors
+    });
+    //refresh userdata
+    UserDataModel _userData = await getUserData(userId);
+
+    provider.refreshUserData(_userData);
+  }
+
+  Future<void> rejectWorkspaceWork(Notifiche notifica, String userId) async {
+    await _db
+        .collection(_userCollection)
+        .doc(userId)
+        .collection(_notificheCollection)
+        .doc(notifica.id)
+        .update(
+      {"accepted": -1},
+    );
   }
 }

@@ -1,26 +1,55 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:market_organizer/provider/date_provider.dart';
+import 'package:market_organizer/service/navigation_service.dart';
+import 'package:provider/provider.dart';
 
 class AppBarCustom extends StatelessWidget {
   final int _selectedIndex;
   final Function _addItem;
   final bool _isLoadingData;
-  AppBarCustom(this._selectedIndex, this._addItem, this._isLoadingData);
+  final String worksapceId;
+  AppBarCustom(this._selectedIndex, this._addItem, this._isLoadingData,
+      this.worksapceId);
 
   @override
   Widget build(BuildContext context) {
     return _header();
   }
 
+//metodo generico per aggiungere utente al nostro workspace
+  void _addUser() {
+    NavigationService.instance
+        .navigateToWithParameters("shareToUserPage", worksapceId);
+  }
+
   Widget _header() {
     return Container(
-      height: 70,
+      height: 80,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Align(alignment: Alignment.bottomLeft, child: _workspaceTitle()),
-          Align(alignment: Alignment.bottomRight, child: _addButton()),
+          Align(
+            alignment: Alignment.bottomRight,
+            child: _selectedIndex == 0 ? _spesaButtons() : _menuButtons(),
+          ),
         ],
       ),
+    );
+  }
+
+  Widget _spesaButtons() {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [_homeButton(), _addUserButton(), _addButton()],
+    );
+  }
+
+  Widget _menuButtons() {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [_homeButton(), _addUserButtonWithPadding()],
     );
   }
 
@@ -28,36 +57,65 @@ class AppBarCustom extends StatelessWidget {
     String title = "";
     if (_selectedIndex == 0)
       title = "Spesa";
-    else if (_selectedIndex == 1)
-      title = "Menù";
     else
-      title = "Profile";
-    return Row(children: [
-      Padding(
-        padding: const EdgeInsets.only(left: 15.0),
-        child: Text(
-          title,
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 40,
-          ),
+      title = "Menù";
+
+    return Padding(
+      padding: const EdgeInsets.only(left: 15.0),
+      child: Text(
+        title,
+        style: TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+          fontSize: 40,
         ),
       ),
-      Icon(
-        Icons.arrow_drop_down,
-        color: Colors.white,
+    );
+  }
+
+  void _goToHome() {
+    NavigationService.instance.navigateToReplacement("home");
+  }
+
+  Widget _homeButton() {
+    return Padding(
+      padding: const EdgeInsets.only(right: 15.0),
+      child: IconButton(
+        icon: Icon(
+          CupertinoIcons.home,
+          color: Colors.white,
+        ),
+        onPressed: () => _goToHome(),
       ),
-    ]);
+    );
   }
 
   Widget _addButton() {
     return Padding(
+      padding: const EdgeInsets.only(right: 5.0),
+      child: IconButton(
+        disabledColor: Colors.white.withOpacity(0.5),
+        icon: Icon(CupertinoIcons.add, color: Colors.white, size: 25),
+        onPressed: () => _isLoadingData ? null : _addItem(),
+      ),
+    );
+  }
+
+  Widget _addUserButton() {
+    return IconButton(
+      disabledColor: Colors.white.withOpacity(0.5),
+      icon: Icon(CupertinoIcons.person_add, color: Colors.white, size: 25),
+      onPressed: () => _isLoadingData ? null : _addUser(),
+    );
+  }
+
+  Widget _addUserButtonWithPadding() {
+    return Padding(
       padding: const EdgeInsets.only(right: 15.0),
       child: IconButton(
-        disabledColor:Colors.white.withOpacity(0.5) ,
-        icon: Icon(Icons.add, color: Colors.white, size: 30),
-        onPressed: () => _isLoadingData ? null : _addItem(),
+        disabledColor: Colors.white.withOpacity(0.5),
+        icon: Icon(CupertinoIcons.person_add, color: Colors.white, size: 25),
+        onPressed: () => _isLoadingData ? null : _addUser(),
       ),
     );
   }

@@ -54,7 +54,7 @@ class SingleRicetta extends StatelessWidget {
       ),
       child: Dismissible(
         child: Container(
-          color: ColorCostant.colorMap[_ricetta.color].withOpacity(0.2),
+          color: ColorCostant.colorMap[_ricetta.color]!.withOpacity(0.2),
           child: _productCard(),
         ),
         key: UniqueKey(),
@@ -84,18 +84,18 @@ class SingleRicetta extends StatelessWidget {
     return ListTile(
       contentPadding: EdgeInsets.symmetric(vertical: 0.0, horizontal: 11.0),
       dense: true,
-      title: Text(_ricetta.name,
+      title: Text(_ricetta.name!,
           style: TextStyle(
               color: Colors.black, fontWeight: FontWeight.bold, fontSize: 16)),
       subtitle: Text(
-        _ricetta.description == null || _ricetta.description.isEmpty
+        _ricetta.description == null || _ricetta.description!.isEmpty
             ? "(nessuna descrizione)"
-            : _ricetta.description,
+            : _ricetta.description!,
         style: TextStyle(
           color: Colors.black.withOpacity(0.7),
         ),
       ),
-      leading: _trailingWidget(),
+      trailing: _trailingWidget(),
     );
   }
 
@@ -109,7 +109,7 @@ class SingleRicetta extends StatelessWidget {
       ),
       child: Center(
         child: Text(
-          _ricetta.ownerName[0].toUpperCase(),
+          _ricetta.ownerName![0].toUpperCase(),
           style: TextStyle(fontSize: 18, color: Colors.white),
         ),
       ),

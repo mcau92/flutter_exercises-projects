@@ -16,12 +16,11 @@ class PastoWidget extends StatefulWidget {
   final String _pastoName;
   final RicettaManagementInput mealDetailModel;
   final Function(String pasto, bool isRicetta) showMealDetailsPage;
-  final bool isToExpandPasto;
   PastoWidget(
-      this._pastoName,
-      this.mealDetailModel,
-      void Function(String pasto, bool isRicetta) this.showMealDetailsPage,
-      this.isToExpandPasto);
+    this._pastoName,
+    this.mealDetailModel,
+    void Function(String pasto, bool isRicetta) this.showMealDetailsPage,
+  );
 
   @override
   State<PastoWidget> createState() => _PastoWidgetState();
@@ -33,7 +32,7 @@ class _PastoWidgetState extends State<PastoWidget> {
     //ricetta può essere nulla se sono in fase di creazione da zero altrimenti è valorizzata con quella selezionata
     Map<Product, bool> fetchedProd = await DatabaseService.instance
         .getProductsByReceiptWithDefaultFalseInSpesa(
-            _ricetta.menuIdRef, _ricetta.id);
+            _ricetta.menuIdRef!, _ricetta.id!);
     NewSelectedReceiptInput receiptInput = new NewSelectedReceiptInput(
         ReceiptOperationType.UPDATE,
         _ricetta,
@@ -68,10 +67,13 @@ class _PastoWidgetState extends State<PastoWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return ExpansionTile(
-      initiallyExpanded: widget.isToExpandPasto,
-      title: _titleBar(),
-      children: [_body()],
+    return Theme(
+      data: ThemeData().copyWith(unselectedWidgetColor: Colors.black),
+      child: ExpansionTile(
+        initiallyExpanded: true,
+        title: _titleBar(),
+        children: [_body()],
+      ),
     );
   }
 
@@ -145,18 +147,18 @@ class _PastoWidgetState extends State<PastoWidget> {
   Widget _ricettaList() {
     return StreamBuilder<List<Ricetta>>(
       stream: DatabaseService.instance.getReciptsFromMenuIdAndDateAndPasto(
-          widget.mealDetailModel.menuIdRef,
-          widget.mealDetailModel.dateTimeDay,
-          widget.mealDetailModel.pasto),
+          widget.mealDetailModel.menuIdRef!,
+          widget.mealDetailModel.dateTimeDay!,
+          widget.mealDetailModel.pasto!),
       builder: (context, snap) {
         if (snap.connectionState == ConnectionState.waiting) {
           return Center(
             child: CircularProgressIndicator(
-              color: Colors.red,
+              color: Colors.orange,
             ),
           );
         } else {
-          List<Ricetta> _ricette = snap.data;
+          List<Ricetta> _ricette = snap.data!;
           return ListView.separated(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -215,18 +217,19 @@ class _PastoWidgetState extends State<PastoWidget> {
       padding: const EdgeInsets.only(top: 10.0),
       child: StreamBuilder<List<Product>>(
         stream: DatabaseService.instance.getProductsFromMenuIdAndDateAndPasto(
-            widget.mealDetailModel.menuIdRef,
-            widget.mealDetailModel.dateTimeDay,
-            widget.mealDetailModel.pasto),
+            widget.mealDetailModel.menuIdRef!,
+            widget.mealDetailModel.dateTimeDay!,
+            widget.mealDetailModel.pasto!),
         builder: (context, snap) {
           if (snap.connectionState == ConnectionState.waiting) {
             return Center(
               child: CircularProgressIndicator(
-                color: Colors.red,
+                color: Colors.orange,
               ),
             );
           } else {
-            List<Product> _products = snap.data;
+            List<Product> _products = snap.data!;
+            print(_products.length);
             return ListView.separated(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
@@ -243,7 +246,7 @@ class _PastoWidgetState extends State<PastoWidget> {
                     child: Container(
                       clipBehavior: Clip.hardEdge,
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: Colors.red,
                         borderRadius: BorderRadius.all(
                           Radius.circular(10),
                         ),

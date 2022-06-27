@@ -23,6 +23,7 @@ class Product {
   bool?
       bought; //indica se è comprato o meno per gestire la visualizzazione in spesa
   bool? checkedOnMenu;
+
   Product({
     this.id,
     this.ownerId,
@@ -65,6 +66,19 @@ class Product {
       "bought": bought,
       "checkedOnMenu": checkedOnMenu,
     };
+  }
+
+  bool isEqualToAnother(Product product) {
+    return product.name == this.name &&
+        product.description == this.description &&
+        product.ownerId == this.ownerId &&
+        product.ownerName == this.ownerName &&
+        product.color == this.color &&
+        product.measureUnit == this.measureUnit &&
+        product.quantity == this.quantity &&
+        product.pasto == this.pasto &&
+        product.reparto == this.reparto &&
+        product.price == this.price;
   }
 
   factory Product.fromFirestore(DocumentSnapshot _snapshot) {

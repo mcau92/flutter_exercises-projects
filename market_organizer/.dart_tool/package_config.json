@@ -285,13 +285,13 @@
     },
     {
       "name": "image_picker",
-      "rootUri": "file:///Users/michaelcauduro/dev/flutter/sdk/flutter/.pub-cache/hosted/pub.dartlang.org/image_picker-0.8.5",
+      "rootUri": "file:///Users/michaelcauduro/dev/flutter/sdk/flutter/.pub-cache/hosted/pub.dartlang.org/image_picker-0.8.5+3",
       "packageUri": "lib/",
       "languageVersion": "2.14"
     },
     {
       "name": "image_picker_android",
-      "rootUri": "file:///Users/michaelcauduro/dev/flutter/sdk/flutter/.pub-cache/hosted/pub.dartlang.org/image_picker_android-0.8.4+11",
+      "rootUri": "file:///Users/michaelcauduro/dev/flutter/sdk/flutter/.pub-cache/hosted/pub.dartlang.org/image_picker_android-0.8.4+13",
       "packageUri": "lib/",
       "languageVersion": "2.14"
     },
@@ -303,7 +303,7 @@
     },
     {
       "name": "image_picker_ios",
-      "rootUri": "file:///Users/michaelcauduro/dev/flutter/sdk/flutter/.pub-cache/hosted/pub.dartlang.org/image_picker_ios-0.8.5",
+      "rootUri": "file:///Users/michaelcauduro/dev/flutter/sdk/flutter/.pub-cache/hosted/pub.dartlang.org/image_picker_ios-0.8.5+5",
       "packageUri": "lib/",
       "languageVersion": "2.14"
     },
@@ -440,6 +440,12 @@
       "languageVersion": "2.12"
     },
     {
+      "name": "shimmer",
+      "rootUri": "file:///Users/michaelcauduro/dev/flutter/sdk/flutter/.pub-cache/hosted/pub.dartlang.org/shimmer-2.0.0",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
       "name": "sky_engine",
       "rootUri": "file:///Users/michaelcauduro/dev/flutter/sdk/flutter/bin/cache/pkg/sky_engine",
       "packageUri": "lib/",
@@ -454,6 +460,12 @@
     {
       "name": "stack_trace",
       "rootUri": "file:///Users/michaelcauduro/dev/flutter/sdk/flutter/.pub-cache/hosted/pub.dartlang.org/stack_trace-1.10.0",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
+      "name": "sticky_headers",
+      "rootUri": "file:///Users/michaelcauduro/dev/flutter/sdk/flutter/.pub-cache/hosted/pub.dartlang.org/sticky_headers-0.2.0",
       "packageUri": "lib/",
       "languageVersion": "2.12"
     },
@@ -524,7 +536,7 @@
       "languageVersion": "2.16"
     }
   ],
-  "generated": "2022-05-03T18:40:10.726194Z",
+  "generated": "2022-05-27T06:54:28.750887Z",
   "generator": "pub",
   "generatorVersion": "2.16.2"
 }

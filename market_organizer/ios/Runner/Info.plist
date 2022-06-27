@@ -16,7 +16,10 @@
 			</dict>
 		</array>
 		<!-- End of the Google Sign-In section -->
-
+		<key>NSPhotoLibraryUsageDescription</key>
+		<string>Please grant photo gallery access</string>
+		<key>NSCameraUsageDescription</key>
+		<string>Please grant camera access</string>
 		<!-- Permission options for the `contacts` group -->
 		<key>NSContactsUsageDescription</key>
 		<string>contacts</string>

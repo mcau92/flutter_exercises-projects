@@ -1,13 +1,16 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:market_organizer/database/database_service.dart';
+import 'package:market_organizer/exception/login_exception.dart';
 import 'package:market_organizer/provider/auth_provider.dart';
+import 'package:market_organizer/service/navigation_service.dart';
 import 'package:market_organizer/service/snackbar_service.dart';
 import 'package:provider/provider.dart';
 
 class SignUpWidget extends StatefulWidget {
   Function _changeSignPage;
-  SignUpWidget(this._changeSignPage);
+  final Function _loadingData;
+  SignUpWidget(this._changeSignPage, this._loadingData);
 
   @override
   _SignUpWidgetState createState() => _SignUpWidgetState();
@@ -15,10 +18,12 @@ class SignUpWidget extends StatefulWidget {
 
 class _SignUpWidgetState extends State<SignUpWidget> {
   late AuthProvider _auth;
-  late String _name;
-  late String _email;
-  late String _password;
-  late bool _isButtonEnable = false;
+  String? _name;
+  String? _email;
+  String? _password;
+
+  bool _passwordVisible = false;
+  bool _isButtonEnable = false;
   late GlobalKey<FormState> _formKey;
 
   _SignUpWidgetState() {
@@ -27,12 +32,12 @@ class _SignUpWidgetState extends State<SignUpWidget> {
 
   void _checkValidator() {
     if (_name != null &&
-        _name.length > 0 &&
+        _name!.length > 0 &&
         _email != null &&
         _password != null &&
-        _email.length > 0 &&
-        _password.length > 5 &&
-        (_email.contains('@') && _email.contains('.'))) {
+        _email!.length > 0 &&
+        _password!.length > 5 &&
+        (_email!.contains('@') && _email!.contains('.'))) {
       setState(() {
         _isButtonEnable = true;
       });
@@ -44,17 +49,27 @@ class _SignUpWidgetState extends State<SignUpWidget> {
   }
 
   void _userAuth() async {
-    _email = _email.trim();
-    _name = _name.trim();
-    _auth.registerUserWithEmailAndPassword(_email, _password,
-        (String _uid) async {
-      try {
-        await DatabaseService.instance.createUserInDb(_uid, _email, _name);
-      } catch (e) {
-        SnackBarService.instance.showSnackBarError(
-            "impossibile creare l'utente, riprovare in un secondo momento");
-      }
-    });
+    //detect keyboard and close
+    _email = _email!.trim();
+    _name = _name!.trim();
+    widget._loadingData();
+    try {
+      await _auth.registerUserWithEmailAndPassword(_email!, _password!,
+          (String _uid) async {
+        try {
+          await DatabaseService.instance.createUserInDb(_uid, _email!, _name!);
+        } on LoginException catch (e) {
+          print("$e");
+          SnackBarService.instance.showSnackBarError(
+              "impossibile creare l'utente, riprovare in un secondo momento");
+
+          widget._loadingData();
+        }
+      });
+    } on LoginException catch (e) {
+      print("$e");
+      widget._loadingData();
+    }
   }
 
   @override
@@ -97,15 +112,15 @@ class _SignUpWidgetState extends State<SignUpWidget> {
               SizedBox(
                 height: 50,
               ),
-              _nameField(_context),
+              _nameBox(_context),
               SizedBox(
                 height: 30,
               ),
-              _emailTextField(_context),
+              _emailBox(_context),
               SizedBox(
                 height: 30,
               ),
-              _passwordTextField(_context),
+              _passwordBox(_context),
               SizedBox(
                 height: 50,
               ),
@@ -116,6 +131,19 @@ class _SignUpWidgetState extends State<SignUpWidget> {
               _signUpSection(_context),
             ],
           )),
+    );
+  }
+
+  Widget _nameBox(BuildContext _context) {
+    return Container(
+      padding: EdgeInsets.only(left: 10),
+      child: _nameField(_context),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(5),
+        border: Border.all(
+          color: Colors.black,
+        ),
+      ),
     );
   }
 
@@ -141,24 +169,25 @@ class _SignUpWidgetState extends State<SignUpWidget> {
         cursorColor: Colors.black,
         decoration: InputDecoration(
           hintText: "Nome",
-          border: OutlineInputBorder(
-            borderSide: BorderSide(
-              color: Colors.black,
-            ),
-          ),
-          focusedBorder: UnderlineInputBorder(
-            borderSide: BorderSide(
-              color: Colors.black,
-            ),
-          ),
-          enabledBorder: UnderlineInputBorder(
-            borderSide: BorderSide(
-              color: Colors.black,
-            ),
-          ),
+          border: InputBorder.none,
+          focusedBorder: InputBorder.none,
+          enabledBorder: InputBorder.none,
           errorBorder: InputBorder.none,
           disabledBorder: InputBorder.none,
           hintStyle: TextStyle(color: Colors.black),
+        ),
+      ),
+    );
+  }
+
+  Widget _emailBox(BuildContext _context) {
+    return Container(
+      padding: EdgeInsets.only(left: 10),
+      child: _emailTextField(_context),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(5),
+        border: Border.all(
+          color: Colors.black,
         ),
       ),
     );
@@ -173,7 +202,7 @@ class _SignUpWidgetState extends State<SignUpWidget> {
         validator: (_input) {
           return _input != null && (_input.length != 0 || _input.contains('@'))
               ? null
-              : "Inserisci un'email valida";
+              : "Please Enter a Valid Email";
         },
         style: Theme.of(_context).textTheme.headline5?.copyWith(fontSize: 18),
         onSaved: (_input) {
@@ -188,21 +217,9 @@ class _SignUpWidgetState extends State<SignUpWidget> {
         cursorColor: Colors.black,
         decoration: InputDecoration(
           hintText: "Email",
-          border: OutlineInputBorder(
-            borderSide: BorderSide(
-              color: Colors.black,
-            ),
-          ),
-          focusedBorder: UnderlineInputBorder(
-            borderSide: BorderSide(
-              color: Colors.black,
-            ),
-          ),
-          enabledBorder: UnderlineInputBorder(
-            borderSide: BorderSide(
-              color: Colors.black,
-            ),
-          ),
+          border: InputBorder.none,
+          focusedBorder: InputBorder.none,
+          enabledBorder: InputBorder.none,
           errorBorder: InputBorder.none,
           disabledBorder: InputBorder.none,
           hintStyle: TextStyle(color: Colors.black),
@@ -211,47 +228,64 @@ class _SignUpWidgetState extends State<SignUpWidget> {
     );
   }
 
-  Widget _passwordTextField(BuildContext _context) {
+  Widget _passwordBox(BuildContext _context) {
     return Container(
-      child: TextFormField(
-        textAlignVertical: TextAlignVertical.bottom,
-        textAlign: TextAlign.start,
-        autocorrect: false,
-        validator: (_input) {
-          return _input?.length != 0 ? null : "Inserisci la password";
-        },
-        style: Theme.of(_context).textTheme.headline5?.copyWith(fontSize: 18),
-        onSaved: (_input) {
-          if (_input != null) {
-            setState(() {
-              _password = _input;
-              _checkValidator();
-            });
-          }
-        },
-        cursorHeight: 18,
-        cursorColor: Colors.black,
-        decoration: InputDecoration(
-          hintText: "Password",
-          border: OutlineInputBorder(
-            borderSide: BorderSide(
-              color: Colors.black,
-            ),
+      padding: EdgeInsets.only(left: 10),
+      child: Row(
+        children: [
+          Expanded(
+            child: _passwordTextField(_context),
           ),
-          focusedBorder: UnderlineInputBorder(
-            borderSide: BorderSide(
-              color: Colors.black,
-            ),
+          IconButton(
+            onPressed: () {
+              setState(() {
+                _passwordVisible = !_passwordVisible;
+              });
+            },
+            icon: Icon(_passwordVisible
+                ? CupertinoIcons.eye_slash
+                : CupertinoIcons.eye),
           ),
-          enabledBorder: UnderlineInputBorder(
-            borderSide: BorderSide(
-              color: Colors.black,
-            ),
-          ),
-          errorBorder: InputBorder.none,
-          disabledBorder: InputBorder.none,
-          hintStyle: TextStyle(color: Colors.black),
+        ],
+      ),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(5),
+        border: Border.all(
+          color: Colors.black,
         ),
+      ),
+    );
+  }
+
+  Widget _passwordTextField(BuildContext _context) {
+    return TextFormField(
+      keyboardType: TextInputType.text,
+      obscureText: !_passwordVisible,
+      textAlignVertical: TextAlignVertical.bottom,
+      textAlign: TextAlign.start,
+      autocorrect: false,
+      validator: (_input) {
+        return _input?.length != 0 ? null : "Inserisci la password";
+      },
+      style: Theme.of(_context).textTheme.headline5?.copyWith(fontSize: 18),
+      onSaved: (_input) {
+        if (_input != null) {
+          setState(() {
+            _password = _input;
+            _checkValidator();
+          });
+        }
+      },
+      cursorHeight: 18,
+      cursorColor: Colors.black,
+      decoration: InputDecoration(
+        hintText: "Password",
+        border: InputBorder.none,
+        focusedBorder: InputBorder.none,
+        enabledBorder: InputBorder.none,
+        errorBorder: InputBorder.none,
+        disabledBorder: InputBorder.none,
+        hintStyle: TextStyle(color: Colors.black),
       ),
     );
   }
@@ -261,28 +295,30 @@ class _SignUpWidgetState extends State<SignUpWidget> {
 
     double _height = MediaQuery.of(_context).size.height;
     return InkWell(
-      child: Container(
-        width: _width / 2,
-        height: _height / 18,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8),
-          color: Colors.orange,
-        ),
-        child: Center(
-          child: Text(
-            'Registrati',
-            style: _isButtonEnable
-                ? Theme.of(_context)
-                    .textTheme
-                    .headline5
-                    ?.copyWith(color: Colors.white, fontSize: 18)
-                : Theme.of(_context).textTheme.headline5?.copyWith(
-                    color: Colors.white.withOpacity(0.5), fontSize: 18),
+        child: Container(
+          width: _width / 2,
+          height: _height / 18,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            color: Colors.orange,
+          ),
+          child: Center(
+            child: Text(
+              'Registrati',
+              style: _isButtonEnable
+                  ? Theme.of(_context)
+                      .textTheme
+                      .headline5
+                      ?.copyWith(color: Colors.white, fontSize: 18)
+                  : Theme.of(_context).textTheme.headline5?.copyWith(
+                      color: Colors.white.withOpacity(0.5), fontSize: 18),
+            ),
           ),
         ),
-      ),
-      onTap: () => _isButtonEnable ? _userAuth() : null,
-    );
+        onTap: () {
+          FocusManager.instance.primaryFocus?.unfocus();
+          _isButtonEnable ? _userAuth() : null;
+        });
   }
 
   Widget _signUpSection(BuildContext _context) {

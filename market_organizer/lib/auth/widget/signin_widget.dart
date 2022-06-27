@@ -1,12 +1,15 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:market_organizer/exception/login_exception.dart';
 import 'package:market_organizer/provider/auth_provider.dart';
+import 'package:market_organizer/service/navigation_service.dart';
 import 'package:provider/provider.dart';
 
 class SignInWidget extends StatefulWidget {
   final Function _changeSignPage;
   final Function _resetPassword;
-  SignInWidget(this._changeSignPage, this._resetPassword);
+  final Function _loadingData;
+  SignInWidget(this._changeSignPage, this._resetPassword, this._loadingData);
 
   @override
   _SignInWidgetState createState() => _SignInWidgetState();
@@ -16,7 +19,8 @@ class _SignInWidgetState extends State<SignInWidget> {
   late AuthProvider _auth;
   String? _email;
   String? _password;
-  late bool _isButtonEnable = false;
+  bool _isButtonEnable = false;
+  bool _passwordVisible = false;
   late GlobalKey<FormState> _formKey;
 
   _SignInWidgetState() {
@@ -25,9 +29,10 @@ class _SignInWidgetState extends State<SignInWidget> {
   void _checkValidator() {
     if (_email != null &&
         _password != null &&
-        _email!.length > 0 &&
-        _password!.length > 0 &&
-        (_email!.contains('@') && _email!.contains('.'))) {
+        _email!.length > 3 &&
+        _password!.length > 3 &&
+        _email!.contains('@') &&
+        _email!.contains('.')) {
       setState(() {
         _isButtonEnable = true;
       });
@@ -39,7 +44,13 @@ class _SignInWidgetState extends State<SignInWidget> {
   }
 
   void _userAuth() async {
-    _auth.loginUserWithEmailAndPassword(_email!, _password!);
+    widget._loadingData();
+    try {
+      await _auth.loginUserWithEmailAndPassword(_email!, _password!);
+    } on LoginException catch (e) {
+      print("$e");
+      widget._loadingData();
+    }
   }
 
   void _signInWithGoogle() async {
@@ -87,11 +98,11 @@ class _SignInWidgetState extends State<SignInWidget> {
               SizedBox(
                 height: 50,
               ),
-              _emailTextField(_context),
+              _emailBox(_context),
               SizedBox(
                 height: 30,
               ),
-              _passwordTextField(_context),
+              _passwordBox(_context),
               SizedBox(
                 height: 10,
               ),
@@ -110,6 +121,19 @@ class _SignInWidgetState extends State<SignInWidget> {
               _signUpSection(_context),
             ],
           )),
+    );
+  }
+
+  Widget _emailBox(BuildContext _context) {
+    return Container(
+      padding: EdgeInsets.only(left: 10),
+      child: _emailTextField(_context),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(5),
+        border: Border.all(
+          color: Colors.black,
+        ),
+      ),
     );
   }
 
@@ -137,21 +161,9 @@ class _SignInWidgetState extends State<SignInWidget> {
         cursorColor: Colors.black,
         decoration: InputDecoration(
           hintText: "Email",
-          border: OutlineInputBorder(
-            borderSide: BorderSide(
-              color: Colors.black,
-            ),
-          ),
-          focusedBorder: UnderlineInputBorder(
-            borderSide: BorderSide(
-              color: Colors.black,
-            ),
-          ),
-          enabledBorder: UnderlineInputBorder(
-            borderSide: BorderSide(
-              color: Colors.black,
-            ),
-          ),
+          border: InputBorder.none,
+          focusedBorder: InputBorder.none,
+          enabledBorder: InputBorder.none,
           errorBorder: InputBorder.none,
           disabledBorder: InputBorder.none,
           hintStyle: TextStyle(color: Colors.black),
@@ -160,47 +172,64 @@ class _SignInWidgetState extends State<SignInWidget> {
     );
   }
 
-  Widget _passwordTextField(BuildContext _context) {
+  Widget _passwordBox(BuildContext _context) {
     return Container(
-      child: TextFormField(
-        textAlignVertical: TextAlignVertical.bottom,
-        textAlign: TextAlign.start,
-        autocorrect: false,
-        validator: (_input) {
-          return _input?.length != 0 ? null : "Please Enter a Password";
-        },
-        style: Theme.of(_context).textTheme.headline5?.copyWith(fontSize: 18),
-        onSaved: (_input) {
-          if (_input != null) {
-            setState(() {
-              _password = _input;
-              _checkValidator();
-            });
-          }
-        },
-        cursorHeight: 18,
-        cursorColor: Colors.black,
-        decoration: InputDecoration(
-          hintText: "Password",
-          border: OutlineInputBorder(
-            borderSide: BorderSide(
-              color: Colors.black,
-            ),
+      padding: EdgeInsets.only(left: 10),
+      child: Row(
+        children: [
+          Expanded(
+            child: _passwordTextField(_context),
           ),
-          focusedBorder: UnderlineInputBorder(
-            borderSide: BorderSide(
-              color: Colors.black,
-            ),
+          IconButton(
+            onPressed: () {
+              setState(() {
+                _passwordVisible = !_passwordVisible;
+              });
+            },
+            icon: Icon(_passwordVisible
+                ? CupertinoIcons.eye_slash
+                : CupertinoIcons.eye),
           ),
-          enabledBorder: UnderlineInputBorder(
-            borderSide: BorderSide(
-              color: Colors.black,
-            ),
-          ),
-          errorBorder: InputBorder.none,
-          disabledBorder: InputBorder.none,
-          hintStyle: TextStyle(color: Colors.black),
+        ],
+      ),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(5),
+        border: Border.all(
+          color: Colors.black,
         ),
+      ),
+    );
+  }
+
+  Widget _passwordTextField(BuildContext _context) {
+    return TextFormField(
+      keyboardType: TextInputType.text,
+      obscureText: !_passwordVisible,
+      textAlignVertical: TextAlignVertical.bottom,
+      textAlign: TextAlign.start,
+      autocorrect: false,
+      validator: (_input) {
+        return _input?.length != 0 ? null : "Inserisci la password";
+      },
+      style: Theme.of(_context).textTheme.headline5?.copyWith(fontSize: 18),
+      onSaved: (_input) {
+        if (_input != null) {
+          setState(() {
+            _password = _input;
+            _checkValidator();
+          });
+        }
+      },
+      cursorHeight: 18,
+      cursorColor: Colors.black,
+      decoration: InputDecoration(
+        hintText: "Password",
+        border: InputBorder.none,
+        focusedBorder: InputBorder.none,
+        enabledBorder: InputBorder.none,
+        errorBorder: InputBorder.none,
+        disabledBorder: InputBorder.none,
+        hintStyle: TextStyle(color: Colors.black),
       ),
     );
   }
@@ -237,7 +266,10 @@ class _SignInWidgetState extends State<SignInWidget> {
               : Theme.of(_context).textTheme.headline5?.copyWith(
                   color: Colors.white.withOpacity(0.5), fontSize: 18),
         ),
-        onPressed: () async => _isButtonEnable ? _userAuth() : null,
+        onPressed: () async {
+          FocusManager.instance.primaryFocus?.unfocus();
+          _isButtonEnable ? _userAuth() : null;
+        },
       ),
     );
   }

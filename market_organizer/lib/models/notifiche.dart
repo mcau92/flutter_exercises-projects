@@ -6,15 +6,16 @@ class Notifiche {
   String? userOwner;
   String? workspaceIdRef;
   bool? viewed;
-  int? accepted;
+  String? accepted;
+  DateTime? date;
 
-  Notifiche({
-    this.id,
-    this.userOwner,
-    this.viewed,
-    this.accepted,
-    this.workspaceIdRef,
-  });
+  Notifiche(
+      {this.id,
+      this.userOwner,
+      this.viewed,
+      this.accepted,
+      this.workspaceIdRef,
+      this.date});
   factory Notifiche.fromFirestore(DocumentSnapshot _snapshot) {
     var _data = _snapshot.data() as Map;
     return Notifiche(
@@ -23,6 +24,7 @@ class Notifiche {
       viewed: _data["viewed"],
       accepted: _data["accepted"],
       workspaceIdRef: _data["workspaceIdRef"],
+      date: _data["date"].toDate(),
     );
   }
 }

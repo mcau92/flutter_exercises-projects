@@ -1,12 +1,18 @@
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
+import 'package:market_organizer/database/database_service.dart';
+import 'package:market_organizer/models/invites.dart';
+import 'package:market_organizer/models/userdata_model.dart';
+import 'package:market_organizer/provider/auth_provider.dart';
+import 'package:market_organizer/service/snackbar_service.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:provider/provider.dart';
+import 'package:sticky_headers/sticky_headers.dart';
 
 class ContactListWidget extends StatefulWidget {
-  final Function _shareToSelectedUser;
-  ContactListWidget(this._shareToSelectedUser);
+  final String workspaceId;
+  ContactListWidget(this.workspaceId);
   @override
   _ContactListWidgetState createState() => _ContactListWidgetState();
 }
@@ -14,7 +20,7 @@ class ContactListWidget extends StatefulWidget {
 class _ContactListWidgetState extends State<ContactListWidget> {
   Iterable<Contact> _contacts = [];
   late TextEditingController _textController;
-  String searchBarText = "";
+  String emailSearchBarText = "";
 
   @override
   void initState() {
@@ -33,13 +39,13 @@ class _ContactListWidgetState extends State<ContactListWidget> {
           (c.emails!.first.value!.startsWith(string)));
 
       setState(() {
-        searchBarText = string;
+        emailSearchBarText = string;
         _contacts = contacts;
       });
     } else {
       final Iterable<Contact> contacts = await ContactsService.getContacts();
       setState(() {
-        searchBarText = "";
+        emailSearchBarText = "";
         _contacts = contacts.where((element) => element.emails!.isNotEmpty);
       });
     }
@@ -50,19 +56,19 @@ class _ContactListWidgetState extends State<ContactListWidget> {
     //page, so we can just retrieve it
 
     //avoid refresh
-    if (_contacts.isNotEmpty || searchBarText.isNotEmpty) {
+    if (_contacts.isNotEmpty || emailSearchBarText.isNotEmpty) {
       return;
     }
     final Iterable<Contact> contacts = await ContactsService.getContacts();
     setState(() {
-      _contacts = contacts.where((element) => element.emails!.isNotEmpty);
+      _contacts =
+          contacts.where((element) => element.emails!.isNotEmpty).toList();
     });
   }
 
   Future<PermissionStatus> _getPermission() async {
     final status = await Permission.contacts.request();
     if (status.isGranted) {
-      print('Permission granted');
     } else if (status.isDenied) {
     } else if (status.isPermanentlyDenied) {
       await openAppSettings();
@@ -70,16 +76,175 @@ class _ContactListWidgetState extends State<ContactListWidget> {
     return status;
   }
 
+  Future<void> _removeSelectedUser(Invites invites) async {
+    try {
+      await DatabaseService.instance.deleteInvites(invites, widget.workspaceId,
+          () async {
+        SnackBarService.instance
+            .showSnackBarSuccesfull("workspace condiviso correttamente");
+      });
+      setState(() {});
+    } catch (e) {
+      print(e);
+      SnackBarService.instance
+          .showSnackBarError("impossibile rimuovere utente, riprova più tardi");
+    }
+  }
+
+  Future<void> _shareToSelectedUser(String email) async {
+    UserDataModel ownerId =
+        Provider.of<AuthProvider>(context, listen: false).userData!;
+    //check if user exist manage invites and notify
+    List<UserDataModel> userSingletonList =
+        await DatabaseService.instance.getUserFromEmail(email);
+    if (userSingletonList.isNotEmpty) {
+      try {
+        await DatabaseService.instance.shareWorkspaceToUser(
+            ownerId.id!, userSingletonList.first.id!, email, widget.workspaceId,
+            () async {
+          SnackBarService.instance
+              .showSnackBarSuccesfull("workspace condiviso correttamente");
+        });
+        setState(() {
+          _textController.text = "";
+          emailSearchBarText = "";
+        });
+      } catch (e) {
+        print(e);
+        SnackBarService.instance
+            .showSnackBarError("impossibile condividere, riprova più tardi");
+      }
+    } else {
+      //if not present send invitation, actualy print user not exist
+      print("non esiste");
+      SnackBarService.instance.showSnackBarError("utente non registrato");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (emailSearchBarText.isNotEmpty) {
+      return SingleChildScrollView(
+        child: Column(
+          children: [
+            _showSearchBar(),
+            SingleChildScrollView(
+              child: Column(
+                children: [
+                  _customDivider("Invita"),
+                  _showEmailBuilder(),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    } else {
+      return Column(
+        children: [
+          _showSearchBar(),
+          Expanded(
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  _showTip(),
+                  _showSharedUser(),
+                  _contactList(),
+                ],
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+  }
+
+  Widget _showSharedUser() {
+    return FutureBuilder<List<Invites>>(
+      future:
+          DatabaseService.instance.getInvitesForWorkspace(widget.workspaceId),
+      builder: (context, snap) {
+        if (snap.hasData) {
+          List<Invites> accepted =
+              snap.data!.where((invite) => invite.accepted == "1").toList();
+          List<Invites> notYetProcessed =
+              snap.data!.where((invite) => invite.accepted == "").toList();
+
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (accepted.isNotEmpty)
+                StickyHeader(
+                  header: _customDivider("Condiviso con"),
+                  content: ListView.builder(
+                    padding: EdgeInsets.all(0),
+                    physics: NeverScrollableScrollPhysics(),
+                    shrinkWrap: true,
+                    itemCount: accepted.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      Invites invites = accepted.elementAt(index);
+                      return Container(
+                        margin: EdgeInsets.all(10),
+                        clipBehavior: Clip.hardEdge,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.all(
+                            Radius.circular(10),
+                          ),
+                        ),
+                        child: _invitesCardProcessed(invites),
+                      );
+                    },
+                  ),
+                ),
+              if (notYetProcessed.isNotEmpty)
+                StickyHeader(
+                  header: _customDivider("In attesa"),
+                  content: ListView.builder(
+                    shrinkWrap: true,
+                    padding: EdgeInsets.all(0),
+                    physics: NeverScrollableScrollPhysics(),
+                    itemCount: notYetProcessed.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      Invites invites = notYetProcessed.elementAt(index);
+                      return Container(
+                        margin: EdgeInsets.all(10),
+                        clipBehavior: Clip.hardEdge,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.all(
+                            Radius.circular(10),
+                          ),
+                        ),
+                        child: _invitesCardWaiting(invites),
+                      );
+                    },
+                  ),
+                ),
+              if (notYetProcessed.isEmpty && accepted.isEmpty)
+                //default
+                Container(),
+            ],
+          );
+        }
+        return Container();
+      },
+    );
+  }
+
+  Widget _contactList() {
     return FutureBuilder<PermissionStatus>(
       future: _getPermission(),
       builder: (cont, snap) {
-        print(snap.hasData);
         if (snap.hasData && snap.data!.isGranted) {
-          return _showContactsBody();
-        } else if (snap.hasData) {
-          return Center(child: CircularProgressIndicator(color: Colors.red));
+          return _showContacts();
+        } else if (snap.hasData && snap.data!.isDenied) {
+          return Center(
+            child: Text(
+              "Accesso ai contatti negato",
+              style: TextStyle(color: Colors.white),
+            ),
+          );
         } else {
           return Container();
         }
@@ -87,42 +252,30 @@ class _ContactListWidgetState extends State<ContactListWidget> {
     );
   }
 
-  Widget _showContactsBody() {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        _showSearchBar(),
-        if (searchBarText.isEmpty) _showTip(),
-        if (searchBarText.isNotEmpty) _customDivider("Invita"),
-        if (searchBarText.isNotEmpty)
-          _showEmailBuilder(), //per mostrare il contatto con la mail che sto inserendo e voglio crearlo da zero
-
-        _customDivider("Contatti"),
-        Expanded(child: _showContacts()),
-      ],
-    );
-  }
-
   Widget _customDivider(String text) {
-    return Row(
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 10.0, right: 5),
-          child: Text(
-            text,
-            style: TextStyle(
+    return Container(
+      color: Color.fromRGBO(43, 43, 43, 1),
+      padding: EdgeInsets.symmetric(vertical: 5),
+      child: Row(
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(left: 10.0, right: 7),
+            child: Text(
+              text,
+              style: TextStyle(
+                color: Colors.white,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Divider(
+              height: 1,
+              thickness: 0.2,
               color: Colors.white,
             ),
           ),
-        ),
-        Expanded(
-          child: Divider(
-            height: 1,
-            thickness: 0.2,
-            color: Colors.white,
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -144,7 +297,7 @@ class _ContactListWidgetState extends State<ContactListWidget> {
           child: Text("?"),
           backgroundColor: Theme.of(context).accentColor,
         ),
-        title: Text(searchBarText),
+        title: Text(emailSearchBarText),
         subtitle: Text(
           isEmailValid ? "" : "inserire una mail valida",
           style: TextStyle(color: Colors.red),
@@ -157,7 +310,7 @@ class _ContactListWidgetState extends State<ContactListWidget> {
                   CupertinoIcons.add_circled,
                   size: 30,
                 ),
-                onPressed: () {})
+                onPressed: () => _shareToSelectedUser(emailSearchBarText))
             : CupertinoButton(
                 padding: EdgeInsets.all(0),
                 child: Icon(
@@ -176,7 +329,7 @@ class _ContactListWidgetState extends State<ContactListWidget> {
   bool checkMailIsValid() {
     return RegExp(
             r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+")
-        .hasMatch(searchBarText);
+        .hasMatch(emailSearchBarText);
   }
 
   Widget _showTip() {
@@ -184,7 +337,7 @@ class _ContactListWidgetState extends State<ContactListWidget> {
       padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 8.0),
       child: Center(
         child: Text(
-          "Per condividere, inserisci l'indirizzo email e tocca +",
+          "Ricerca per nome contatto o email e tocca +",
           style: TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
@@ -200,7 +353,7 @@ class _ContactListWidgetState extends State<ContactListWidget> {
       child: CupertinoSearchTextField(
         controller: _textController,
         itemColor: Colors.white38,
-        placeholder: "Inserisci persona o email..",
+        placeholder: "Contatto o email..",
         style: TextStyle(color: Colors.white),
         onChanged: (string) => _updateResearch(string),
       ),
@@ -211,21 +364,27 @@ class _ContactListWidgetState extends State<ContactListWidget> {
     return FutureBuilder(
       future: _getContacts(),
       builder: (cont, snap) {
-        return ListView.builder(
-          itemCount: _contacts.length,
-          itemBuilder: (BuildContext context, int index) {
-            Contact contact = _contacts.elementAt(index);
-            return Container(
-                margin: EdgeInsets.all(10),
-                clipBehavior: Clip.hardEdge,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.all(
-                    Radius.circular(10),
+        return StickyHeader(
+          header: _customDivider("Contatti"),
+          content: ListView.builder(
+            padding: EdgeInsets.all(0),
+            shrinkWrap: true,
+            physics: NeverScrollableScrollPhysics(),
+            itemCount: _contacts.length,
+            itemBuilder: (BuildContext context, int index) {
+              Contact contact = _contacts.elementAt(index);
+              return Container(
+                  margin: EdgeInsets.all(10),
+                  clipBehavior: Clip.hardEdge,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.all(
+                      Radius.circular(10),
+                    ),
                   ),
-                ),
-                child: _contactCard(contact));
-          },
+                  child: _contactCard(contact));
+            },
+          ),
         );
       },
     );
@@ -253,9 +412,114 @@ class _ContactListWidgetState extends State<ContactListWidget> {
               CupertinoIcons.add_circled,
               size: 30,
             ),
-            onPressed: () {})
+            onPressed: () => _shareToSelectedUser(contact.emails!.first.value!))
         //This can be further expanded to showing contacts detail
         // onPressed().
         );
+  }
+
+  Widget _invitesCardProcessed(Invites invites) {
+    return FutureBuilder<UserDataModel>(
+        future: DatabaseService.instance.getUserData(invites.userId!),
+        builder: (context, snapshot) {
+          if (snapshot.hasData) {
+            UserDataModel userinfo = snapshot.data!;
+            return ListTile(
+              contentPadding:
+                  const EdgeInsets.symmetric(vertical: 2, horizontal: 18),
+              dense: true,
+              leading: (userinfo.image != null && userinfo.image!.isNotEmpty)
+                  ? CircleAvatar(
+                      backgroundImage: NetworkImage(userinfo.image!),
+                    )
+                  : CircleAvatar(
+                      child: Text(userinfo.name!.substring(0, 1)),
+                      backgroundColor: Theme.of(context).accentColor,
+                    ),
+              title: Text(userinfo.name ?? ''),
+              subtitle: Text(
+                  userinfo.email != null && userinfo.email!.isNotEmpty
+                      ? userinfo.email!
+                      : ""),
+              trailing: CupertinoButton(
+                onPressed: () => _removeSelectedUser(invites),
+                padding: EdgeInsets.all(0),
+                child: Icon(
+                  invites.accepted == "1"
+                      ? CupertinoIcons.checkmark_alt_circle_fill
+                      : CupertinoIcons.clear_thick_circled,
+                  color: invites.accepted == "1" ? Colors.green : Colors.red,
+                  size: 30,
+                ),
+              ), //This can be further expanded to showing contacts detail
+              // onPressed().
+            );
+          } else {
+            return Container();
+          }
+        });
+  }
+
+  Widget _invitesCardWaiting(Invites invites) {
+    if (invites.userId == null) {
+      return ListTile(
+        contentPadding: const EdgeInsets.symmetric(vertical: 2, horizontal: 18),
+        dense: true,
+        leading: CircleAvatar(
+          child: Text("?"),
+          backgroundColor: Theme.of(context).accentColor,
+        ),
+        title: Text(invites.email!),
+
+        trailing: CupertinoButton(
+          onPressed: () => _removeSelectedUser(invites),
+          padding: EdgeInsets.all(0),
+          child: Icon(
+            CupertinoIcons.envelope,
+            color: Colors.blue,
+            size: 30,
+          ),
+        ), //This can be further expanded to showing contacts detail
+        // onPressed().
+      );
+      //else use userinfo
+    } else {
+      return FutureBuilder<UserDataModel>(
+          future: DatabaseService.instance.getUserData(invites.userId!),
+          builder: (context, snapshot) {
+            if (snapshot.hasData) {
+              UserDataModel userinfo = snapshot.data!;
+              return ListTile(
+                contentPadding:
+                    const EdgeInsets.symmetric(vertical: 2, horizontal: 18),
+                dense: true,
+                leading: (userinfo.image != null && userinfo.image!.isNotEmpty)
+                    ? CircleAvatar(
+                        backgroundImage: NetworkImage(userinfo.image!),
+                      )
+                    : CircleAvatar(
+                        child: Text(userinfo.name!.substring(0, 1)),
+                        backgroundColor: Theme.of(context).accentColor,
+                      ),
+                title: Text(userinfo.name ?? ''),
+                subtitle: Text(
+                    userinfo.email != null && userinfo.email!.isNotEmpty
+                        ? userinfo.email!
+                        : ""),
+                trailing: CupertinoButton(
+                  onPressed: () => _removeSelectedUser(invites),
+                  padding: EdgeInsets.all(0),
+                  child: Icon(
+                    CupertinoIcons.envelope,
+                    color: Colors.blue,
+                    size: 30,
+                  ),
+                ),
+              );
+            } else {
+              return Container();
+            }
+          });
+    }
   }
 }

@@ -1,9 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter/widgets.dart';
 import 'package:market_organizer/database/database_service.dart';
-import 'package:market_organizer/models/userdata_model.dart';
 import 'package:market_organizer/models/userworkspace.model.dart';
 import 'package:market_organizer/provider/auth_provider.dart';
 import 'package:market_organizer/service/navigation_service.dart';
@@ -17,9 +14,11 @@ class SaveWorkspacePage extends StatefulWidget {
 class _SaveWorkspacePageState extends State<SaveWorkspacePage> {
   late GlobalKey<FormState> _formKey;
   late TextEditingController _controller;
-  UserWorkspace? _currentWorkspace; //nullo se inserimento
-  String _workspaceName = "";
+  late UserWorkspace _currentWorkspace; //nullo se inserimento
+  late AuthProvider provider;
   bool _isInsertSelected = false;
+//primo flag salvo il dato se è gia presente e con il secondo refresho il suo stato cosi da evitare che si sovvrascrivi
+  bool? _isFavourite;
 
   @override
   void dispose() {
@@ -31,21 +30,21 @@ class _SaveWorkspacePageState extends State<SaveWorkspacePage> {
   void initState() {
     _formKey = GlobalKey<FormState>();
     _controller = TextEditingController();
+
     super.initState();
   }
 
   void _saveWorkspace() async {
-    AuthProvider provider = Provider.of<AuthProvider>(context, listen: false);
     _formKey.currentState!.save();
+
     if (_formKey.currentState!.validate()) {
-      if (_currentWorkspace == null) {
+      if (_currentWorkspace.id == null) {
         //create new workspace
-        _currentWorkspace = new UserWorkspace();
-        _currentWorkspace!.ownerId = provider.userData!.id;
+        _currentWorkspace.ownerId = provider.userData!.id;
       }
-      _currentWorkspace!.name = _workspaceName;
+
       await DatabaseService.instance
-          .saveWorkspace(_currentWorkspace!, provider);
+          .saveWorkspace(_currentWorkspace, _isFavourite!, provider);
 
       NavigationService.instance.goBack();
     } else {
@@ -73,13 +72,23 @@ class _SaveWorkspacePageState extends State<SaveWorkspacePage> {
     }
   }
 
+  void _initData() {
+    if (_isFavourite == null) {
+      if (_currentWorkspace.id == null) {
+        _isFavourite = false;
+      } else {
+        _isFavourite = provider.userData!.favouriteWs == _currentWorkspace.id;
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     var data = ModalRoute.of(context)!.settings.arguments;
-    if (data != null) {
-      _currentWorkspace = data as UserWorkspace;
-    }
-
+    provider = Provider.of<AuthProvider>(context, listen: false);
+    _currentWorkspace =
+        data != null ? data as UserWorkspace : new UserWorkspace();
+    _initData();
     return GestureDetector(
       onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
       child: Scaffold(
@@ -96,16 +105,13 @@ class _SaveWorkspacePageState extends State<SaveWorkspacePage> {
           ),
           actions: [
             CupertinoButton(
-              child: Text(_currentWorkspace == null ? "Inserisci" : "Aggiorna"),
-              onPressed: () => _workspaceName == null || _workspaceName.isEmpty
-                  ? Navigator.of(
-                      context,
-                    ).pop(true)
-                  : _saveWorkspace(),
+              child:
+                  Text(_currentWorkspace.id == null ? "Inserisci" : "Aggiorna"),
+              onPressed: () => _saveWorkspace(),
             )
           ],
           title: Text(
-            _currentWorkspace == null
+            _currentWorkspace.id == null
                 ? "Crea il Workspace"
                 : "Aggiorna il Workspace",
             style: TextStyle(color: Colors.white),
@@ -121,9 +127,38 @@ class _SaveWorkspacePageState extends State<SaveWorkspacePage> {
     return Padding(
       padding: const EdgeInsets.only(top: 10, left: 20.0, right: 20),
       child: Form(
-        key: _formKey,
-        child: _descriptionContainer(),
-      ),
+          key: _formKey,
+          child: Column(
+            children: [
+              _favouriteSelector(),
+              SizedBox(
+                height: 10,
+              ),
+              _descriptionContainer(),
+            ],
+          )),
+    );
+  }
+
+  Widget _favouriteSelector() {
+    return Row(
+      children: [
+        Text(
+          "Preferito",
+          style: TextStyle(color: Colors.white, fontSize: 17),
+        ),
+        Transform.scale(
+          scale: 0.8,
+          child: CupertinoSwitch(
+            value: _isFavourite!,
+            onChanged: (bool value) {
+              setState(() {
+                _isFavourite = value;
+              });
+            },
+          ),
+        )
+      ],
     );
   }
 
@@ -140,7 +175,7 @@ class _SaveWorkspacePageState extends State<SaveWorkspacePage> {
 
   Widget _productNameWidget() {
     return TextFormField(
-      initialValue: _currentWorkspace != null ? _currentWorkspace!.name : "",
+      initialValue: _currentWorkspace.name ?? "",
       validator: (value) {
         if (value == null || value.isEmpty) {
           return "Inserisci il nome del Workspace";
@@ -150,9 +185,17 @@ class _SaveWorkspacePageState extends State<SaveWorkspacePage> {
       },
       style: TextStyle(color: Colors.white),
       onChanged: (text) {
+        if (text.isNotEmpty) {
+          setState(() {
+            _currentWorkspace.name = text;
+          });
+          if (_isInsertSelected) _formKey.currentState!.validate();
+        }
+      },
+      onSaved: (text) {
         if (text != null && text.isNotEmpty) {
           setState(() {
-            _workspaceName = text;
+            _currentWorkspace.name = text;
           });
           if (_isInsertSelected) _formKey.currentState!.validate();
         }

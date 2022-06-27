@@ -3,7 +3,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:market_organizer/database/database_service.dart';
+import 'package:market_organizer/exception/login_exception.dart';
 import 'package:market_organizer/models/userdata_model.dart';
+import 'package:market_organizer/models/userworkspace.model.dart';
 import 'package:market_organizer/service/navigation_service.dart';
 import 'package:market_organizer/service/snackbar_service.dart';
 
@@ -30,12 +32,6 @@ class AuthProvider extends ChangeNotifier {
     _db = FirebaseFirestore.instance;
     _checkCurrentUserIsAuthenticated();
   }
-  void _autoLogin() async {
-    if (user != null) {
-      userData = await _getUserData();
-      return NavigationService.instance.navigateToReplacement("home");
-    }
-  }
 
   void refreshUserData(UserDataModel userDataNew) async {
     userData = userDataNew;
@@ -49,17 +45,43 @@ class AuthProvider extends ChangeNotifier {
         );
   }
 
-  void _checkCurrentUserIsAuthenticated() async {
-    user = _auth.currentUser;
-    if (user != null) {
-      notifyListeners();
-      _autoLogin();
+  void dispatchToRightPageAfterLogin(UserDataModel userData) async {
+    if (userData.workspacesIdRef!.isEmpty) {
+      NavigationService.instance.navigateToReplacement("home");
+    } else {
+      if (userData.favouriteWs != null && userData.favouriteWs!.isNotEmpty) {
+        UserWorkspace focused = await DatabaseService.instance
+            .getWorkspaceFromId(userData.favouriteWs!);
+        NavigationService.instance
+            .navigateToReplacementWithParameters("dispatchPage", focused);
+      } else {
+        NavigationService.instance.navigateToReplacement("home");
+      }
     }
   }
 
-  void loginUserWithEmailAndPassword(String _email, String _password) async {
-    List<String> fetchMethods = await _auth.fetchSignInMethodsForEmail(_email);
+  void _checkCurrentUserIsAuthenticated() async {
+    user = _auth.currentUser;
+    if (user != null) {
+      await Future.delayed(Duration(seconds: 1));
+      userData = await _getUserData();
+      dispatchToRightPageAfterLogin(userData!);
+      notifyListeners();
+    } else {
+      notifyListeners();
+      await Future.delayed(Duration(seconds: 1));
+      NavigationService.instance.navigateToReplacement("auth");
+    }
+  }
 
+  Future<void> loginUserWithEmailAndPassword(
+      String _email, String _password) async {
+    List<String> fetchMethods = await _auth.fetchSignInMethodsForEmail(_email);
+    if (fetchMethods.contains("google.com")) {
+      SnackBarService.instance
+          .showSnackBarError("Utente registrato via google api");
+      throw LoginException("Utente registrato via google api");
+    }
     status = AuthStatus.Authenticating;
     notifyListeners();
     try {
@@ -68,28 +90,29 @@ class AuthProvider extends ChangeNotifier {
       user = _result.user;
 
       status = AuthStatus.Authenticated;
-
+      print("arrivo");
       userData = await _getUserData();
       SnackBarService.instance
-          .showSnackBarSuccesfull("Bentornato " + userData!.name! + "!");
-      NavigationService.instance.navigateToReplacement("home");
+          .showSnackBarSuccesfull("Ciao " + userData!.name! + "!");
+      dispatchToRightPageAfterLogin(userData!);
     } catch (e) {
       status = AuthStatus.Error;
       SnackBarService.instance.showSnackBarError("Autenticazione fallita!");
       user = null;
+      throw new LoginException("$e");
     }
 
     notifyListeners();
   }
 
-  void registerUserWithEmailAndPassword(String _email, String _password,
+  Future<void> registerUserWithEmailAndPassword(String _email, String _password,
       Future<void> onSuccess(String _uid)) async {
     List<String> fetchMethods = await _auth.fetchSignInMethodsForEmail(_email);
 
     if (fetchMethods.contains("google.com")) {
       SnackBarService.instance
           .showSnackBarError("utente gia creato via google");
-      return;
+      throw LoginException("utente gia creato via google");
     }
     status = AuthStatus.Authenticating;
     try {
@@ -105,31 +128,28 @@ class AuthProvider extends ChangeNotifier {
     } catch (e) {
       print(e);
       status = AuthStatus.Error;
+
+      SnackBarService.instance.showSnackBarError("Registrazione fallita!");
       user = null;
+      throw LoginException("$e");
     }
     notifyListeners();
   }
 
   void logoutUser() async {
     try {
-      print("logout pressed");
-
-      print(_auth.currentUser != null);
       List<String> fetchMethods =
           await _auth.fetchSignInMethodsForEmail(_auth.currentUser!.email!);
 
-      print("logout pressed1");
       if (fetchMethods.contains("google.com")) {
-        print("logout google iniziato");
         await _googleSignIn.signOut();
       } else {
-        print("logout iniziato");
         await _auth.signOut();
       }
       user = null;
       userData = null;
       status = AuthStatus.NotAuthenticated;
-      await NavigationService.instance.navigateToReplacement("auth");
+      NavigationService.instance.navigateToReplacement("auth");
 
       notifyListeners();
     } catch (e) {}
@@ -168,6 +188,6 @@ class AuthProvider extends ChangeNotifier {
     }
 
     userData = await _getUserData();
-    NavigationService.instance.navigateToReplacement("home");
+    dispatchToRightPageAfterLogin(userData!);
   }
 }

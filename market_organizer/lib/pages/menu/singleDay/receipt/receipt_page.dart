@@ -509,7 +509,8 @@ class _NewSelectedReceiptPageState extends State<NewSelectedReceiptPage> {
           index,
           product, //prodotto nullo in fase di creazione
           isAddToSpesa, //default in fase di creazione
-          ProductOperationType.UPDATE_FROM_RECEIPT, null, null,
+          ProductOperationType.UPDATE_FROM_RECEIPT,
+          null, null,
         ));
   }
 
@@ -531,35 +532,37 @@ class _NewSelectedReceiptPageState extends State<NewSelectedReceiptPage> {
             return GestureDetector(
               onTap: () => showProduct(index, _prods[index],
                   widget._input.productsFetched![_prods[index]]!),
-              child: Container(
-                clipBehavior: Clip.hardEdge,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.all(
-                    Radius.circular(10),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.all(
+                      Radius.circular(10),
+                    ),
                   ),
-                ),
-                child: Dismissible(
-                  child: ProductReceiptWidget(
-                      _prods[index] //sto aggiornando il prodotto
-                      ),
-                  key: UniqueKey(),
-                  onDismissed: (direction) =>
-                      removeProduct(_prods[index], index),
-                  direction: DismissDirection.startToEnd,
-                  dismissThresholds: {DismissDirection.startToEnd: 0.3},
-                  confirmDismiss: (direction) => _confirmDismiss(context),
-                  background: Container(
-                    decoration: BoxDecoration(
-                        color: Colors.red,
-                        borderRadius: BorderRadius.circular(10)),
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 10.0),
-                        child: Icon(
-                          CupertinoIcons.delete,
-                          color: Colors.white,
+                  child: Dismissible(
+                    child: ProductReceiptWidget(
+                        _prods[index] //sto aggiornando il prodotto
+                        ),
+                    key: UniqueKey(),
+                    onDismissed: (direction) =>
+                        removeProduct(_prods[index], index),
+                    direction: DismissDirection.startToEnd,
+                    dismissThresholds: {DismissDirection.startToEnd: 0.3},
+                    confirmDismiss: (direction) => _confirmDismiss(context),
+                    background: Container(
+                      decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(10)),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 10.0),
+                          child: Icon(
+                            CupertinoIcons.delete,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                     ),

@@ -1,6 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:market_organizer/database/database_service.dart';
 import 'package:market_organizer/models/product_model.dart';
+import 'package:market_organizer/models/userdata_model.dart';
 import 'package:market_organizer/pages/spesa/single_product_detail_page.dart';
 import 'package:market_organizer/service/navigation_service.dart';
 import 'package:market_organizer/utils/color_costant.dart';
@@ -11,13 +13,16 @@ class SingleProductWidget extends StatelessWidget {
   final Product _product;
   final Function _updateCheckBox;
   final bool showPrice;
+  //
+  late String? userimage;
+
   SingleProductWidget(
       this._workspaceId, this._product, this._updateCheckBox, this.showPrice);
 
   void _singleProductDetailPage(Product _product) {
     NavigationService.instance.navigateToWithParameters(
         "singleProductDetailPage",
-        SingleProductDetailPageInput(_workspaceId, _product));
+        SingleProductDetailPageInput(_workspaceId, null, _product));
   }
 
   void _updateCheckBoxIntern(bool value) {
@@ -27,13 +32,22 @@ class SingleProductWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _productCard();
+    return FutureBuilder<UserDataModel>(
+        future: DatabaseService.instance.getUserData(_product.ownerId!),
+        builder: (ctx, snap) {
+          if (snap.hasData) {
+            userimage = snap.data!.image;
+            return _productCard();
+          } else {
+            return Container();
+          }
+        });
   }
 
   Widget _productCard() {
     return ListTile(
       onTap: () => _singleProductDetailPage(_product),
-      contentPadding: EdgeInsets.symmetric(horizontal: 0.0),
+      contentPadding: EdgeInsets.symmetric(horizontal: 0.0, vertical: 0.0),
       horizontalTitleGap: 10,
       leading: Transform.scale(
         scale: 1.5,
@@ -110,33 +124,37 @@ class SingleProductWidget extends StatelessWidget {
         SizedBox(
           width: 20,
         ),
-        Container(
-          margin: EdgeInsets.symmetric(vertical: 15),
-          width: 25,
-          decoration: BoxDecoration(
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withOpacity(0.4),
-                spreadRadius: 2,
-              ),
-            ],
-            color: _product.bought!
-                ? ColorCostant.colorMap[_product.color]!.withOpacity(0.5)
-                : ColorCostant.colorMap[_product.color],
-            borderRadius: BorderRadius.circular(25),
-          ),
-          child: Center(
-            child: Text(
-              _product.ownerName![0].toUpperCase(),
-              style: TextStyle(
-                  fontSize: 15,
-                  color: _product.bought!
-                      ? Colors.white.withOpacity(0.5)
-                      : Colors.white),
-            ),
-          ),
-        ),
+        userBoxName()
       ],
+    );
+  }
+
+  Widget userBoxName() {
+    return Container(
+      margin: EdgeInsets.symmetric(vertical: 15),
+      width: 27,
+      decoration: BoxDecoration(
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.4),
+            spreadRadius: 0.5,
+          ),
+        ],
+        color: _product.bought!
+            ? ColorCostant.colorMap[_product.color]!.withOpacity(0.5)
+            : ColorCostant.colorMap[_product.color],
+        borderRadius: BorderRadius.circular(25),
+      ),
+      child: Center(
+        child: Text(
+          _product.ownerName![0].toUpperCase(),
+          style: TextStyle(
+              fontSize: 15,
+              color: _product.bought!
+                  ? Colors.white.withOpacity(0.5)
+                  : Colors.white),
+        ),
+      ),
     );
   }
 }

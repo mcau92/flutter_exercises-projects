@@ -25,6 +25,14 @@ class Ricetta {
     this.menuIdRef,
   });
 
+  bool isEqualToAnother(Ricetta ricetta) {
+    return ricetta.name == this.name &&
+        ricetta.ownerId == this.ownerId &&
+        ricetta.ownerName == this.ownerName &&
+        ricetta.color == this.color &&
+        ricetta.pasto == this.pasto;
+  }
+
   factory Ricetta.fromFirestore(DocumentSnapshot _snapshot) {
     var _data = _snapshot.data() as Map;
     return Ricetta(

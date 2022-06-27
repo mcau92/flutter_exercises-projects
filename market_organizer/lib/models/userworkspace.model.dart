@@ -7,7 +7,6 @@ class UserWorkspace {
   Map<String, String>?
       userColors; //mappa che salva per ogni id utente il suo colore nel workspace sia per ricetta che per menu
   List<String>? contributorsId;
-  bool? focused; //last user selected workspace on homepage
 
   UserWorkspace({
     this.id,
@@ -15,7 +14,6 @@ class UserWorkspace {
     this.ownerId,
     this.userColors,
     this.contributorsId,
-    this.focused,
   });
 
   factory UserWorkspace.fromFirestore(DocumentSnapshot _snapshot) {
@@ -32,8 +30,9 @@ class UserWorkspace {
       name: _data["name"],
       ownerId: _data["ownerId"],
       userColors: userColors, //forse non corretto
-      contributorsId: _data["contributorsId"].cast<String>(),
-      focused: _data["focused"],
+      contributorsId: _data["contributorsId"] == null
+          ? []
+          : _data["contributorsId"].cast<String>(),
     );
   }
 }

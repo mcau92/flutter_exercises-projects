@@ -1,14 +1,14 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:market_organizer/database/database_service.dart';
 import 'package:market_organizer/models/product_model.dart';
+import 'package:market_organizer/models/spesa.dart';
 import 'package:market_organizer/models/userdata_model.dart';
+import 'package:market_organizer/pages/spesa/product_search_page.dart';
 import 'package:market_organizer/pages/spesa/singleproduct_widget.dart';
 import 'package:market_organizer/pages/widget/commons/appbar_custom_widget.dart';
 import 'package:market_organizer/pages/widget/commons/weekpicker_widget.dart';
-import 'package:market_organizer/models/spesa.dart';
 import 'package:market_organizer/provider/auth_provider.dart';
 import 'package:market_organizer/provider/date_provider.dart';
 import 'package:market_organizer/service/navigation_service.dart';
@@ -30,6 +30,7 @@ class _SpesaWidgetState extends State<SpesaWidget> {
   late DateTime dateStart;
 
   late DateTime dateEnd;
+  late UserDataModel _currentUserData;
 //usati per il clona
   late DateTime? _dateStartForClone;
   late DateTime? _dateEndForClone;
@@ -38,8 +39,11 @@ class _SpesaWidgetState extends State<SpesaWidget> {
   late Spesa _currentSpesa;
 
   void _addToSpesa() {
+    ProductSpesaSearchInput input =
+        ProductSpesaSearchInput(widget.worksapceId, _currentSpesa);
+
     NavigationService.instance
-        .navigateToWithParameters("addSpesaPage", _currentSpesa);
+        .navigateToWithParameters("productSpesaSearchPage", input);
   }
 
   Future<bool> _confirmDelete() async {
@@ -75,8 +79,6 @@ class _SpesaWidgetState extends State<SpesaWidget> {
   }
 
   Future<void> _cloneSpesa() async {
-    UserDataModel _currentUserData =
-        Provider.of<AuthProvider>(context, listen: false).userData!;
     if (_dateStartForClone == null && _dateEndForClone == null) {
       _dateStartForClone = dateStart.add(Duration(days: 7));
       _dateEndForClone = dateEnd.add(Duration(days: 7));
@@ -362,6 +364,8 @@ class _SpesaWidgetState extends State<SpesaWidget> {
     _dateProvider = Provider.of<DateProvider>(context);
     dateStart = _dateProvider.dateStart;
     dateEnd = _dateProvider.dateEnd;
+    _currentUserData =
+        Provider.of<AuthProvider>(context, listen: false).userData!;
 
     SnackBarService.instance.buildContext = context; //init snackbarservice
     return Column(
@@ -400,13 +404,12 @@ class _SpesaWidgetState extends State<SpesaWidget> {
                 workspaceIdRef: widget.worksapceId,
                 startWeek: dateStart,
                 endWeek: dateEnd,
-                ownerId: "LMgqupuW0wVW4RZn3QyC0y9Xxrg1");
+                ownerId: _currentUserData.id);
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  _workspaceBar(null),
                   Expanded(
                       child: Center(
                     child: _noSpesaWidget(),
@@ -418,7 +421,7 @@ class _SpesaWidgetState extends State<SpesaWidget> {
         } else {
           return Center(
             child: CircularProgressIndicator(
-              backgroundColor: Colors.orange,
+              color: Colors.orange,
             ),
           );
         }
@@ -452,7 +455,7 @@ class _SpesaWidgetState extends State<SpesaWidget> {
               }
               List<String> reparti =
                   Utils.instance.getReparti(_products, _currentSpesa.orderBy!);
-              if (reparti != null && reparti.isNotEmpty) {
+              if (reparti.isNotEmpty) {
                 return ListView.separated(
                     separatorBuilder: (context, index) {
                       return SizedBox(
@@ -473,9 +476,7 @@ class _SpesaWidgetState extends State<SpesaWidget> {
                 return Center(child: _noSpesaWidget());
               }
             } else {
-              return Center(
-                child: Text("nessuna spesa inserita"),
-              );
+              return Center(child: _noSpesaWidget());
             }
           } else {
             return Center(
@@ -586,19 +587,46 @@ class _SpesaWidgetState extends State<SpesaWidget> {
       onDismissed: (direction) async {
         if (direction == DismissDirection.endToStart)
           _deleteProduct(products[index]);
+        if (!products[index].bought! &&
+            direction == DismissDirection.startToEnd)
+          products[index].bought = true;
+        _boughtProduct(products[index]);
       },
-      dismissThresholds: {DismissDirection.endToStart: 0.2},
+      dismissThresholds: {
+        DismissDirection.endToStart: 0.2,
+        DismissDirection.startToEnd: 0.2
+      },
       confirmDismiss: (direction) async {
         if (direction == DismissDirection.endToStart)
           return _confirmDismiss(context);
+        if (direction == DismissDirection.startToEnd)
+          return true;
         else
           return false;
       },
-      direction: DismissDirection.endToStart,
-      background: Container(),
+      direction: !products[index].bought!
+          ? DismissDirection.horizontal
+          : DismissDirection.endToStart,
+      background: !products[index].bought!
+          ? Container(
+              decoration: BoxDecoration(
+                color: Colors.green,
+              ),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 15.0),
+                  child: Icon(
+                    CupertinoIcons.checkmark_alt,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            )
+          : Container(),
       secondaryBackground: Container(
         decoration: BoxDecoration(
-          color: Colors.orange,
+          color: Colors.red,
         ),
         child: Align(
           alignment: Alignment.centerRight,
@@ -666,34 +694,44 @@ class _SpesaWidgetState extends State<SpesaWidget> {
   Widget _workspaceBar(Spesa? _currentSpesa) {
     return Builder(builder: (context) {
       return Container(
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        child: Column(
           children: [
-            Padding(
-              padding: EdgeInsets.only(left: 15),
-              child: Text(
-                _currentSpesa == null
-                    ? "Tot. 0 €"
-                    : _currentSpesa.showPrice!
-                        ? createString(_currentSpesa.ammount!)
-                        : "Tot --.-",
-                style: TextStyle(
-                  color: Colors.orange,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Padding(
+                  padding: EdgeInsets.only(left: 15),
+                  child: Text(
+                    _currentSpesa == null
+                        ? "Tot. 0 €"
+                        : _currentSpesa.showPrice!
+                            ? createString(_currentSpesa.ammount!)
+                            : "Tot --.-",
+                    style: TextStyle(
+                      color: Colors.orange,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
-              ),
+                Padding(
+                  padding: const EdgeInsets.only(right: 8.0),
+                  child: CupertinoButton(
+                    padding: EdgeInsets.all(0),
+                    child: Icon(
+                      CupertinoIcons.ellipsis,
+                      color: Colors.white,
+                    ),
+                    onPressed: () =>
+                        _currentSpesa == null ? {} : _showOptions(),
+                  ),
+                ),
+              ],
             ),
-            Padding(
-              padding: const EdgeInsets.only(right: 8.0),
-              child: CupertinoButton(
-                padding: EdgeInsets.all(0),
-                child: Icon(
-                  CupertinoIcons.ellipsis,
-                  color: Colors.white,
-                ),
-                onPressed: () => _currentSpesa == null ? {} : _showOptions(),
-              ),
+            Divider(
+              height: 5,
+              thickness: 0.2,
+              color: Colors.white,
             ),
           ],
         ),

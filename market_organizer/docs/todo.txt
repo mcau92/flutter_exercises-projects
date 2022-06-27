@@ -1,10 +1,8 @@
 ---------GENERALE---------
 - Ricordarsi di sistemare autenticazione con google su android
-- Dare la possibilità di inserire immagini in modo da visualizzare quelle al posto del bollino con l'iniziale 
-- Mettere dei loader quando facciamo login e gestire meglio le snacbar in modo da poter informare l'utente
 - Creare file per tenere tutte le varie label e cambiarle in base al tipo di lingua selezionata dall'utente
 - Capire come referenziare i prodotti tra di loro in spesa e menu ed eventualmente gestire la cancellazione
-- Inserire storico prodotti e ricette quindi prevedere data di inserimento
+- Gestire eliminazione account
 
 ---------SPESA------------
 -CAPIRE COME ALLINEARE LE QUANTITà DEI VARI PRODOTTI 

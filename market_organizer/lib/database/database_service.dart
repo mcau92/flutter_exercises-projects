@@ -1,4 +1,10 @@
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/material.dart';
+import 'package:market_organizer/exception/login_exception.dart';
+import 'package:market_organizer/models/invites.dart';
 import 'package:market_organizer/models/men%C3%B9.dart';
 import 'package:market_organizer/models/notifiche.dart';
 import 'package:market_organizer/models/product_model.dart';
@@ -25,11 +31,14 @@ class DatabaseService {
   String _productCollection = "product";
   String _notificheCollection = "notifiche";
   String _settingsCollection = "settings";
+  String _invitesCollection = "invites";
 
   late FirebaseFirestore _db;
+  late FirebaseStorage _storage;
   var batch;
   DatabaseService() {
     _db = FirebaseFirestore.instance;
+    _storage = FirebaseStorage.instance;
     batch = _db.batch();
   }
 
@@ -51,6 +60,7 @@ class DatabaseService {
         .collection(_userCollection)
         .doc(userId)
         .collection(_notificheCollection)
+        .orderBy("date", descending: true)
         .get()
         .then(
           (_q) => _q.docs.map(
@@ -82,7 +92,12 @@ class DatabaseService {
         .doc(userId)
         .collection(_settingsCollection)
         .doc(settings.id)
-        .update({"language": settings.language});
+        .update({
+      "language": settings.language,
+      "showPrice": settings.showPrice,
+      "showSelected": settings.showSelected,
+      "saveMenuDays": settings.saveMenuDays,
+    });
   }
 
   Future<bool> checkEmailIsAvailable(String _email) async {
@@ -102,11 +117,22 @@ class DatabaseService {
   Future<void> createUserInDb(
       String _userId, String _email, String _name) async {
     try {
-      return await _db.collection(_userCollection).doc(_userId).set(
+      await _db.collection(_userCollection).doc(_userId).set(
         {"name": _name, "email": _email, "workspacesIdRef": []},
       );
+      await _db
+          .collection(_userCollection)
+          .doc(_userId)
+          .collection(_settingsCollection)
+          .doc()
+          .set({
+        "language": "italiano",
+        "showPrice": true,
+        "showSelected": true,
+        "saveMenuDays": 7,
+      });
     } catch (e) {
-      throw e;
+      throw LoginException("$e");
     }
   }
 
@@ -653,14 +679,14 @@ class DatabaseService {
 
   Future<String> getUserColor(String? workspaceId, String? ownerId) async {
     if (workspaceId != null && ownerId != null) {
-      String color;
+      String? color;
       UserWorkspace workspaceData = await _db
           .collection(_workspaceCollection)
           .doc(workspaceId)
           .get()
           .then((d) => UserWorkspace.fromFirestore(d));
-      color = workspaceData.userColors?[ownerId]
-          as String; //recupero il colore può essere nullo
+      color = workspaceData
+          .userColors![ownerId]; //recupero il colore può essere nullo
 
       if (color == null) {
         List<String> colorsUsed = [];
@@ -675,7 +701,7 @@ class DatabaseService {
         } else {
           color = ColorCostant.colorMap.keys.first; //first product
         }
-        workspaceData.userColors?.putIfAbsent(ownerId, () => color);
+        workspaceData.userColors?.putIfAbsent(ownerId, () => color!);
       }
       return color;
     }
@@ -770,7 +796,7 @@ class DatabaseService {
       String productReparto,
       double quantity,
       String measureUnit,
-      String currency,
+      String? currency,
       double price) async {
     String _color = await getUserColor(workspaceId, ownerId);
     await _db
@@ -790,7 +816,12 @@ class DatabaseService {
       "reparto": productReparto,
       "spesaIdRef": spesaIdRef,
       "currency": "€",
-      "price": price
+      "price": price,
+      "date": new DateTime(
+              DateTime.now().year, DateTime.now().month, DateTime.now().day)
+          .subtract(
+        Duration(days: DateTime.now().weekday - 1),
+      ),
     });
     await _db
         .collection(_spesaCollection)
@@ -854,7 +885,6 @@ class DatabaseService {
   Future<void> updateProductOnSpesa(
       String productId,
       String spesaIdRef,
-      String ownerId,
       String productName,
       String productDescription,
       String productReparto,
@@ -886,6 +916,8 @@ class DatabaseService {
   }
 
   Future<Spesa> createNewSpesa(Spesa spesa) async {
+    List<UserSettings> userSetting =
+        await getUserSettings(spesa.ownerId!).first;
     var docRef = await _db.collection(_spesaCollection).add({
       "ownerId": spesa.ownerId,
       "startWeek": spesa.startWeek,
@@ -893,8 +925,8 @@ class DatabaseService {
       "ammount": 0.0,
       "workspaceIdRef": spesa.workspaceIdRef,
       "orderBy": spesa.orderBy,
-      "showSelected": true,
-      "showPrice": true
+      "showSelected": userSetting.first.showSelected,
+      "showPrice": userSetting.first.showPrice,
     });
 
     spesa.id = docRef.id;
@@ -1303,21 +1335,29 @@ class DatabaseService {
     await _db.collection(_menuCollection).doc(menuId).delete();
   }
 
-  Future<void> updateWorkspaceFocus(String id, bool bool) async {
-    await _db.collection(_workspaceCollection).doc(id).update(
-      {"focused": bool},
+  Future<void> updateWorkspaceFocus(
+      AuthProvider provider, String userId, String? wsId) async {
+    await _db.collection(_userCollection).doc(userId).update(
+      {"favouriteWs": wsId},
     );
+
+    UserDataModel _userData = await getUserData(userId);
+    provider.refreshUserData(_userData);
   }
 
-  Future<void> saveWorkspace(
-      UserWorkspace currentWorkspace, AuthProvider provider) async {
+  Future<void> saveWorkspace(UserWorkspace currentWorkspace, bool _isFavourite,
+      AuthProvider provider) async {
+    late String wsId;
     if (currentWorkspace.id != null) {
       //aggiorna
+      wsId = currentWorkspace.id!;
       await _db
           .collection(_workspaceCollection)
           .doc(currentWorkspace.id)
           .update(
-        {"name": currentWorkspace.name},
+        {
+          "name": currentWorkspace.name != null ? currentWorkspace.name : "",
+        },
       );
     } else {
       //inserisci
@@ -1329,23 +1369,23 @@ class DatabaseService {
         "name": currentWorkspace.name,
         "ownerId": currentWorkspace.ownerId,
         "contributorsId": [],
-        "focused": false,
         "userColors": firstColorWithUser
       });
+      wsId = docRef.id;
       await _db
           .collection(_userCollection)
           .doc(currentWorkspace.ownerId)
           .update({
         "workspacesIdRef": FieldValue.arrayUnion([docRef.id])
       });
-      //refresh userData
-      //refresh userdata
-      UserDataModel _userData = await getUserData(currentWorkspace.ownerId!);
-      provider.refreshUserData(_userData);
     }
+    //update is favourite for user
+    DatabaseService.instance.updateWorkspaceFocus(
+        provider, provider.userData!.id!, _isFavourite ? wsId : null);
   }
 
-  Future<void> deleteWorkspace(UserWorkspace workspacesWidget) async {
+  Future<void> deleteWorkspace(
+      String userId, UserWorkspace workspacesWidget) async {
     _db.runTransaction(
       (transaction) async {
         //cancello spesa
@@ -1415,54 +1455,263 @@ class DatabaseService {
         //cancello workspace
         await transaction.delete(
             _db.collection(_workspaceCollection).doc(workspacesWidget.id));
+
+        //rimuovo riferimento in array
+
+        await transaction.update(_db.collection(_userCollection).doc(userId), {
+          "workspacesIdRef": FieldValue.arrayRemove([workspacesWidget.id])
+        });
       },
     );
   }
 
   Future<void> acceptWorkspaceWork(
       Notifiche notifica, String userId, AuthProvider provider) async {
-    await _db
-        .collection(_userCollection)
-        .doc(userId)
-        .collection(_notificheCollection)
-        .doc(notifica.id)
-        .update(
-      {"accepted": 1},
-    );
-    await _db.collection(_userCollection).doc(userId).update({
-      "workspacesIdRef": FieldValue.arrayUnion([notifica.workspaceIdRef])
-    });
-    //update workspace
-    String _color = await getUserColor(
-      notifica.workspaceIdRef,
-      userId,
-    );
-    UserWorkspace _workspace =
-        await getWorkspaceFromId(notifica.workspaceIdRef!);
-    Map<String, String> _wsColors = _workspace.userColors!;
-    _wsColors.putIfAbsent(userId, () => _color);
+    try {
+      await _db.runTransaction((transaction) async {
+//aggiorno notifica
+        await transaction.update(
+            _db
+                .collection(_userCollection)
+                .doc(userId)
+                .collection(_notificheCollection)
+                .doc(notifica.id),
+            {"accepted": "1"});
 
-    await _db
-        .collection(_workspaceCollection)
-        .doc(notifica.workspaceIdRef)
-        .update({
-      "contributorsId": FieldValue.arrayUnion([userId]),
-      "userColors": _wsColors
-    });
+        //aggiorno user collection aggiungendo il nuovo workspace
+
+        await transaction.update(_db.collection(_userCollection).doc(userId), {
+          "workspacesIdRef": FieldValue.arrayUnion([notifica.workspaceIdRef])
+        });
+        //aggiorno invito in workspace
+        await _db
+            .collection(_workspaceCollection)
+            .doc(notifica.workspaceIdRef!)
+            .collection(_invitesCollection)
+            .where("userId", isEqualTo: userId)
+            .get()
+            .then((qds) => transaction
+                .update(qds.docs.first.reference, {"accepted": "1"}));
+
+        //update color e lista dei contributors nel workspace
+        String _color = await getUserColor(
+          notifica.workspaceIdRef,
+          userId,
+        );
+        UserWorkspace _workspace =
+            await getWorkspaceFromId(notifica.workspaceIdRef!);
+        Map<String, String> _wsColors = _workspace.userColors!;
+        _wsColors.putIfAbsent(userId, () => _color);
+
+        await transaction.update(
+            _db.collection(_workspaceCollection).doc(notifica.workspaceIdRef), {
+          "contributorsId": FieldValue.arrayUnion([userId]),
+          "userColors": _wsColors
+        });
+      });
+    } catch (e) {
+      print("errore durante l'accettazione del workspace, " + e.toString());
+    }
+
     //refresh userdata
     UserDataModel _userData = await getUserData(userId);
-
     provider.refreshUserData(_userData);
   }
 
   Future<void> rejectWorkspaceWork(Notifiche notifica, String userId) async {
-    await _db
+    try {
+      await _db.runTransaction((transaction) async {
+        //aggiorno notifica
+        await transaction.update(
+            _db
+                .collection(_userCollection)
+                .doc(userId)
+                .collection(_notificheCollection)
+                .doc(notifica.id),
+            {"accepted": -1});
+        //aggiorno invito in workspace
+        await _db
+            .collection(_workspaceCollection)
+            .doc(notifica.workspaceIdRef!)
+            .collection(_invitesCollection)
+            .where("userId", isEqualTo: userId)
+            .get()
+            .then((qds) => transaction
+                .update(qds.docs.first.reference, {"accepted": "0"}));
+      });
+    } catch (e) {
+      print("errore durante il rifiuto del workspace, " + e.toString());
+    }
+  }
+
+  Future<void> shareWorkspaceToUser(String ownerId, String userId, String email,
+      String worksapceId, Future<void> onSuccess()) async {
+    //creo invito
+    await _db.runTransaction((transaction) async {
+      //creo invito
+      DocumentReference documentReference = await _db
+          .collection(_workspaceCollection)
+          .doc(worksapceId)
+          .collection(_invitesCollection)
+          .doc();
+      await transaction.set(documentReference, {
+        "email": email,
+        "userId": userId,
+        "accepted": "",
+        "dateInvitation": DateTime.now()
+      });
+      //creo notifica all'utente
+      DocumentReference documentReferenceNotify = await _db
+          .collection(_userCollection)
+          .doc(userId)
+          .collection(_notificheCollection)
+          .doc();
+      await transaction.set(documentReferenceNotify, {
+        "userOwner": ownerId,
+        "viewed": false,
+        "accepted": "",
+        "workspaceIdRef": worksapceId,
+        "date": DateTime.now().toUtc()
+      });
+    });
+    await onSuccess();
+  }
+
+  Future<List<UserDataModel>> getUserFromEmail(String email) async {
+    return await _db
+        .collection(_userCollection)
+        .where("email", isEqualTo: email)
+        .get()
+        .then((qs) =>
+            qs.docs.map((qd) => UserDataModel.fromFirestore(qd)).toList());
+  }
+
+  Future<List<Invites>> getInvitesForWorkspace(String workspaceId) async {
+    return await _db
+        .collection(_workspaceCollection)
+        .doc(workspaceId)
+        .collection(_invitesCollection)
+        .get()
+        .then(
+          (qs) => qs.docs.map((qd) => Invites.fromFirestore(qd)).toList(),
+        );
+  }
+
+  Future<void> deleteInvites(
+      Invites invites, String wsId, Future<void> onSuccess()) async {
+    _db.runTransaction((transaction) async {
+      //elimino invito
+      print("cancello invito");
+      await transaction.delete(_db
+          .collection(_workspaceCollection)
+          .doc(wsId)
+          .collection(_invitesCollection)
+          .doc(invites.id));
+      if (invites.userId != null) {
+        //elimino user colors da workspace se presente
+        UserWorkspace workspace = await _db
+            .collection(_workspaceCollection)
+            .doc(wsId)
+            .get()
+            .then((value) => UserWorkspace.fromFirestore(value));
+        Map<String, String> userColors = workspace.userColors!;
+        userColors.removeWhere((key, value) => key == invites.userId);
+
+        print("aggiorno mappa colori e lista di contributors");
+        await transaction
+            .update(_db.collection(_workspaceCollection).doc(wsId), {
+          "userColors": userColors,
+          "contributorsId": FieldValue.arrayRemove([invites.userId])
+        });
+        //elimino workspaceidref dall'utente a cui tolgo invito
+
+        print("cancello workspace utente");
+        await transaction
+            .update(_db.collection(_userCollection).doc(invites.userId), {
+          "workspacesIdRef": FieldValue.arrayRemove([wsId])
+        });
+        //elimino la notifica dell'utente
+
+        print("cancello notifica");
+        await _db
+            .collection(_userCollection)
+            .doc(invites.userId)
+            .collection(_notificheCollection)
+            .where("workspaceIdRef", isEqualTo: wsId)
+            .get()
+            .then((qs) => transaction.delete(qs.docs.first.reference));
+      }
+    });
+
+    await onSuccess();
+  }
+
+  Stream<List<Notifiche>> countNotificheNotViewed(String userId) {
+    return _db
         .collection(_userCollection)
         .doc(userId)
         .collection(_notificheCollection)
-        .doc(notifica.id)
-        .update(
-      {"accepted": -1},
-    );
+        .where("viewed", isEqualTo: false)
+        .snapshots()
+        .map(
+          (_q) => _q.docs.map(
+            (_d) {
+              return Notifiche.fromFirestore(_d);
+            },
+          ).toList(),
+        );
+  }
+
+  Future<void> updateUserImage(
+    AuthProvider provider,
+    File imageFile,
+    String fileName,
+    String userId,
+  ) async {
+    //salvo il vecchio url se esiste
+    String? oldImage = provider.userData!.image;
+    //inserisco immagine in storadge e aggiorno db
+    final taskSnap = await _storage
+        .ref()
+        .child("images/account/$userId/$fileName")
+        .putFile(imageFile);
+    String url = await taskSnap.ref.getDownloadURL();
+    await _db.collection(_userCollection).doc(userId).update({"image": url});
+    //se tutto ok rimuovo dallo storadge la vecchia immagine
+    if (oldImage != null) {
+      await _storage
+          .ref()
+          .storage
+          .refFromURL(provider.userData!.image!)
+          .delete();
+    }
+    //aggiorno provider
+
+    UserDataModel _userData = await getUserData(userId);
+    provider.refreshUserData(_userData);
+  }
+
+  Stream<List<Product>> getHistoryProducts30days(
+      String userId, DateTime dateStart) {
+    return _db
+        .collectionGroup(_productCollection)
+        .where("ownerId", isEqualTo: userId)
+        .where("date", isLessThanOrEqualTo: dateStart)
+        .where("date",
+            isGreaterThanOrEqualTo: dateStart.subtract(Duration(days: 28)))
+        .snapshots()
+        .map((qs) => qs.docs.map((qd) => Product.fromFirestore(qd)).toList());
+  }
+
+  Stream<List<Ricetta>> getHistoryRicetta30days(
+      String userId, DateTime dateEnd) {
+    return _db
+        .collectionGroup(_ricettaCollection)
+        .where("ownerId", isEqualTo: userId)
+        .where("date", isLessThanOrEqualTo: dateEnd)
+        .where("date",
+            isGreaterThanOrEqualTo: dateEnd.subtract(Duration(days: 28)))
+        .snapshots()
+        .map((qs) => qs.docs.map((qd) => Ricetta.fromFirestore(qd)).toList());
   }
 }

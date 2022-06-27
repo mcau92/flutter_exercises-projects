@@ -1,3 +1,3 @@
 class LanguageList {
-  static final List<String> units = ["italiano", "inglese"];
+  static final List<String> units = ["italiano"]; //solo italiano per ora
 }

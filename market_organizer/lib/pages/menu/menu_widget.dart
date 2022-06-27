@@ -68,7 +68,7 @@ class _MenuWidgetState extends State<MenuWidget> {
         } else {
           return Center(
               child: CircularProgressIndicator(
-            backgroundColor: Colors.orange,
+            color: Colors.orange,
           ));
         }
       },
@@ -171,7 +171,7 @@ class _MenuWidgetState extends State<MenuWidget> {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                Color.fromRGBO(71, 71, 71, 1),
+                Color.fromARGB(255, 125, 125, 125),
                 Colors.grey,
               ],
             ),

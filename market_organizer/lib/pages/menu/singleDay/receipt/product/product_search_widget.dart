@@ -20,10 +20,7 @@ class ProductSearchWidget extends StatelessWidget {
           Radius.circular(10),
         ),
       ),
-      child: Container(
-        color: ColorCostant.colorMap[_product.color]!.withOpacity(0.2),
-        child: _productCard(),
-      ),
+      child: _productCard(),
     );
   }
 

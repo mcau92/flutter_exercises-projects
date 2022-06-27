@@ -128,7 +128,7 @@ class ProductReceiptPageState extends State<ProductReceiptPage> {
       //retrive the color for the new product
       String _color = await DatabaseService.instance
           .getUserColor(widget.input.workspaceId, _currentUserData.id);
-      print(_color);
+
       Product _product = new Product();
       _product.ownerId = _currentUserData.id;
       _product.ownerName = _currentUserData.name;
@@ -140,11 +140,9 @@ class ProductReceiptPageState extends State<ProductReceiptPage> {
       _product.currency = _currency;
       _product.price = _price;
       _product.color = _color;
-
-//inserisco direttamente in menu
+      _product.pasto = widget.input.pasto;
+      _product.date = widget.input.date;
       if (widget.input.operationType == ProductOperationType.INSERT) {
-        _product.pasto = widget.input.pasto;
-        _product.date = widget.input.date;
         DateTime dateStart =
             Provider.of<DateProvider>(context, listen: false).dateStart;
         DateTime dateEnd =
@@ -186,6 +184,7 @@ class ProductReceiptPageState extends State<ProductReceiptPage> {
 
   @override
   Widget build(BuildContext context) {
+    print(widget.input.operationType);
     return GestureDetector(
       onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
       child: Scaffold(

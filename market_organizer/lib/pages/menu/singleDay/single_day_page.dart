@@ -3,8 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:market_organizer/database/database_service.dart';
 import 'package:market_organizer/models/productOperationType.dart';
-import 'package:market_organizer/models/product_model.dart';
-import 'package:market_organizer/models/ricetta.dart';
 import 'package:market_organizer/models/userdata_model.dart';
 import 'package:market_organizer/pages/menu/singleDay/meal/meal_detail_model.dart';
 import 'package:market_organizer/pages/menu/singleDay/pasto_widget.dart';
@@ -39,10 +37,10 @@ class SingleDayPage extends StatefulWidget {
 class _SingleDayPageState extends State<SingleDayPage> {
   late SingleDayPageInput singleDayPageInput;
   //USATI SOLO PER IL CLONE
-  late String _dayForClone;
+  String? _dayForClone;
   late DateTime _dateTimeDayForClone;
-  late DateTime _dateStartForClone;
-  late DateTime _dateEndForClone;
+  DateTime? _dateStartForClone;
+  DateTime? _dateEndForClone;
 
   //navigo al dettaglio del pasto , se isRicetta false allora inserisco prodotto
   void _showMealDetailsPage(String pasto, bool isRicetta) {
@@ -98,13 +96,13 @@ class _SingleDayPageState extends State<SingleDayPage> {
       _dateStartForClone = singleDayPageInput.dateStart.add(Duration(days: 7));
       _dateEndForClone = singleDayPageInput.dateEnd.add(Duration(days: 7));
     }
-    _dateTimeDayForClone = _dateStartForClone
-        .add(Duration(days: Utils.instance.weekDays.indexOf(_dayForClone)));
+    _dateTimeDayForClone = _dateStartForClone!
+        .add(Duration(days: Utils.instance.weekDays.indexOf(_dayForClone!)));
     await DatabaseService.instance.cloneMenuInSpecificDay(
         singleDayPageInput.menuIdRef!,
         singleDayPageInput.dateTimeDay,
-        _dateStartForClone,
-        _dateEndForClone,
+        _dateStartForClone!,
+        _dateEndForClone!,
         _dateTimeDayForClone,
         _currentUserData.id!,
         _currentUserData.name!);
@@ -175,12 +173,10 @@ class _SingleDayPageState extends State<SingleDayPage> {
               itemExtent: 32.0,
               backgroundColor: Colors.white,
               onSelectedItemChanged: (int index) {
-                setState(() {
-                  _dateStartForClone =
-                      dateStartLoop.add(Duration(days: ((index + 1) * 7)));
-                  _dateEndForClone =
-                      dateEndLoop.add(Duration(days: ((index + 1) * 7)));
-                });
+                _dateStartForClone =
+                    dateStartLoop.add(Duration(days: ((index + 1) * 7)));
+                _dateEndForClone =
+                    dateEndLoop.add(Duration(days: ((index + 1) * 7)));
               },
               children: [
                 for (int i = 7; i < 29; i += 7)
@@ -194,9 +190,7 @@ class _SingleDayPageState extends State<SingleDayPage> {
                 itemExtent: 32.0,
                 backgroundColor: Colors.white,
                 onSelectedItemChanged: (int index) {
-                  setState(() {
-                    _dayForClone = Utils.instance.weekDays[index];
-                  });
+                  _dayForClone = Utils.instance.weekDays[index];
                 },
                 children: [
                   for (String day in Utils.instance.weekDays)

@@ -3,13 +3,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:market_organizer/database/database_service.dart';
 import 'package:market_organizer/models/product_model.dart';
+import 'package:market_organizer/models/spesa.dart';
+import 'package:market_organizer/models/userdata_model.dart';
+import 'package:market_organizer/provider/auth_provider.dart';
 import 'package:market_organizer/service/navigation_service.dart';
+import 'package:market_organizer/utils/category_enum.dart';
 import 'package:market_organizer/utils/measure_unit_list.dart';
+import 'package:provider/provider.dart';
 
 class SingleProductDetailPageInput {
   String workspaceId;
+  Spesa?
+      _currentSpesa; //valorizzato se ho selezionato il prodotto dalla ricerca per poter creare eventualmente la spesa
   Product product;
-  SingleProductDetailPageInput(this.workspaceId, this.product);
+  SingleProductDetailPageInput(
+      this.workspaceId, this._currentSpesa, this.product);
 }
 
 class SingleProductDetailPage extends StatefulWidget {
@@ -31,8 +39,8 @@ class _SingleProductDetailPageState extends State<SingleProductDetailPage> {
   double _quantity = 0.0;
   String _measureUnit = "";
   bool _isInsertSelected = false;
-  late String _currency;
-  late double _price;
+  String? _currency;
+  double? _price;
 
   @override
   void dispose() {
@@ -54,28 +62,55 @@ class _SingleProductDetailPageState extends State<SingleProductDetailPage> {
   void initProd() {
     _productName = widget.input.product.name!;
     _productDescription = widget.input.product.description!;
-    _productReparto = widget.input.product.reparto!;
+    _productReparto = widget.input.product.reparto ?? "";
     _quantity = widget.input.product.quantity!;
     _measureUnit = widget.input.product.measureUnit!;
-    _currency = widget.input.product.currency!;
-    _price = widget.input.product.price!;
+    _currency = widget.input.product.currency;
+    _price = widget.input.product.price;
   }
 
   void _saveProduct() async {
     _formKey.currentState!.save();
     if (_formKey.currentState!.validate()) {
-      await DatabaseService.instance.updateProductOnSpesa(
-          widget.input.product.id!,
-          widget.input.product.spesaIdRef!,
+      if (widget.input.product.id == null) {
+        //sto inserendo il prodotto dalla ricerca quindi lo inserisco nuovo
+        String? spesaId = widget.input.product.spesaIdRef;
+        if (spesaId == null) {
+          //create new spesa
+          Spesa _currentSpesa = widget.input._currentSpesa!;
+          _currentSpesa.orderBy = CategoryOrder.category.toString();
+          _currentSpesa.showPrice = true;
+          _currentSpesa.showSelected = true;
+          _currentSpesa =
+              await DatabaseService.instance.createNewSpesa(_currentSpesa);
+          spesaId = _currentSpesa.id;
+        }
+        await DatabaseService.instance.insertProductOnSpesa(
+          widget.input.workspaceId,
+          spesaId!,
           widget.input.product.ownerId!,
+          widget.input.product.ownerName!,
           _productName,
           _productDescription,
           _productReparto,
           _quantity,
-          this._measureController.text,
+          _measureUnit,
           _currency,
-          _price,
-          _price - widget.input.product.price!);
+          _price!,
+        );
+      } else {
+        await DatabaseService.instance.updateProductOnSpesa(
+            widget.input.product.id!,
+            widget.input.product.spesaIdRef!,
+            _productName,
+            _productDescription,
+            _productReparto,
+            _quantity,
+            this._measureController.text,
+            _currency!,
+            _price!,
+            _price! - widget.input.product.price!);
+      }
       NavigationService.instance.goBack();
     } else {
       return await showCupertinoDialog(
@@ -121,12 +156,15 @@ class _SingleProductDetailPageState extends State<SingleProductDetailPage> {
           ),
           actions: [
             CupertinoButton(
-              child: Text("Aggiorna"),
+              child: Text(
+                  widget.input.product.id != null ? "Aggiorna" : "Inserisci"),
               onPressed: () => _saveProduct(),
             )
           ],
           title: Text(
-            "Aggiungi Prodotto",
+            widget.input.product.id != null
+                ? "Aggiorna Prodotto"
+                : "Aggiungi Prodotto",
             style: TextStyle(color: Colors.white),
           ),
         ),
@@ -252,6 +290,7 @@ class _SingleProductDetailPageState extends State<SingleProductDetailPage> {
         style: TextStyle(
           color: Colors.white,
         ),
+        textCapitalization: TextCapitalization.sentences,
         decoration: InputDecoration(
           contentPadding: EdgeInsets.all(10),
           fillColor: Colors.white,
@@ -264,17 +303,24 @@ class _SingleProductDetailPageState extends State<SingleProductDetailPage> {
           focusedBorder: UnderlineInputBorder(borderSide: BorderSide.none),
         ),
       ),
-      suggestionsCallback: (pattern) {
-        return DatabaseService.instance
-            .getUserRepartiByInput(pattern, widget.input.product.ownerId!);
+      suggestionsCallback: (pattern) async {
+        UserDataModel _currentUserData =
+            Provider.of<AuthProvider>(context, listen: false).userData!;
+
+        return await DatabaseService.instance
+            .getUserRepartiByInput(pattern, _currentUserData.id!);
       },
       itemBuilder: (context, suggestion) {
         return ListTile(
           title: Text(suggestion as String),
         );
       },
+      getImmediateSuggestions: true,
       onSuggestionSelected: (suggestion) {
         this._typeAheadController.text = suggestion as String;
+        setState(() {
+          _productReparto = suggestion;
+        });
       },
       transitionBuilder: (context, suggestionsBox, animationController) =>
           FadeTransition(

@@ -1,15 +1,20 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
-import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:market_organizer/database/database_service.dart';
 import 'package:market_organizer/models/userdata_model.dart';
 import 'package:market_organizer/models/userworkspace.model.dart';
 import 'package:market_organizer/provider/auth_provider.dart';
 import 'package:market_organizer/service/navigation_service.dart';
 import 'package:market_organizer/utils/color_costant.dart';
-import 'package:market_organizer/utils/utils.dart';
 import 'package:provider/provider.dart';
+
+class UserInfo {
+  final UserDataModel ownerInfo;
+  final List<UserDataModel> contributorsInfo;
+
+  UserInfo(this.ownerInfo, this.contributorsInfo);
+}
 
 class WorkspacesWidget extends StatefulWidget {
   @override
@@ -51,24 +56,39 @@ class _WorkspacesWidgetState extends State<WorkspacesWidget> {
   }
 
   void _updateWorkspace(UserWorkspace workspacesWidget) {
+    Navigator.pop(context);
     NavigationService.instance
         .navigateToWithParameters("saveWorkspace", workspacesWidget);
   }
 
 //non usato da cancellare
   void _addToPreferred(UserWorkspace workspacesWidget) async {
-    Iterable<UserWorkspace> currentFocused =
-        workspaces.where((w) => w.focused! && w.id != workspacesWidget.id);
-    if (currentFocused != null && currentFocused.isNotEmpty) {
-      await DatabaseService.instance.updateWorkspaceFocus(
-          currentFocused.first.id!, !currentFocused.first.focused!);
-    }
+    AuthProvider provider = Provider.of<AuthProvider>(context, listen: false);
+    await DatabaseService.instance.updateWorkspaceFocus(
+        provider, provider.userData!.id!, workspacesWidget.id!);
+  }
+
+  void _removeFromPreferred(UserWorkspace workspacesWidget) async {
+    AuthProvider provider = Provider.of<AuthProvider>(context, listen: false);
+    await DatabaseService.instance
+        .updateWorkspaceFocus(provider, provider.userData!.id!, "");
+  }
+
+  //metodo generico per aggiungere utente al nostro workspace
+  void _addUser(String workspaceId) {
+    Navigator.pop(context);
+    NavigationService.instance
+        .navigateToWithParameters("shareToUserPage", workspaceId);
   }
 
   Future<void> _deleteWorkspace(UserWorkspace workspacesWidget) async {
+    Navigator.pop(context);
     bool isToDeleteAfterConfirm = await _confirmDismiss(context);
+
+    AuthProvider provider = Provider.of<AuthProvider>(context, listen: false);
     if (isToDeleteAfterConfirm) {
-      await DatabaseService.instance.deleteWorkspace(workspacesWidget);
+      await DatabaseService.instance
+          .deleteWorkspace(provider.userData!.id!, workspacesWidget);
     }
   }
 
@@ -81,6 +101,10 @@ class _WorkspacesWidgetState extends State<WorkspacesWidget> {
 
   @override
   Widget build(BuildContext context) {
+    return _wsStream();
+  }
+
+  Widget _wsStream() {
     return Consumer<AuthProvider>(builder: (context, autProv, child) {
       if (autProv.userData!.workspacesIdRef!.isEmpty) {
         return Container();
@@ -104,145 +128,220 @@ class _WorkspacesWidgetState extends State<WorkspacesWidget> {
   }
 
   Widget _workspaceList(String name) {
-    return ListView.separated(
-        separatorBuilder: (context, index) {
-          return SizedBox(
-            height: 2,
-          );
-        },
-        itemCount: workspaces.length,
-        itemBuilder: (context, index) {
-          return _workspaceCard(workspaces[index], name);
-        });
+    return ListView.builder(
+      itemCount: workspaces.length,
+      itemBuilder: ((context, index) {
+        return _workspaceCard(workspaces[index], name);
+      }),
+    );
+  }
+
+  List<Widget> getWorkspaceList(String name) {
+    if (workspaces.isNotEmpty)
+      return workspaces.map((e) => _workspaceCard(e, name)).toList();
+    return [];
   }
 
   Widget _workspaceCard(UserWorkspace workspacesWidget, String name) {
+    UserDataModel _userdata =
+        Provider.of<AuthProvider>(context, listen: false).userData!;
+    bool isOwnerId = workspacesWidget.ownerId == _userdata.id;
     return Padding(
-      padding: const EdgeInsets.all(10),
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
       child: GestureDetector(
+        onLongPress: () => _showUpdateActions(workspacesWidget, isOwnerId),
         onTap: () => _dispatchWorkspace(workspacesWidget),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(15),
-          child: Slidable(
-            key: UniqueKey(),
-            child: Card(
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(0)),
-              color: Colors.white,
-              margin: EdgeInsets.all(0),
-              elevation: 5,
-              child: _listTileWorkspace(workspacesWidget, name),
-              shadowColor: Colors.red,
-            ),
-            direction: Axis.horizontal,
-            endActionPane: ActionPane(
-              motion: const ScrollMotion(),
-              children: [
-                SlidableAction(
-                    label: "Modifica",
-                    backgroundColor: Colors.green,
-                    icon: CupertinoIcons.pen,
-                    onPressed: (bc) => _updateWorkspace(workspacesWidget),
-                    autoClose: true),
-                SlidableAction(
-                  label: "Elimina",
-                  backgroundColor: Colors.red,
-                  icon: CupertinoIcons.delete,
-                  onPressed: (bc) => _deleteWorkspace(workspacesWidget),
-                )
-              ],
-            ),
+          child: Card(
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(0)),
+            color: Colors.white,
+            margin: EdgeInsets.all(0),
+            elevation: 5,
+            child: _listTileWorkspace(
+                workspacesWidget, name, isOwnerId, _userdata.favouriteWs),
+            shadowColor: Colors.red,
           ),
         ),
       ),
     );
   }
 
-  Widget _listTileWorkspace(UserWorkspace workspacesWidget, String name) {
+  Widget _listTileWorkspace(UserWorkspace workspacesWidget, String name,
+      bool isOwnerId, String? favouriteWs) {
     return Container(
         color: ColorCostant
             .colorMap[workspacesWidget.userColors![workspacesWidget.ownerId]]!
             .withOpacity(0.2),
-        padding: EdgeInsets.symmetric(horizontal: 10),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Padding(
-              padding: const EdgeInsets.only(top: 15.0, left: 10, bottom: 10),
-              child: Text(
-                workspacesWidget.name!,
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
+            Stack(
+              alignment: Alignment.center,
+              children: [
+                Align(
+                  alignment: Alignment.center,
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 15.0, bottom: 10),
+                    child: Text(
+                      workspacesWidget.name!,
+                      style:
+                          TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: CupertinoButton(
+                    padding: EdgeInsets.only(left: 15),
+                    child: Icon(
+                      favouriteWs != null && favouriteWs == workspacesWidget.id
+                          ? CupertinoIcons.star_fill
+                          : CupertinoIcons.star,
+                      color: Colors.black,
+                      size: 22,
+                    ),
+                    onPressed: () => favouriteWs != null &&
+                            favouriteWs == workspacesWidget.id
+                        ? _removeFromPreferred(workspacesWidget)
+                        : _addToPreferred(workspacesWidget),
+                  ),
+                )
+              ],
             ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [_userShared(workspacesWidget)],
+            Padding(
+              padding: const EdgeInsets.only(
+                  left: 15.0, right: 15, top: 35, bottom: 15),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [_userShared(workspacesWidget)],
+              ),
             )
           ],
         ));
   }
 
-  Widget _userShared(UserWorkspace workspacesWidget) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 10.0),
-      child: IntrinsicHeight(
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            FutureBuilder<UserDataModel>(
-                future: DatabaseService.instance
-                    .getUserData(workspacesWidget.ownerId!),
-                builder: (c, s) {
-                  if (s.hasData) {
-                    return _userBox(
-                      workspacesWidget.userColors![workspacesWidget.ownerId]!,
-                      s.data!.name!,
-                    );
-                  } else {
-                    return Container();
-                  }
-                }),
-            if (workspacesWidget.contributorsId!.isNotEmpty)
-              VerticalDivider(
-                indent: 10,
-                endIndent: 10,
-                thickness: 0.5,
-                color: Colors.black,
-              ),
-            for (var contributorId in workspacesWidget.contributorsId!)
-              FutureBuilder<UserDataModel>(
-                  future: DatabaseService.instance.getUserData(contributorId),
-                  builder: (c, s) {
-                    if (s.hasData) {
-                      return _userBox(
-                        workspacesWidget.userColors![contributorId]!,
-                        s.data!.name!,
-                      );
-                    } else {
-                      return Container();
-                    }
-                  })
-          ],
-        ),
+  void _showUpdateActions(UserWorkspace workspacesWidget, bool isOwnerId) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => Container(
+        color: Colors.white,
+        child: actions(workspacesWidget, isOwnerId),
       ),
     );
   }
 
-  Widget _userBox(String color, String name) {
-    return Container(
-      margin: EdgeInsets.symmetric(vertical: 15, horizontal: 2),
-      height: 25,
-      width: 25,
-      decoration: BoxDecoration(
-        color: ColorCostant.colorMap[color],
-        borderRadius: BorderRadius.circular(25),
-      ),
-      child: Center(
-        child: Text(
-          name[0].toUpperCase(),
-          style: TextStyle(fontSize: 15, color: Colors.white),
+  Widget actions(UserWorkspace workspacesWidget, bool isOwnerId) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Padding(
+          padding: EdgeInsets.symmetric(vertical: 15, horizontal: 20),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              "Azioni",
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.black,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
         ),
-      ),
+        Divider(
+          thickness: 0.2,
+          color: Colors.black,
+        ),
+        if (isOwnerId)
+          ListTile(
+            onTap: () => _updateWorkspace(workspacesWidget),
+            leading: Icon(CupertinoIcons.pen),
+            title: Text("Modifica"),
+          ),
+        if (isOwnerId)
+          ListTile(
+            onTap: () => _addUser(workspacesWidget.id!),
+            leading: Icon(CupertinoIcons.person),
+            title: Text("Condividi"),
+          ),
+        ListTile(
+          onTap: () async => await _deleteWorkspace(workspacesWidget),
+          leading: Icon(CupertinoIcons.delete),
+          title: Text("Cancella"),
+        ),
+        SizedBox(
+          height: 30,
+        )
+      ],
     );
+  }
+
+  Widget _userShared(UserWorkspace workspacesWidget) {
+    return IntrinsicHeight(
+      child: FutureBuilder<UserInfo>(
+          future: collectUserInfo(workspacesWidget),
+          builder: (c, s) {
+            if (s.hasData) {
+              UserDataModel ownerInfo = s.data!.ownerInfo;
+              List<UserDataModel> contributorsInfo = s.data!.contributorsInfo;
+              return Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Creato da: ",
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      SizedBox(
+                        height: 10,
+                      ),
+                      Text(
+                        "Condiviso con: ",
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                  SizedBox(
+                    width: 20,
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(ownerInfo.name ?? ownerInfo.email!),
+                      SizedBox(
+                        height: 10,
+                      ),
+                      if (contributorsInfo.isNotEmpty)
+                        ...contributorsInfo.expand((contributor) => [
+                              Text(contributor.name ?? contributor.email!),
+                              SizedBox(
+                                height: 10,
+                              ),
+                            ]),
+                    ],
+                  )
+                ],
+              );
+            } else {
+              return Container();
+            }
+          }),
+    );
+  }
+
+//collect user info
+  Future<UserInfo> collectUserInfo(UserWorkspace workspacesWidget) async {
+    UserDataModel ownerInfo =
+        await DatabaseService.instance.getUserData(workspacesWidget.ownerId!);
+    List<UserDataModel> contributorsInfo = [];
+    for (var contributorId in workspacesWidget.contributorsId!) {
+      contributorsInfo
+          .add(await DatabaseService.instance.getUserData(contributorId));
+    }
+    return UserInfo(ownerInfo, contributorsInfo);
   }
 }

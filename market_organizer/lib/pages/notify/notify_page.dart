@@ -106,7 +106,7 @@ class _NotifyPageState extends State<NotifyPage> {
           ),
           direction: Axis.horizontal,
           startActionPane: ActionPane(
-            extentRatio: 1 / 5,
+            extentRatio: 1 / 2,
             motion: ScrollMotion(),
             children: [
               SlidableAction(
@@ -185,7 +185,7 @@ class _NotifyPageState extends State<NotifyPage> {
   Widget _manageInfo(Notifiche notifiche) {
     return Row(
       children: [
-        if (notifiche.viewed!)
+        if (!notifiche.viewed!)
           Container(
             decoration: BoxDecoration(
                 color: Colors.orange, borderRadius: BorderRadius.circular(5)),
@@ -198,20 +198,21 @@ class _NotifyPageState extends State<NotifyPage> {
               ),
             ),
           ),
-        if (notifiche.viewed!)
+        if (!notifiche.viewed!)
           SizedBox(
             width: 10,
           ),
         Container(
           decoration: BoxDecoration(
-              color: notifiche.accepted != 0
-                  ? (notifiche.accepted == 1 ? Colors.green : Colors.red)
-                  : Colors.lightBlue,
+              color:
+                  notifiche.accepted != null && notifiche.accepted!.isNotEmpty
+                      ? (notifiche.accepted == 1 ? Colors.green : Colors.red)
+                      : Colors.lightBlue,
               borderRadius: BorderRadius.circular(5)),
           child: Padding(
             padding: const EdgeInsets.all(3.0),
             child: Text(
-              notifiche.accepted != 0
+              notifiche.accepted != null && notifiche.accepted!.isNotEmpty
                   ? (notifiche.accepted == 1 ? "ACCETTATO" : "RIFIUTATO")
                   : "IN ATTESA",
               style:

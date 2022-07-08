@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:market_organizer/database/database_service.dart';
 import 'package:market_organizer/models/product_model.dart';
 import 'package:market_organizer/models/userdata_model.dart';
@@ -26,6 +27,7 @@ class SingleProductWidget extends StatelessWidget {
   }
 
   void _updateCheckBoxIntern(bool value) {
+    HapticFeedback.heavyImpact();
     _product.bought = value;
     _updateCheckBox(_product);
   }

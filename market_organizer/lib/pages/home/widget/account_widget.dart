@@ -10,6 +10,7 @@ import 'package:market_organizer/models/settings.dart';
 import 'package:market_organizer/models/userdata_model.dart';
 import 'package:market_organizer/models/userworkspace.model.dart';
 import 'package:market_organizer/provider/auth_provider.dart';
+import 'package:market_organizer/service/navigation_service.dart';
 import 'package:market_organizer/service/snackbar_service.dart';
 import 'package:market_organizer/utils/language_list.dart';
 import 'package:provider/provider.dart';
@@ -70,6 +71,14 @@ class _UserWidgetState extends State<UserWidget> {
   Future<void> _updateSettings() async {
     await DatabaseService.instance
         .updateUserSettings(userDataModel.id!, userSettings);
+  }
+
+  Future<void> _deleteAccountFunction() async {
+    await DatabaseService.instance.deleteUserAccount(userDataModel, (() async {
+      SnackBarService.instance
+          .showSnackBarSuccesfull("Utente eliminato correttamente");
+      AuthProvider.instance.deleteAndlogoutUser();
+    }));
   }
 
   void _logout() async {
@@ -655,7 +664,8 @@ class _UserWidgetState extends State<UserWidget> {
             "Elimina Account",
             style: TextStyle(color: Colors.white, fontSize: 16),
           ),
-          onPressed: () => {}),
+          onPressed: () async =>
+              await _confirmDismiss(context) ? _deleteAccountFunction() : {}),
     );
   }
 

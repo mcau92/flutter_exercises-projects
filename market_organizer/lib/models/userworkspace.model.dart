@@ -30,9 +30,10 @@ class UserWorkspace {
       name: _data["name"],
       ownerId: _data["ownerId"],
       userColors: userColors, //forse non corretto
-      contributorsId: _data["contributorsId"] == null
-          ? []
-          : _data["contributorsId"].cast<String>(),
+      contributorsId:
+          _data["contributorsId"] == null || _data["contributorsId"] == []
+              ? []
+              : _data["contributorsId"].cast<String>(),
     );
   }
 }

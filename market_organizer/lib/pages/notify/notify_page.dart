@@ -89,6 +89,44 @@ class _NotifyPageState extends State<NotifyPage> {
     );
   }
 
+  void _showOptions(Notifiche notifica, String userId) async {
+    return await showCupertinoDialog(
+        context: context,
+        builder: (ctx) {
+          return CupertinoAlertDialog(
+            title: Text("Vuoi accettare l'invito ?"),
+            actions: [
+              CupertinoDialogAction(
+                child: Text("Si"),
+                onPressed: () {
+                  Navigator.of(
+                    ctx,
+                    // rootNavigator: true,
+                  ).pop(true);
+                  _acceptWorkspaceWork(notifica, userId);
+                },
+              ),
+              CupertinoDialogAction(
+                child: Text("No"),
+                onPressed: () {
+                  Navigator.of(
+                    ctx,
+                  ).pop(false);
+                },
+              ),
+              CupertinoDialogAction(
+                child: Text("Annulla"),
+                onPressed: () {
+                  Navigator.of(
+                    ctx,
+                  ).pop(false);
+                },
+              )
+            ],
+          );
+        });
+  }
+
   Widget _notifyCard(Notifiche notifica, AuthProvider _autProv) {
     return Padding(
       padding: const EdgeInsets.all(10),
@@ -97,12 +135,15 @@ class _NotifyPageState extends State<NotifyPage> {
         clipBehavior: Clip.hardEdge,
         child: Slidable(
           key: UniqueKey(),
-          child: Card(
-            color: Colors.white,
-            margin: EdgeInsets.all(0),
-            elevation: 5,
-            child: _listTileNotifiche(notifica),
-            shadowColor: Colors.red,
+          child: GestureDetector(
+            onTap: () => _showOptions(notifica, _autProv.userData!.id!),
+            child: Card(
+              color: Colors.white,
+              margin: EdgeInsets.all(0),
+              elevation: 5,
+              child: _listTileNotifiche(notifica),
+              shadowColor: Colors.red,
+            ),
           ),
           direction: Axis.horizontal,
           startActionPane: ActionPane(

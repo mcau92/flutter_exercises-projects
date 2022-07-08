@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:market_organizer/auth/widget/signin_widget.dart';
 import 'package:market_organizer/auth/widget/signup_widget.dart';
 import 'package:market_organizer/service/snackbar_service.dart';
+import 'package:market_organizer/utils/full_page_loader.dart';
 
 class AuthenticationPage extends StatefulWidget {
   @override
@@ -35,14 +36,14 @@ class _AuthenticationPageState extends State<AuthenticationPage> {
   @override
   Widget build(BuildContext context) {
     SnackBarService.instance.buildContext = context; //init snackbarservice
-    double _heigth = MediaQuery.of(context).size.height;
     double _width = MediaQuery.of(context).size.width;
     return Scaffold(
+      backgroundColor: Color.fromRGBO(43, 43, 43, 1),
       resizeToAvoidBottomInset: false,
       body: Stack(
         children: [
           _body(_width),
-          if (_isLoadingData) _loader(_heigth, _width),
+          if (_isLoadingData) FullPageLoader(),
         ],
       ),
     );
@@ -82,19 +83,6 @@ class _AuthenticationPageState extends State<AuthenticationPage> {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _loader(double _height, double _width) {
-    return Container(
-      width: _width,
-      height: _height,
-      color: Color.fromRGBO(43, 43, 43, 1).withOpacity(0.5),
-      child: const Center(
-        child: CircularProgressIndicator(
-          color: Colors.orange,
-        ),
-      ),
     );
   }
 }

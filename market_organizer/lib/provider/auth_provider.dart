@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:market_organizer/database/database_service.dart';
@@ -62,14 +63,13 @@ class AuthProvider extends ChangeNotifier {
 
   void _checkCurrentUserIsAuthenticated() async {
     user = _auth.currentUser;
+    await Future.delayed(Duration(seconds: 1));
     if (user != null) {
-      await Future.delayed(Duration(seconds: 1));
       userData = await _getUserData();
       dispatchToRightPageAfterLogin(userData!);
       notifyListeners();
     } else {
       notifyListeners();
-      await Future.delayed(Duration(seconds: 1));
       NavigationService.instance.navigateToReplacement("auth");
     }
   }
@@ -136,6 +136,19 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void deleteAndlogoutUser() async {
+    try {
+      await user!.delete();
+      user = null;
+      userData = null;
+      status = AuthStatus.NotAuthenticated;
+
+      NavigationService.instance.navigateToReplacement("auth");
+
+      notifyListeners();
+    } catch (e) {}
+  }
+
   void logoutUser() async {
     try {
       List<String> fetchMethods =
@@ -143,16 +156,18 @@ class AuthProvider extends ChangeNotifier {
 
       if (fetchMethods.contains("google.com")) {
         await _googleSignIn.signOut();
-      } else {
-        await _auth.signOut();
       }
+
+      await _auth.signOut();
+
       user = null;
       userData = null;
       status = AuthStatus.NotAuthenticated;
-      NavigationService.instance.navigateToReplacement("auth");
-
       notifyListeners();
-    } catch (e) {}
+      NavigationService.instance.navigateToReplacement("auth");
+    } catch (e) {
+      print(e);
+    }
   }
 
   void sendRecoveryPassword(String email) {

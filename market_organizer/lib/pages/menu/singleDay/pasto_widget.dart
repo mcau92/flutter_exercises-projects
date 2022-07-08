@@ -229,7 +229,7 @@ class _PastoWidgetState extends State<PastoWidget> {
                         onDismissed: (direction) =>
                             _deleteReceipt(_ricette[index]),
                         direction: DismissDirection.endToStart,
-                        dismissThresholds: {DismissDirection.endToStart: 0.2},
+                        dismissThresholds: {DismissDirection.endToStart: 0.4},
                         confirmDismiss: (direction) =>
                             _confirmDismissRicetta(context),
                         background: Container(),
@@ -308,7 +308,6 @@ class _PastoWidgetState extends State<PastoWidget> {
             );
           } else {
             List<Product> _products = snap.data!;
-            print(_products.length);
             return ListView.separated(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
@@ -338,18 +337,19 @@ class _PastoWidgetState extends State<PastoWidget> {
                           key: UniqueKey(),
                           onDismissed: (direction) =>
                               _removeProduct(_products[index]),
-                          direction: DismissDirection.startToEnd,
-                          dismissThresholds: {DismissDirection.startToEnd: 0.3},
+                          direction: DismissDirection.endToStart,
+                          dismissThresholds: {DismissDirection.endToStart: 0.4},
                           confirmDismiss: (direction) =>
                               _confirmDismiss(context),
-                          background: Container(
+                          background: Container(),
+                          secondaryBackground: Container(
                             decoration: BoxDecoration(
                                 color: Colors.red,
                                 borderRadius: BorderRadius.circular(10)),
                             child: Align(
-                              alignment: Alignment.centerLeft,
+                              alignment: Alignment.centerRight,
                               child: Padding(
-                                padding: const EdgeInsets.only(left: 10.0),
+                                padding: const EdgeInsets.only(right: 25.0),
                                 child: Icon(
                                   CupertinoIcons.delete,
                                   color: Colors.white,

@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:market_organizer/exception/login_exception.dart';
@@ -70,7 +72,7 @@ class _SignInWidgetState extends State<SignInWidget> {
               child: Text(
                 "Login",
                 style: Theme.of(context).textTheme.headline4?.copyWith(
-                    color: Colors.black, fontWeight: FontWeight.bold),
+                    color: Colors.white, fontWeight: FontWeight.bold),
               ),
             ),
             Divider(
@@ -131,7 +133,7 @@ class _SignInWidgetState extends State<SignInWidget> {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(5),
         border: Border.all(
-          color: Colors.black,
+          color: Colors.grey,
         ),
       ),
     );
@@ -148,7 +150,10 @@ class _SignInWidgetState extends State<SignInWidget> {
               ? null
               : "Please Enter a Valid Email";
         },
-        style: Theme.of(_context).textTheme.headline5?.copyWith(fontSize: 18),
+        style: Theme.of(_context)
+            .textTheme
+            .headline5
+            ?.copyWith(fontSize: 18, color: Colors.white),
         onSaved: (_input) {
           if (_input != null) {
             setState(() {
@@ -158,7 +163,7 @@ class _SignInWidgetState extends State<SignInWidget> {
           }
         },
         cursorHeight: 20,
-        cursorColor: Colors.black,
+        cursorColor: Colors.white,
         decoration: InputDecoration(
           hintText: "Email",
           border: InputBorder.none,
@@ -166,7 +171,7 @@ class _SignInWidgetState extends State<SignInWidget> {
           enabledBorder: InputBorder.none,
           errorBorder: InputBorder.none,
           disabledBorder: InputBorder.none,
-          hintStyle: TextStyle(color: Colors.black),
+          hintStyle: TextStyle(color: Colors.grey),
         ),
       ),
     );
@@ -186,16 +191,17 @@ class _SignInWidgetState extends State<SignInWidget> {
                 _passwordVisible = !_passwordVisible;
               });
             },
-            icon: Icon(_passwordVisible
-                ? CupertinoIcons.eye_slash
-                : CupertinoIcons.eye),
+            icon: Icon(
+              _passwordVisible ? CupertinoIcons.eye_slash : CupertinoIcons.eye,
+              color: Colors.grey,
+            ),
           ),
         ],
       ),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(5),
         border: Border.all(
-          color: Colors.black,
+          color: Colors.grey,
         ),
       ),
     );
@@ -211,7 +217,10 @@ class _SignInWidgetState extends State<SignInWidget> {
       validator: (_input) {
         return _input?.length != 0 ? null : "Inserisci la password";
       },
-      style: Theme.of(_context).textTheme.headline5?.copyWith(fontSize: 18),
+      style: Theme.of(_context)
+          .textTheme
+          .headline5
+          ?.copyWith(fontSize: 18, color: Colors.white),
       onSaved: (_input) {
         if (_input != null) {
           setState(() {
@@ -221,7 +230,7 @@ class _SignInWidgetState extends State<SignInWidget> {
         }
       },
       cursorHeight: 18,
-      cursorColor: Colors.black,
+      cursorColor: Colors.white,
       decoration: InputDecoration(
         hintText: "Password",
         border: InputBorder.none,
@@ -229,7 +238,7 @@ class _SignInWidgetState extends State<SignInWidget> {
         enabledBorder: InputBorder.none,
         errorBorder: InputBorder.none,
         disabledBorder: InputBorder.none,
-        hintStyle: TextStyle(color: Colors.black),
+        hintStyle: TextStyle(color: Colors.grey),
       ),
     );
   }
@@ -246,7 +255,7 @@ class _SignInWidgetState extends State<SignInWidget> {
             style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
-                color: Colors.black)),
+                color: Colors.orange)),
       ),
     );
   }
@@ -280,16 +289,19 @@ class _SignInWidgetState extends State<SignInWidget> {
       children: [
         Text(
           "Non hai un account? ",
-          style: Theme.of(_context).textTheme.headline6?.copyWith(fontSize: 16),
+          style: Theme.of(_context)
+              .textTheme
+              .headline6
+              ?.copyWith(fontSize: 16, color: Colors.white),
         ),
         TextButton(
           onPressed: () => widget._changeSignPage(),
           child: Text(
             "Registrati",
-            style: Theme.of(_context)
-                .textTheme
-                .headline6
-                ?.copyWith(fontWeight: FontWeight.bold, fontSize: 16),
+            style: Theme.of(_context).textTheme.headline6?.copyWith(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: Colors.orange),
           ),
         )
       ],
@@ -302,7 +314,10 @@ class _SignInWidgetState extends State<SignInWidget> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text("--Oppure--"),
+        Text(
+          "--Oppure--",
+          style: TextStyle(color: Colors.white),
+        ),
         InkWell(
           child: Container(
               width: _width / 2,
@@ -310,7 +325,7 @@ class _SignInWidgetState extends State<SignInWidget> {
               margin: EdgeInsets.only(top: 10),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.black),
+                border: Border.all(color: Colors.grey),
               ),
               child: Center(
                   child: Row(
@@ -331,7 +346,7 @@ class _SignInWidgetState extends State<SignInWidget> {
                     style: TextStyle(
                         fontSize: 16.0,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black),
+                        color: Colors.white),
                   ),
                 ],
               ))),

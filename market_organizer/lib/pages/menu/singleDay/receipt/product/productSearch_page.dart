@@ -109,6 +109,10 @@ class ProductSearchPageState extends State<ProductSearchPage> {
       _textController.text = "";
       _products = [];
     });
+    product.spesaIdRef = null;
+    product.bought = false;
+    product.color = null;
+
     NavigationService.instance.navigateToWithParameters(
         "productPageReceipt",
         ProductReceiptInput(

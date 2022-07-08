@@ -81,9 +81,8 @@ class _ContactListWidgetState extends State<ContactListWidget> {
       await DatabaseService.instance.deleteInvites(invites, widget.workspaceId,
           () async {
         SnackBarService.instance
-            .showSnackBarSuccesfull("workspace condiviso correttamente");
+            .showSnackBarSuccesfull("Utente rimosso dal workspace");
       });
-      setState(() {});
     } catch (e) {
       print(e);
       SnackBarService.instance
@@ -102,8 +101,8 @@ class _ContactListWidgetState extends State<ContactListWidget> {
         await DatabaseService.instance.shareWorkspaceToUser(
             ownerId.id!, userSingletonList.first.id!, email, widget.workspaceId,
             () async {
-          SnackBarService.instance
-              .showSnackBarSuccesfull("workspace condiviso correttamente");
+          SnackBarService.instance.showSnackBarSuccesfull(
+              "L'invito è stato inoltrato correttamente");
         });
         setState(() {
           _textController.text = "";
@@ -160,8 +159,8 @@ class _ContactListWidgetState extends State<ContactListWidget> {
   }
 
   Widget _showSharedUser() {
-    return FutureBuilder<List<Invites>>(
-      future:
+    return StreamBuilder<List<Invites>>(
+      stream:
           DatabaseService.instance.getInvitesForWorkspace(widget.workspaceId),
       builder: (context, snap) {
         if (snap.hasData) {
@@ -294,10 +293,15 @@ class _ContactListWidgetState extends State<ContactListWidget> {
         contentPadding: const EdgeInsets.symmetric(vertical: 2, horizontal: 18),
         dense: true,
         leading: CircleAvatar(
-          child: Text("?"),
-          backgroundColor: Theme.of(context).accentColor,
+          child: Text(
+            "?",
+            style: TextStyle(color: Colors.white),
+          ),
+          backgroundColor: Color.fromRGBO(43, 43, 43, 1),
         ),
-        title: Text(emailSearchBarText),
+        title: Text(
+          emailSearchBarText,
+        ),
         subtitle: Text(
           isEmailValid ? "" : "inserire una mail valida",
           style: TextStyle(color: Colors.red),
@@ -309,6 +313,7 @@ class _ContactListWidgetState extends State<ContactListWidget> {
                 child: Icon(
                   CupertinoIcons.add_circled,
                   size: 30,
+                  color: Colors.orange,
                 ),
                 onPressed: () => _shareToSelectedUser(emailSearchBarText))
             : CupertinoButton(
@@ -351,6 +356,7 @@ class _ContactListWidgetState extends State<ContactListWidget> {
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: CupertinoSearchTextField(
+        autofocus: true,
         controller: _textController,
         itemColor: Colors.white38,
         placeholder: "Contatto o email..",
@@ -397,25 +403,63 @@ class _ContactListWidgetState extends State<ContactListWidget> {
         leading: (contact.avatar != null && contact.avatar!.isNotEmpty)
             ? CircleAvatar(
                 backgroundImage: MemoryImage(contact.avatar!),
+                backgroundColor: Color.fromRGBO(43, 43, 43, 1),
               )
             : CircleAvatar(
-                child: Text(contact.initials()),
-                backgroundColor: Theme.of(context).accentColor,
+                child: Text(contact.initials(),
+                    style: TextStyle(color: Colors.white)),
+                backgroundColor: Color.fromRGBO(43, 43, 43, 1),
               ),
         title: Text(contact.displayName ?? ''),
-        subtitle: Text(contact.emails != null && contact.emails!.isNotEmpty
-            ? contact.emails!.first.value!
-            : ""),
+        subtitle: Text(
+          contact.emails != null && contact.emails!.isNotEmpty
+              ? contact.emails!.first.value!
+              : "",
+        ),
         trailing: CupertinoButton(
             padding: EdgeInsets.all(0),
             child: Icon(
               CupertinoIcons.add_circled,
+              color: Colors.orange,
               size: 30,
             ),
             onPressed: () => _shareToSelectedUser(contact.emails!.first.value!))
         //This can be further expanded to showing contacts detail
         // onPressed().
         );
+  }
+
+  Future<bool> _confirmRemoveUser(
+      bool isAcceptedAlready, BuildContext context) async {
+    return await showCupertinoDialog(
+        context: context,
+        builder: (ctx) {
+          return CupertinoAlertDialog(
+            title: Text(isAcceptedAlready
+                ? "Confermi di rimuovere l'utente?"
+                : "Confermi di rimuovere l'invito?"),
+            actions: [
+              CupertinoDialogAction(
+                child: Text("Si"),
+                onPressed: () {
+                  Navigator.of(
+                    ctx,
+                    // rootNavigator: true,
+                  ).pop(true);
+                },
+              ),
+              CupertinoDialogAction(
+                child: Text("No"),
+                onPressed: () {
+                  Navigator.of(
+                    ctx,
+                    // rootNavigator: true,
+                  ).pop(false);
+                },
+              ),
+            ],
+          );
+        });
   }
 
   Widget _invitesCardProcessed(Invites invites) {
@@ -431,18 +475,22 @@ class _ContactListWidgetState extends State<ContactListWidget> {
               leading: (userinfo.image != null && userinfo.image!.isNotEmpty)
                   ? CircleAvatar(
                       backgroundImage: NetworkImage(userinfo.image!),
+                      backgroundColor: Color.fromRGBO(43, 43, 43, 1),
                     )
                   : CircleAvatar(
                       child: Text(userinfo.name!.substring(0, 1)),
-                      backgroundColor: Theme.of(context).accentColor,
+                      backgroundColor: Color.fromRGBO(43, 43, 43, 1),
                     ),
-              title: Text(userinfo.name ?? ''),
+              title: Text(userinfo.name ?? '',
+                  style: TextStyle(color: Colors.white)),
               subtitle: Text(
                   userinfo.email != null && userinfo.email!.isNotEmpty
                       ? userinfo.email!
                       : ""),
               trailing: CupertinoButton(
-                onPressed: () => _removeSelectedUser(invites),
+                onPressed: () async => await _confirmRemoveUser(true, context)
+                    ? _removeSelectedUser(invites)
+                    : null,
                 padding: EdgeInsets.all(0),
                 child: Icon(
                   invites.accepted == "1"
@@ -466,17 +514,19 @@ class _ContactListWidgetState extends State<ContactListWidget> {
         contentPadding: const EdgeInsets.symmetric(vertical: 2, horizontal: 18),
         dense: true,
         leading: CircleAvatar(
-          child: Text("?"),
-          backgroundColor: Theme.of(context).accentColor,
+          child: Text("?", style: TextStyle(color: Colors.white)),
+          backgroundColor: Color.fromRGBO(43, 43, 43, 1),
         ),
         title: Text(invites.email!),
 
         trailing: CupertinoButton(
-          onPressed: () => _removeSelectedUser(invites),
+          onPressed: () async => await _confirmRemoveUser(false, context)
+              ? _removeSelectedUser(invites)
+              : null,
           padding: EdgeInsets.all(0),
           child: Icon(
             CupertinoIcons.envelope,
-            color: Colors.blue,
+            color: Colors.orange,
             size: 30,
           ),
         ), //This can be further expanded to showing contacts detail
@@ -496,22 +546,29 @@ class _ContactListWidgetState extends State<ContactListWidget> {
                 leading: (userinfo.image != null && userinfo.image!.isNotEmpty)
                     ? CircleAvatar(
                         backgroundImage: NetworkImage(userinfo.image!),
+                        backgroundColor: Color.fromRGBO(43, 43, 43, 1),
                       )
                     : CircleAvatar(
-                        child: Text(userinfo.name!.substring(0, 1)),
-                        backgroundColor: Theme.of(context).accentColor,
+                        child: Text(userinfo.name!.substring(0, 1),
+                            style: TextStyle(color: Colors.white)),
+                        backgroundColor: Color.fromRGBO(43, 43, 43, 1),
                       ),
-                title: Text(userinfo.name ?? ''),
+                title: Text(
+                  userinfo.name ?? '',
+                ),
                 subtitle: Text(
                     userinfo.email != null && userinfo.email!.isNotEmpty
                         ? userinfo.email!
                         : ""),
                 trailing: CupertinoButton(
-                  onPressed: () => _removeSelectedUser(invites),
+                  onPressed: () async =>
+                      await _confirmRemoveUser(false, context)
+                          ? _removeSelectedUser(invites)
+                          : null,
                   padding: EdgeInsets.all(0),
                   child: Icon(
-                    CupertinoIcons.envelope,
-                    color: Colors.blue,
+                    CupertinoIcons.envelope_badge,
+                    color: Colors.orange,
                     size: 30,
                   ),
                 ),

@@ -1,14 +1,8 @@
-import 'dart:math';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:market_organizer/database/database_service.dart';
-import 'package:market_organizer/models/userdata_model.dart';
 import 'package:market_organizer/pages/shareToUser/contactListWidget.dart';
-import 'package:market_organizer/provider/auth_provider.dart';
 import 'package:market_organizer/service/navigation_service.dart';
 import 'package:market_organizer/service/snackbar_service.dart';
-import 'package:provider/provider.dart';
 
 class ShareToUserPage extends StatefulWidget {
   @override

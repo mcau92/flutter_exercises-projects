@@ -5,10 +5,8 @@ import 'package:market_organizer/service/navigation_service.dart';
 class AppBarCustom extends StatelessWidget {
   final int _selectedIndex;
   final Function _addItem;
-  final bool _isLoadingData;
   final String worksapceId;
-  AppBarCustom(this._selectedIndex, this._addItem, this._isLoadingData,
-      this.worksapceId);
+  AppBarCustom(this._selectedIndex, this._addItem, this.worksapceId);
 
   @override
   Widget build(BuildContext context) {
@@ -17,29 +15,33 @@ class AppBarCustom extends StatelessWidget {
 
   Widget _header() {
     return Container(
-      height: 80,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
         children: [
-          Align(alignment: Alignment.bottomLeft, child: _workspaceTitle()),
           Align(
-            alignment: Alignment.bottomRight,
-            child: _selectedIndex == 0 ? _spesaButtons() : _menuButtons(),
+            alignment: Alignment.centerLeft,
+            child: IconButton(
+              constraints: BoxConstraints(),
+              padding: EdgeInsets.all(15),
+              icon: Icon(
+                CupertinoIcons.home,
+                color: Colors.white,
+              ),
+              onPressed: () => _goToHome(),
+            ),
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Align(alignment: Alignment.bottomLeft, child: _workspaceTitle()),
+              Align(
+                alignment: Alignment.bottomRight,
+                child: _addButton(),
+              ),
+            ],
           ),
         ],
       ),
     );
-  }
-
-  Widget _spesaButtons() {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [_homeButton(), _addButton()],
-    );
-  }
-
-  Widget _menuButtons() {
-    return _homeButton();
   }
 
   Widget _workspaceTitle() {
@@ -66,26 +68,14 @@ class AppBarCustom extends StatelessWidget {
     NavigationService.instance.navigateToReplacement("home");
   }
 
-  Widget _homeButton() {
-    return Padding(
-      padding: const EdgeInsets.only(right: 15.0),
-      child: IconButton(
-        icon: Icon(
-          CupertinoIcons.home,
-          color: Colors.white,
-        ),
-        onPressed: () => _goToHome(),
-      ),
-    );
-  }
-
   Widget _addButton() {
     return Padding(
       padding: const EdgeInsets.only(right: 5.0),
       child: IconButton(
         disabledColor: Colors.white.withOpacity(0.5),
-        icon: Icon(CupertinoIcons.add, color: Colors.white, size: 25),
-        onPressed: () => _isLoadingData ? null : _addItem(),
+        icon: Icon(CupertinoIcons.ellipsis_vertical,
+            color: Colors.white, size: 25),
+        onPressed: () => _addItem(),
       ),
     );
   }

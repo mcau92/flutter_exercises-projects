@@ -548,17 +548,18 @@ class _NewSelectedReceiptPageState extends State<NewSelectedReceiptPage> {
                     key: UniqueKey(),
                     onDismissed: (direction) =>
                         removeProduct(_prods[index], index),
-                    direction: DismissDirection.startToEnd,
-                    dismissThresholds: {DismissDirection.startToEnd: 0.3},
+                    direction: DismissDirection.endToStart,
+                    dismissThresholds: {DismissDirection.endToStart: 0.4},
                     confirmDismiss: (direction) => _confirmDismiss(context),
-                    background: Container(
+                    background: Container(),
+                    secondaryBackground: Container(
                       decoration: BoxDecoration(
                           color: Colors.red,
                           borderRadius: BorderRadius.circular(10)),
                       child: Align(
-                        alignment: Alignment.centerLeft,
+                        alignment: Alignment.centerRight,
                         child: Padding(
-                          padding: const EdgeInsets.only(left: 10.0),
+                          padding: const EdgeInsets.only(right: 25.0),
                           child: Icon(
                             CupertinoIcons.delete,
                             color: Colors.white,

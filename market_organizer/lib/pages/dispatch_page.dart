@@ -1,9 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:market_organizer/models/userworkspace.model.dart';
-import 'package:market_organizer/pages/menu/menu_widget.dart';
 import 'package:market_organizer/pages/spesa/spesa_widget.dart';
-import 'package:market_organizer/service/navigation_service.dart';
 
 class DispatchPage extends StatefulWidget {
   @override
@@ -12,7 +10,7 @@ class DispatchPage extends StatefulWidget {
 
 class _DispatchPageState extends State<DispatchPage> {
   int _selectedIndex = 0;
-  late UserWorkspace? focusedWorkspace;
+  late UserWorkspace focusedWorkspace;
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +22,7 @@ class _DispatchPageState extends State<DispatchPage> {
           preferredSize: Size.fromHeight(10.0), // here the desired height
           child: AppBar(
               backgroundColor: Color.fromRGBO(43, 43, 43, 1), elevation: 0)),
-      bottomNavigationBar: _bottomBar(),
+      //bottomNavigationBar: _bottomBar(),  NEXT RELEASE
       /* body: ChangeNotifierProvider<AuthProvider>.value(
         value: AuthProvider.instance,
         child: _homePageBody(_height),
@@ -35,14 +33,17 @@ class _DispatchPageState extends State<DispatchPage> {
   }
 
   Widget _bodySelection() {
-    if (_selectedIndex == 0)
-      return SpesaWidget(
-        focusedWorkspace!.id!,
-      );
-    else
-      return MenuWidget(
-        focusedWorkspace!.id!,
-      );
+    return SpesaWidget(
+      focusedWorkspace.id!,
+    );
+    // if (_selectedIndex == 0)
+    //   return SpesaWidget(
+    //     focusedWorkspace.id!,
+    //   );
+    // else
+    //   return MenuWidget(
+    //     focusedWorkspace.id!,
+    //   );
   }
 //header section
 
@@ -54,22 +55,64 @@ class _DispatchPageState extends State<DispatchPage> {
   }
 
   Widget _bottomBar() {
-    return CupertinoTabBar(
-      items: const <BottomNavigationBarItem>[
-        BottomNavigationBarItem(
-          icon: Icon(CupertinoIcons.cart),
-          label: 'Spesa',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(CupertinoIcons.calendar),
-          label: 'Menu',
-        ),
-      ],
-      currentIndex: _selectedIndex,
-      activeColor: Colors.orange,
-      inactiveColor: Colors.white.withOpacity(0.5),
-      backgroundColor: Color.fromRGBO(43, 43, 43, 1),
-      onTap: _onItemTapped,
+    return Container(
+      height: 100,
+      padding: EdgeInsets.all(20),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          GestureDetector(
+            onTap: () => _onItemTapped(0),
+            child: Column(
+              children: [
+                Icon(
+                  CupertinoIcons.cart,
+                  size: 30,
+                  color: _selectedIndex == 1
+                      ? Colors.grey.withOpacity(0.5)
+                      : Color.fromRGBO(255, 152, 0, 1),
+                ),
+                SizedBox(
+                  height: 5,
+                ),
+                Text(
+                  "Spesa",
+                  style: TextStyle(
+                    color: _selectedIndex == 1
+                        ? Colors.grey.withOpacity(0.5)
+                        : Colors.orange,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          GestureDetector(
+            onTap: () => _onItemTapped(1),
+            child: Column(
+              children: [
+                Icon(
+                  CupertinoIcons.calendar,
+                  color: _selectedIndex == 0
+                      ? Colors.grey.withOpacity(0.5)
+                      : Colors.orange,
+                  size: 30,
+                ),
+                SizedBox(
+                  height: 5,
+                ),
+                Text(
+                  "Menu",
+                  style: TextStyle(
+                    color: _selectedIndex == 0
+                        ? Colors.grey.withOpacity(0.5)
+                        : Colors.orange,
+                  ),
+                ),
+              ],
+            ),
+          )
+        ],
+      ),
     );
   }
 }

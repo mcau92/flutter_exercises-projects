@@ -125,22 +125,64 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _bottomBar() {
-    return CupertinoTabBar(
-      items: const <BottomNavigationBarItem>[
-        BottomNavigationBarItem(
-          icon: Icon(CupertinoIcons.collections),
-          label: 'Workspaces',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(CupertinoIcons.person),
-          label: 'Account',
-        ),
-      ],
-      currentIndex: _selectedIndex,
-      activeColor: Colors.orange,
-      inactiveColor: Colors.white.withOpacity(0.5),
-      backgroundColor: Color.fromRGBO(43, 43, 43, 1),
-      onTap: _onItemTapped,
+    return Container(
+      height: 100,
+      padding: EdgeInsets.all(20),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          GestureDetector(
+            onTap: () => _onItemTapped(0),
+            child: Column(
+              children: [
+                Icon(
+                  CupertinoIcons.collections,
+                  size: 30,
+                  color: _selectedIndex == 1
+                      ? Colors.grey.withOpacity(0.5)
+                      : Colors.orange,
+                ),
+                SizedBox(
+                  height: 5,
+                ),
+                Text(
+                  "Workspaces",
+                  style: TextStyle(
+                    color: _selectedIndex == 1
+                        ? Colors.grey.withOpacity(0.5)
+                        : Colors.orange,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          GestureDetector(
+            onTap: () => _onItemTapped(1),
+            child: Column(
+              children: [
+                Icon(
+                  CupertinoIcons.person,
+                  color: _selectedIndex == 0
+                      ? Colors.grey.withOpacity(0.5)
+                      : Colors.orange,
+                  size: 30,
+                ),
+                SizedBox(
+                  height: 5,
+                ),
+                Text(
+                  "Account",
+                  style: TextStyle(
+                    color: _selectedIndex == 0
+                        ? Colors.grey.withOpacity(0.5)
+                        : Colors.orange,
+                  ),
+                ),
+              ],
+            ),
+          )
+        ],
+      ),
     );
   }
 }

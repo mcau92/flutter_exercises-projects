@@ -258,7 +258,7 @@ class _SingleDayPageState extends State<SingleDayPage> {
       context: context,
       builder: (ctx) {
         return CupertinoAlertDialog(
-          title: Text("Confermi di cancellare questo menu?"),
+          title: Text("Confermi di cancellare il menu per questa giornata?"),
           actions: [
             CupertinoDialogAction(
               child: Text("Si"),
@@ -311,7 +311,7 @@ class _SingleDayPageState extends State<SingleDayPage> {
         actions: [
           CupertinoButton(
             child: Icon(
-              CupertinoIcons.ellipsis,
+              CupertinoIcons.ellipsis_vertical,
               color: Colors.white,
             ),
             onPressed: () =>

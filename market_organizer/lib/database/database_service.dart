@@ -17,6 +17,7 @@ import 'package:market_organizer/models/userworkspace.model.dart';
 import 'package:market_organizer/pages/menu/singleDay/meal/meal_detail_model.dart';
 import 'package:market_organizer/pages/menu/singleDay/receipt/product/productInputForDb.dart';
 import 'package:market_organizer/provider/auth_provider.dart';
+import 'package:market_organizer/service/navigation_service.dart';
 import 'package:market_organizer/utils/category_enum.dart';
 import 'package:market_organizer/utils/color_costant.dart';
 
@@ -1384,14 +1385,13 @@ class DatabaseService {
         provider, provider.userData!.id!, _isFavourite ? wsId : null);
   }
 
-  Future<void> deleteWorkspace(
-      String userId, UserWorkspace workspacesWidget) async {
+  Future<void> deleteWorkspace(String userId, String workspacesId) async {
     _db.runTransaction(
       (transaction) async {
         //cancello spesa
         await _db
             .collection(_spesaCollection)
-            .where("workspaceIdRef", isEqualTo: workspacesWidget.id)
+            .where("workspaceIdRef", isEqualTo: workspacesId)
             .get()
             .then(
               (qs) => qs.docs.forEach(
@@ -1413,7 +1413,7 @@ class DatabaseService {
         //cancello menu
         await _db
             .collection(_menuCollection)
-            .where("workspaceIdRef", isEqualTo: workspacesWidget.id)
+            .where("workspaceIdRef", isEqualTo: workspacesId)
             .get()
             .then(
               (qs) => qs.docs.forEach(
@@ -1453,13 +1453,13 @@ class DatabaseService {
             );
 
         //cancello workspace
-        await transaction.delete(
-            _db.collection(_workspaceCollection).doc(workspacesWidget.id));
+        await transaction
+            .delete(_db.collection(_workspaceCollection).doc(workspacesId));
 
         //rimuovo riferimento in array
 
         await transaction.update(_db.collection(_userCollection).doc(userId), {
-          "workspacesIdRef": FieldValue.arrayRemove([workspacesWidget.id])
+          "workspacesIdRef": FieldValue.arrayRemove([workspacesId])
         });
       },
     );
@@ -1586,13 +1586,13 @@ class DatabaseService {
             qs.docs.map((qd) => UserDataModel.fromFirestore(qd)).toList());
   }
 
-  Future<List<Invites>> getInvitesForWorkspace(String workspaceId) async {
-    return await _db
+  Stream<List<Invites>> getInvitesForWorkspace(String workspaceId) {
+    return _db
         .collection(_workspaceCollection)
         .doc(workspaceId)
         .collection(_invitesCollection)
-        .get()
-        .then(
+        .snapshots()
+        .map(
           (qs) => qs.docs.map((qd) => Invites.fromFirestore(qd)).toList(),
         );
   }
@@ -1601,7 +1601,6 @@ class DatabaseService {
       Invites invites, String wsId, Future<void> onSuccess()) async {
     _db.runTransaction((transaction) async {
       //elimino invito
-      print("cancello invito");
       await transaction.delete(_db
           .collection(_workspaceCollection)
           .doc(wsId)
@@ -1617,7 +1616,6 @@ class DatabaseService {
         Map<String, String> userColors = workspace.userColors!;
         userColors.removeWhere((key, value) => key == invites.userId);
 
-        print("aggiorno mappa colori e lista di contributors");
         await transaction
             .update(_db.collection(_workspaceCollection).doc(wsId), {
           "userColors": userColors,
@@ -1625,7 +1623,6 @@ class DatabaseService {
         });
         //elimino workspaceidref dall'utente a cui tolgo invito
 
-        print("cancello workspace utente");
         await transaction
             .update(_db.collection(_userCollection).doc(invites.userId), {
           "workspacesIdRef": FieldValue.arrayRemove([wsId])
@@ -1713,5 +1710,94 @@ class DatabaseService {
             isGreaterThanOrEqualTo: dateEnd.subtract(Duration(days: 28)))
         .snapshots()
         .map((qs) => qs.docs.map((qd) => Ricetta.fromFirestore(qd)).toList());
+  }
+
+  Future<void> deleteUserAccount(
+      UserDataModel userDataModel, Future<void> onSuccess()) async {
+    _db.runTransaction(
+      (transaction) async {
+        //recupero workspace associati a utente che siano creati da lui
+        await _db
+            .collection(_workspaceCollection)
+            .where("ownerId", isEqualTo: userDataModel.id)
+            .get()
+            .then((qs) => qs.docs.forEach((qds) {
+                  deleteWorkspace(userDataModel.id!, qds.id);
+                }));
+        print("elimino");
+        //elimino settings
+        await _db
+            .collection(_userCollection)
+            .doc(userDataModel.id)
+            .collection(_settingsCollection)
+            .get()
+            .then((qs) => qs.docs.forEach((qds) {
+                  transaction.delete(qds.reference);
+                }));
+        //elimino user collection
+        await transaction
+            .delete(_db.collection(_userCollection).doc(userDataModel.id));
+      },
+    );
+
+    onSuccess();
+  }
+
+  Future<void> removeUserFromWorkspace(AuthProvider provider, String userId,
+      UserWorkspace workspacesWidget) async {
+    await _db.runTransaction((transaction) async {
+      //elimino invito
+
+      //elimino user colors da workspace se presente
+      UserWorkspace workspace = await _db
+          .collection(_workspaceCollection)
+          .doc(workspacesWidget.id)
+          .get()
+          .then((value) => UserWorkspace.fromFirestore(value));
+      Map<String, String> userColors = workspace.userColors!;
+      userColors.removeWhere((key, value) => key == userId);
+
+      await transaction.update(
+          _db.collection(_workspaceCollection).doc(workspacesWidget.id), {
+        "userColors": userColors,
+        "contributorsId": FieldValue.arrayRemove([userId])
+      });
+      //elimino workspaceidref dall'utente a cui tolgo invito
+
+      await transaction.update(_db.collection(_userCollection).doc(userId), {
+        "workspacesIdRef": FieldValue.arrayRemove([workspacesWidget.id])
+      });
+      //elimino la notifica dell'utente
+
+      await _db
+          .collection(_userCollection)
+          .doc(userId)
+          .collection(_notificheCollection)
+          .where("workspaceIdRef", isEqualTo: workspacesWidget.id)
+          .get()
+          .then((qs) => transaction.delete(qs.docs.first.reference));
+
+      await _db
+          .collection(_workspaceCollection)
+          .doc(workspacesWidget.id)
+          .collection(_invitesCollection)
+          .where("userId", isEqualTo: userId)
+          .get()
+          .then((qs) => transaction.delete(qs.docs.first.reference));
+    });
+
+    UserDataModel _userData = await getUserData(userId);
+    _userData.workspacesIdRef!.forEach((element) {
+      print(element);
+    });
+    provider.refreshUserData(_userData);
+    NavigationService.instance.navigateToReplacement("home");
+  }
+
+  Future<List<UserDataModel>> getContributorsInfo(
+      List<String> contributorsId) async {
+    List<UserDataModel> data = [];
+    contributorsId.forEach((id) async => data.add(await (getUserData(id))));
+    return data;
   }
 }

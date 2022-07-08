@@ -22,12 +22,33 @@ class _SignUpWidgetState extends State<SignUpWidget> {
   String? _email;
   String? _password;
 
+  String? _passwordConfirmed;
+  bool? _passwordsNotEquals;
+
   bool _passwordVisible = false;
   bool _isButtonEnable = false;
   late GlobalKey<FormState> _formKey;
 
-  _SignUpWidgetState() {
+  @override
+  void initState() {
+    super.initState();
     _formKey = GlobalKey<FormState>();
+  }
+
+  void _checkPasswordEquals() {
+    if (_passwordConfirmed == null || _passwordConfirmed!.isEmpty) {
+      return;
+    }
+
+    if (_password == _passwordConfirmed) {
+      setState(() {
+        _passwordsNotEquals = false;
+      });
+    } else {
+      setState(() {
+        _passwordsNotEquals = true;
+      });
+    }
   }
 
   void _checkValidator() {
@@ -37,6 +58,8 @@ class _SignUpWidgetState extends State<SignUpWidget> {
         _password != null &&
         _email!.length > 0 &&
         _password!.length > 5 &&
+        _passwordConfirmed != null &&
+        _passwordConfirmed == _password &&
         (_email!.contains('@') && _email!.contains('.'))) {
       setState(() {
         _isButtonEnable = true;
@@ -85,7 +108,7 @@ class _SignUpWidgetState extends State<SignUpWidget> {
               child: Text(
                 "Registrati",
                 style: Theme.of(context).textTheme.headline4?.copyWith(
-                    color: Colors.black, fontWeight: FontWeight.bold),
+                    color: Colors.white, fontWeight: FontWeight.bold),
               ),
             ),
             Divider(
@@ -122,7 +145,12 @@ class _SignUpWidgetState extends State<SignUpWidget> {
               ),
               _passwordBox(_context),
               SizedBox(
-                height: 50,
+                height: 30,
+              ),
+              _passwordConfirmBox(context),
+              errorMessagePasswordConfirmed(),
+              SizedBox(
+                height: 30,
               ),
               _submitButton(_context),
               SizedBox(
@@ -141,7 +169,7 @@ class _SignUpWidgetState extends State<SignUpWidget> {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(5),
         border: Border.all(
-          color: Colors.black,
+          color: Colors.grey,
         ),
       ),
     );
@@ -150,23 +178,25 @@ class _SignUpWidgetState extends State<SignUpWidget> {
   Widget _nameField(BuildContext _context) {
     return Container(
       child: TextFormField(
+        textInputAction: TextInputAction.next,
         textAlignVertical: TextAlignVertical.bottom,
         textAlign: TextAlign.start,
         autocorrect: false,
-        style: Theme.of(_context).textTheme.headline5?.copyWith(fontSize: 18),
+        style: Theme.of(_context)
+            .textTheme
+            .headline5
+            ?.copyWith(fontSize: 18, color: Colors.white),
         validator: (_input) {
           return _input?.length != 0 ? null : "Inserisci il tuo nome";
         },
         onSaved: (_input) {
           if (_input != null) {
-            setState(() {
-              _name = _input;
-              _checkValidator();
-            });
+            _name = _input;
+            _checkValidator();
           }
         },
         cursorHeight: 20,
-        cursorColor: Colors.black,
+        cursorColor: Colors.white,
         decoration: InputDecoration(
           hintText: "Nome",
           border: InputBorder.none,
@@ -174,7 +204,7 @@ class _SignUpWidgetState extends State<SignUpWidget> {
           enabledBorder: InputBorder.none,
           errorBorder: InputBorder.none,
           disabledBorder: InputBorder.none,
-          hintStyle: TextStyle(color: Colors.black),
+          hintStyle: TextStyle(color: Colors.grey),
         ),
       ),
     );
@@ -187,7 +217,7 @@ class _SignUpWidgetState extends State<SignUpWidget> {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(5),
         border: Border.all(
-          color: Colors.black,
+          color: Colors.grey,
         ),
       ),
     );
@@ -204,17 +234,18 @@ class _SignUpWidgetState extends State<SignUpWidget> {
               ? null
               : "Please Enter a Valid Email";
         },
-        style: Theme.of(_context).textTheme.headline5?.copyWith(fontSize: 18),
+        style: Theme.of(_context)
+            .textTheme
+            .headline5
+            ?.copyWith(fontSize: 18, color: Colors.white),
         onSaved: (_input) {
           if (_input != null) {
-            setState(() {
-              _email = _input;
-              _checkValidator();
-            });
+            _email = _input;
+            _checkValidator();
           }
         },
         cursorHeight: 20,
-        cursorColor: Colors.black,
+        cursorColor: Colors.white,
         decoration: InputDecoration(
           hintText: "Email",
           border: InputBorder.none,
@@ -222,7 +253,7 @@ class _SignUpWidgetState extends State<SignUpWidget> {
           enabledBorder: InputBorder.none,
           errorBorder: InputBorder.none,
           disabledBorder: InputBorder.none,
-          hintStyle: TextStyle(color: Colors.black),
+          hintStyle: TextStyle(color: Colors.grey),
         ),
       ),
     );
@@ -242,16 +273,18 @@ class _SignUpWidgetState extends State<SignUpWidget> {
                 _passwordVisible = !_passwordVisible;
               });
             },
-            icon: Icon(_passwordVisible
-                ? CupertinoIcons.eye_slash
-                : CupertinoIcons.eye),
+            icon: Icon(
+                _passwordVisible
+                    ? CupertinoIcons.eye_slash
+                    : CupertinoIcons.eye,
+                color: Colors.grey),
           ),
         ],
       ),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(5),
         border: Border.all(
-          color: Colors.black,
+          color: Colors.grey,
         ),
       ),
     );
@@ -267,17 +300,22 @@ class _SignUpWidgetState extends State<SignUpWidget> {
       validator: (_input) {
         return _input?.length != 0 ? null : "Inserisci la password";
       },
-      style: Theme.of(_context).textTheme.headline5?.copyWith(fontSize: 18),
+      style: Theme.of(_context)
+          .textTheme
+          .headline5
+          ?.copyWith(fontSize: 18, color: Colors.grey),
       onSaved: (_input) {
         if (_input != null) {
-          setState(() {
-            _password = _input;
-            _checkValidator();
-          });
+          _password = _input;
+          _checkValidator();
         }
       },
+      onChanged: (_input) {
+        _password = _input;
+        _checkPasswordEquals();
+      },
       cursorHeight: 18,
-      cursorColor: Colors.black,
+      cursorColor: Colors.white,
       decoration: InputDecoration(
         hintText: "Password",
         border: InputBorder.none,
@@ -285,8 +323,96 @@ class _SignUpWidgetState extends State<SignUpWidget> {
         enabledBorder: InputBorder.none,
         errorBorder: InputBorder.none,
         disabledBorder: InputBorder.none,
-        hintStyle: TextStyle(color: Colors.black),
+        hintStyle: TextStyle(color: Colors.grey),
       ),
+    );
+  }
+
+  Widget _passwordConfirmBox(BuildContext _context) {
+    return Container(
+      padding: EdgeInsets.only(left: 10),
+      child: Row(
+        children: [
+          Expanded(
+            child: _passwordConfirmTextField(_context),
+          ),
+          IconButton(
+            onPressed: () {
+              setState(() {
+                _passwordVisible = !_passwordVisible;
+              });
+            },
+            icon: Icon(
+                _passwordVisible
+                    ? CupertinoIcons.eye_slash
+                    : CupertinoIcons.eye,
+                color: Colors.grey),
+          ),
+        ],
+      ),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(5),
+        border: Border.all(
+          color: _passwordsNotEquals != null && _passwordsNotEquals!
+              ? Colors.red
+              : Colors.grey,
+        ),
+      ),
+    );
+  }
+
+  Widget errorMessagePasswordConfirmed() {
+    return Container(
+      padding: EdgeInsets.only(top: 10),
+      alignment: Alignment.centerLeft,
+      child: Text(
+        (_passwordsNotEquals != null && _passwordsNotEquals!)
+            ? "Le due password non coincidono"
+            : "",
+        style: TextStyle(color: Colors.red),
+        textAlign: TextAlign.left,
+      ),
+    );
+  }
+
+  Widget _passwordConfirmTextField(BuildContext _context) {
+    return Stack(
+      children: [
+        TextFormField(
+          enabled: (_password != null && _password!.isNotEmpty) ||
+              (_passwordConfirmed != null && _passwordConfirmed!.isNotEmpty),
+          keyboardType: TextInputType.text,
+          obscureText: !_passwordVisible,
+          textAlignVertical: TextAlignVertical.bottom,
+          textAlign: TextAlign.start,
+          autocorrect: false,
+          style: Theme.of(_context)
+              .textTheme
+              .headline5
+              ?.copyWith(fontSize: 18, color: Colors.grey),
+          onChanged: (text) {
+            _passwordConfirmed = text;
+            _checkPasswordEquals();
+          },
+          onSaved: (_input) {
+            if (_input != null) {
+              _passwordConfirmed = _input;
+              _checkValidator();
+            }
+          },
+          cursorHeight: 18,
+          cursorColor: Colors.white,
+          decoration: InputDecoration(
+            hintText: "Conferma Password",
+            border: InputBorder.none,
+            focusedBorder: InputBorder.none,
+            enabledBorder: InputBorder.none,
+            errorBorder: InputBorder.none,
+            disabledBorder: InputBorder.none,
+            hintStyle: TextStyle(color: Colors.grey),
+          ),
+        ),
+      ],
     );
   }
 
@@ -322,28 +448,27 @@ class _SignUpWidgetState extends State<SignUpWidget> {
   }
 
   Widget _signUpSection(BuildContext _context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 30.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            "Hai gia un account? ",
-            style:
-                Theme.of(_context).textTheme.headline6?.copyWith(fontSize: 16),
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          "Hai gia un account? ",
+          style: Theme.of(_context)
+              .textTheme
+              .headline6
+              ?.copyWith(fontSize: 16, color: Colors.white),
+        ),
+        TextButton(
+          onPressed: () => widget._changeSignPage(),
+          child: Text(
+            "Accedi",
+            style: Theme.of(_context).textTheme.headline6?.copyWith(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: Colors.orange),
           ),
-          TextButton(
-            onPressed: () => widget._changeSignPage(),
-            child: Text(
-              "Accedi",
-              style: Theme.of(_context)
-                  .textTheme
-                  .headline6
-                  ?.copyWith(fontWeight: FontWeight.bold, fontSize: 16),
-            ),
-          )
-        ],
-      ),
+        )
+      ],
     );
   }
 }

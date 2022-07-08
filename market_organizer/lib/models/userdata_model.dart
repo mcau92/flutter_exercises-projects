@@ -27,7 +27,9 @@ class UserDataModel {
         image: _data["image"],
         password: _data["password"],
         name: _data["name"],
-        workspacesIdRef: _data["workspacesIdRef"].cast<String>(),
+        workspacesIdRef: _data["workspacesIdRef"] == null
+            ? []
+            : _data["workspacesIdRef"].cast<String>(),
         favouriteWs: _data["favouriteWs"]);
   }
 }

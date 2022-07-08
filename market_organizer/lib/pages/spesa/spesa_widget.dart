@@ -1,5 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:market_organizer/database/database_service.dart';
 import 'package:market_organizer/models/product_model.dart';
@@ -148,13 +150,9 @@ class _SpesaWidgetState extends State<SpesaWidget> {
         itemExtent: 32.0,
         backgroundColor: Colors.white,
         onSelectedItemChanged: (int index) {
-          print(index);
-          setState(() {
-            _dateStartForClone =
-                dateStartLoop.add(Duration(days: ((index + 1) * 7)));
-            _dateEndForClone =
-                dateEndLoop.add(Duration(days: ((index + 1) * 7)));
-          });
+          _dateStartForClone =
+              dateStartLoop.add(Duration(days: ((index + 1) * 7)));
+          _dateEndForClone = dateEndLoop.add(Duration(days: ((index + 1) * 7)));
         },
         children: [
           for (int i = 7; i < 29; i += 7)
@@ -214,7 +212,7 @@ class _SpesaWidgetState extends State<SpesaWidget> {
           enabled: false,
           minVerticalPadding: 0.0,
           title: Text(
-            "Spesa",
+            "Generale",
             style: TextStyle(
               fontSize: 16,
               color: Colors.black,
@@ -370,12 +368,33 @@ class _SpesaWidgetState extends State<SpesaWidget> {
     SnackBarService.instance.buildContext = context; //init snackbarservice
     return Column(
       children: [
-        AppBarCustom(0, _addToSpesa, false, widget.worksapceId),
+        AppBarCustom(0, _showOptions, widget.worksapceId),
         WeekPickerWidget(),
         Expanded(
           child: Padding(
             padding: const EdgeInsets.only(top: 10.0),
-            child: _body(),
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                _body(),
+                Positioned(
+                  bottom: 80.0,
+                  right: 50,
+                  child: ElevatedButton(
+                      onPressed: () => _addToSpesa(),
+                      child: Icon(
+                        Icons.add,
+                        size: 25,
+                      ),
+                      style: ButtonStyle(
+                          shape: MaterialStateProperty.all(CircleBorder()),
+                          padding:
+                              MaterialStateProperty.all(EdgeInsets.all(15)),
+                          backgroundColor:
+                              MaterialStateProperty.all(Colors.orange))),
+                )
+              ],
+            ),
           ),
         )
       ],
@@ -393,7 +412,13 @@ class _SpesaWidgetState extends State<SpesaWidget> {
             _currentSpesa = _spesaList[0];
             return Column(
               children: [
+                SizedBox(
+                  height: 10,
+                ),
                 _workspaceBar(_currentSpesa),
+                SizedBox(
+                  height: 10,
+                ),
                 Expanded(
                   child: _repartoList(_currentSpesa),
                 ),
@@ -405,17 +430,10 @@ class _SpesaWidgetState extends State<SpesaWidget> {
                 startWeek: dateStart,
                 endWeek: dateEnd,
                 ownerId: _currentUserData.id);
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Expanded(
-                      child: Center(
-                    child: _noSpesaWidget(),
-                  )),
-                ],
-              ),
+            double _height = MediaQuery.of(context).size.height;
+            return Padding(
+              padding: EdgeInsets.only(top: _height / 7),
+              child: _noSpesaWidget(),
             );
           }
         } else {
@@ -433,9 +451,14 @@ class _SpesaWidgetState extends State<SpesaWidget> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
+        SizedBox(
+          height: 10,
+        ),
         _image(),
+        SizedBox(
+          height: 30,
+        ),
         _description(),
-        _addSpesaButton(),
       ],
     );
   }
@@ -493,6 +516,10 @@ class _SpesaWidgetState extends State<SpesaWidget> {
       padding: EdgeInsets.only(bottom: 5, top: 5, left: 15),
       child: Column(
         children: [
+          Divider(
+            thickness: 0.1,
+            color: Colors.grey,
+          ),
           _titleReparto(repartoName),
           _productsList(products),
         ],
@@ -586,44 +613,18 @@ class _SpesaWidgetState extends State<SpesaWidget> {
       key: UniqueKey(),
       onDismissed: (direction) async {
         if (direction == DismissDirection.endToStart)
-          _deleteProduct(products[index]);
-        if (!products[index].bought! &&
-            direction == DismissDirection.startToEnd)
-          products[index].bought = true;
-        _boughtProduct(products[index]);
+          HapticFeedback.heavyImpact();
+        _deleteProduct(products[index]);
       },
-      dismissThresholds: {
-        DismissDirection.endToStart: 0.2,
-        DismissDirection.startToEnd: 0.2
-      },
+      dismissThresholds: {DismissDirection.endToStart: 0.4},
       confirmDismiss: (direction) async {
         if (direction == DismissDirection.endToStart)
           return _confirmDismiss(context);
-        if (direction == DismissDirection.startToEnd)
-          return true;
-        else
-          return false;
+
+        return false;
       },
-      direction: !products[index].bought!
-          ? DismissDirection.horizontal
-          : DismissDirection.endToStart,
-      background: !products[index].bought!
-          ? Container(
-              decoration: BoxDecoration(
-                color: Colors.green,
-              ),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Padding(
-                  padding: const EdgeInsets.only(left: 15.0),
-                  child: Icon(
-                    CupertinoIcons.checkmark_alt,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            )
-          : Container(),
+      direction: DismissDirection.endToStart,
+      background: Container(),
       secondaryBackground: Container(
         decoration: BoxDecoration(
           color: Colors.red,
@@ -631,7 +632,7 @@ class _SpesaWidgetState extends State<SpesaWidget> {
         child: Align(
           alignment: Alignment.centerRight,
           child: Padding(
-            padding: const EdgeInsets.only(right: 15.0),
+            padding: const EdgeInsets.only(right: 25.0),
             child: Icon(
               CupertinoIcons.delete,
               color: Colors.white,
@@ -642,28 +643,20 @@ class _SpesaWidgetState extends State<SpesaWidget> {
     );
   }
 
-/** REPARTO END */
-  Widget _addSpesaButton() {
-    return CupertinoButton(
-      onPressed: () => _addToSpesa(),
-      child: Container(
-          padding: EdgeInsets.all(15),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(25),
-          ),
-          child: Text("AGGIUNGI", style: TextStyle(color: Colors.orange))),
-    );
-  }
-
   Widget _description() {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(10.0),
-        child: Text(
-          "Nessun Prodotto Presente",
-          style: TextStyle(
-              color: Colors.orange, fontWeight: FontWeight.bold, fontSize: 18),
+        padding: const EdgeInsets.only(bottom: 10.0),
+        child: SizedBox(
+          width: 250,
+          child: Text(
+            "Inizia ad aggiungere i tuoi prodotti",
+            textAlign: TextAlign.center,
+            style: TextStyle(
+                color: Colors.orange,
+                fontWeight: FontWeight.bold,
+                fontSize: 20),
+          ),
         ),
       ),
     );
@@ -673,67 +666,45 @@ class _SpesaWidgetState extends State<SpesaWidget> {
     return Container(
       padding: EdgeInsets.all(30),
       clipBehavior: Clip.hardEdge,
-      height: 200,
-      width: 200,
+      height: 250,
+      width: 250,
       child: SvgPicture.asset(
         'assets/images/empty_spesa.svg',
       ),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(150),
+        borderRadius: BorderRadius.circular(250),
       ),
     );
   }
 
   String createString(double ammount) {
     String tot = "Tot. ";
-    if (ammount == null) return tot + "0.0 €";
     return tot + num.parse(ammount.toStringAsFixed(2)).toString() + " €";
   }
 
   Widget _workspaceBar(Spesa? _currentSpesa) {
     return Builder(builder: (context) {
-      return Container(
-        child: Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Padding(
-                  padding: EdgeInsets.only(left: 15),
-                  child: Text(
-                    _currentSpesa == null
-                        ? "Tot. 0 €"
-                        : _currentSpesa.showPrice!
-                            ? createString(_currentSpesa.ammount!)
-                            : "Tot --.-",
-                    style: TextStyle(
-                      color: Colors.orange,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(right: 8.0),
-                  child: CupertinoButton(
-                    padding: EdgeInsets.all(0),
-                    child: Icon(
-                      CupertinoIcons.ellipsis,
-                      color: Colors.white,
-                    ),
-                    onPressed: () =>
-                        _currentSpesa == null ? {} : _showOptions(),
-                  ),
-                ),
-              ],
+      return Align(
+        alignment: Alignment.centerLeft,
+        child: Container(
+          decoration: BoxDecoration(
+              color: Colors.orange.withOpacity(0.4),
+              borderRadius: BorderRadius.circular(20)),
+          child: Text(
+            _currentSpesa == null
+                ? "Tot. 0 €"
+                : _currentSpesa.showPrice!
+                    ? createString(_currentSpesa.ammount!)
+                    : "Tot --.-",
+            style: TextStyle(
+              color: Colors.orange,
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
             ),
-            Divider(
-              height: 5,
-              thickness: 0.2,
-              color: Colors.white,
-            ),
-          ],
+          ),
+          padding: EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+          margin: EdgeInsets.only(left: 15),
         ),
       );
     });

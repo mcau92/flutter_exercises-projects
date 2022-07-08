@@ -10,7 +10,7 @@ class MeasureConverterUtility {
   static String quantityMeasureUnitStringCreation(
       double quantity, String measureUnit) {
     if (MeasureUnitList.units.containsKey(measureUnit)) {
-      return quantity.toString() + " " + MeasureUnitList.units[measureUnit];
+      return quantity.toString() + " " + MeasureUnitList.units[measureUnit]!;
     } else {
       return quantity.toString() + " " + _checkMeasure(measureUnit);
     }

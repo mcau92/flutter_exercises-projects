@@ -1,14 +1,14 @@
 import 'package:market_organizer/pages/menu/singleDay/single_day_page.dart';
 
 class RicettaManagementInput {
-  final String workspaceId;
-  final String day;
-  final DateTime dateTimeDay; //giorno selezionato
-  final DateTime dateStart;
-  final DateTime dateEnd;
-  final String menuIdRef;
+  final String? workspaceId;
+  final String? day;
+  final DateTime? dateTimeDay; //giorno selezionato
+  final DateTime? dateStart;
+  final DateTime? dateEnd;
+  final String? menuIdRef;
 
-  final String pasto;
+  final String? pasto;
 
   RicettaManagementInput(this.workspaceId, this.day, this.dateTimeDay,
       this.dateStart, this.dateEnd, this.menuIdRef, this.pasto);

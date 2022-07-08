@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:market_organizer/models/product_model.dart';
 import 'package:market_organizer/utils/color_costant.dart';
@@ -13,17 +12,8 @@ class ProductReceiptWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      clipBehavior: Clip.hardEdge,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.all(
-          Radius.circular(10),
-        ),
-      ),
-      child: Container(
-        color: ColorCostant.colorMap[_product.color].withOpacity(0.2),
-        child: _productCard(),
-      ),
+      color: ColorCostant.colorMap[_product.color]!.withOpacity(0.2),
+      child: _productCard(),
     );
   }
 
@@ -31,28 +21,15 @@ class ProductReceiptWidget extends StatelessWidget {
     return ListTile(
       contentPadding: EdgeInsets.symmetric(vertical: 0.0, horizontal: 11.0),
       dense: true,
-      leading: Container(
-        margin: EdgeInsets.symmetric(vertical: 10),
-        width: 27,
-        decoration: BoxDecoration(
-          color: ColorCostant.colorMap[_product.color],
-          borderRadius: BorderRadius.circular(25),
-        ),
-        child: Center(
-          child: Text(
-            _product.ownerName[0].toUpperCase(),
-            style: TextStyle(fontSize: 15, color: Colors.white),
-          ),
-        ),
-      ),
-      title: Text(_product.name,
+      horizontalTitleGap: 10,
+      title: Text(_product.name!,
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
               color: Colors.black, fontWeight: FontWeight.bold, fontSize: 16)),
       subtitle: Text(
-        _product.description == null || _product.description.isEmpty
+        _product.description == null || _product.description!.isEmpty
             ? "(nessuna descrizione)"
-            : _product.description,
+            : _product.description!,
         overflow: TextOverflow.ellipsis,
         style: TextStyle(
           color: Colors.black.withOpacity(0.7),
@@ -68,14 +45,38 @@ class ProductReceiptWidget extends StatelessWidget {
       children: [
         Text(
           MeasureConverterUtility.quantityMeasureUnitStringCreation(
-              _product.quantity, _product.measureUnit),
+              _product.quantity!, _product.measureUnit!),
           style: TextStyle(
             color: Colors.black,
             fontWeight: FontWeight.w600,
           ),
         ),
         SizedBox(width: 20),
+        userBoxName()
       ],
+    );
+  }
+
+  Widget userBoxName() {
+    return Container(
+      margin: EdgeInsets.symmetric(vertical: 10),
+      width: 27,
+      decoration: BoxDecoration(
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.4),
+            spreadRadius: 2,
+          ),
+        ],
+        color: ColorCostant.colorMap[_product.color],
+        borderRadius: BorderRadius.circular(25),
+      ),
+      child: Center(
+        child: Text(
+          _product.ownerName![0].toUpperCase(),
+          style: TextStyle(fontSize: 15, color: Colors.white),
+        ),
+      ),
     );
   }
 }

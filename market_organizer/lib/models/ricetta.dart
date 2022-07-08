@@ -1,16 +1,16 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Ricetta {
-  String id;
-  String ownerId;
-  String ownerName;
-  String color;
-  String name;
-  String description; //titolo ricetta
-  String pasto; //pranzo colazione ecc
-  DateTime date;
-  String image; //opzionale?
-  String menuIdRef;
+  String? id;
+  String? ownerId;
+  String? ownerName;
+  String? color;
+  String? name;
+  String? description; //titolo ricetta
+  String? pasto; //pranzo colazione ecc
+  DateTime? date;
+  String? image; //opzionale?
+  String? menuIdRef;
 
   Ricetta({
     this.id,
@@ -25,8 +25,16 @@ class Ricetta {
     this.menuIdRef,
   });
 
+  bool isEqualToAnother(Ricetta ricetta) {
+    return ricetta.name == this.name &&
+        ricetta.ownerId == this.ownerId &&
+        ricetta.ownerName == this.ownerName &&
+        ricetta.color == this.color &&
+        ricetta.pasto == this.pasto;
+  }
+
   factory Ricetta.fromFirestore(DocumentSnapshot _snapshot) {
-    var _data = _snapshot.data();
+    var _data = _snapshot.data() as Map;
     return Ricetta(
       id: _snapshot.id,
       ownerId: _data["ownerId"],

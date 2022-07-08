@@ -16,12 +16,11 @@ class PastoWidget extends StatefulWidget {
   final String _pastoName;
   final RicettaManagementInput mealDetailModel;
   final Function(String pasto, bool isRicetta) showMealDetailsPage;
-  final bool isToExpandPasto;
   PastoWidget(
-      this._pastoName,
-      this.mealDetailModel,
-      void Function(String pasto, bool isRicetta) this.showMealDetailsPage,
-      this.isToExpandPasto);
+    this._pastoName,
+    this.mealDetailModel,
+    void Function(String pasto, bool isRicetta) this.showMealDetailsPage,
+  );
 
   @override
   State<PastoWidget> createState() => _PastoWidgetState();
@@ -33,7 +32,7 @@ class _PastoWidgetState extends State<PastoWidget> {
     //ricetta può essere nulla se sono in fase di creazione da zero altrimenti è valorizzata con quella selezionata
     Map<Product, bool> fetchedProd = await DatabaseService.instance
         .getProductsByReceiptWithDefaultFalseInSpesa(
-            _ricetta.menuIdRef, _ricetta.id);
+            _ricetta.menuIdRef!, _ricetta.id!);
     NewSelectedReceiptInput receiptInput = new NewSelectedReceiptInput(
         ReceiptOperationType.UPDATE,
         _ricetta,
@@ -68,10 +67,14 @@ class _PastoWidgetState extends State<PastoWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return ExpansionTile(
-      initiallyExpanded: widget.isToExpandPasto,
-      title: _titleBar(),
-      children: [_body()],
+    return Theme(
+      data: ThemeData().copyWith(unselectedWidgetColor: Colors.black),
+      child: ExpansionTile(
+        initiallyExpanded: true,
+        iconColor: Colors.white,
+        title: _titleBar(),
+        children: [_body()],
+      ),
     );
   }
 
@@ -128,13 +131,19 @@ class _PastoWidgetState extends State<PastoWidget> {
             onPressed: () => _showMealDetailsPage(true),
             child: Text(
               "Ricetta",
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.orange),
             )),
         TextButton(
           onPressed: () => _showMealDetailsPage(false),
           child: Text(
             "Prodotto",
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+            style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                color: Colors.orange),
           ),
         ),
       ],
@@ -142,21 +151,56 @@ class _PastoWidgetState extends State<PastoWidget> {
   }
 
   //
+
+  // conferma eliminazione prodotto
+  Future<bool> _confirmDismissRicetta(BuildContext context) async {
+    return await showCupertinoDialog(
+        context: context,
+        builder: (ctx) {
+          return CupertinoAlertDialog(
+            title: Text("Confermi di rimuovere questa ricetta?"),
+            actions: [
+              CupertinoDialogAction(
+                child: Text("si"),
+                onPressed: () {
+                  Navigator.of(
+                    ctx,
+                    // rootNavigator: true,
+                  ).pop(true);
+                },
+              ),
+              CupertinoDialogAction(
+                child: Text("no"),
+                onPressed: () {
+                  Navigator.of(
+                    ctx,
+                  ).pop(false);
+                },
+              )
+            ],
+          );
+        });
+  }
+
+  Future<void> _deleteReceipt(Ricetta _ricetta) async {
+    await DatabaseService.instance.deleteReceiptById(_ricetta);
+  }
+
   Widget _ricettaList() {
     return StreamBuilder<List<Ricetta>>(
       stream: DatabaseService.instance.getReciptsFromMenuIdAndDateAndPasto(
-          widget.mealDetailModel.menuIdRef,
-          widget.mealDetailModel.dateTimeDay,
-          widget.mealDetailModel.pasto),
+          widget.mealDetailModel.menuIdRef!,
+          widget.mealDetailModel.dateTimeDay!,
+          widget.mealDetailModel.pasto!),
       builder: (context, snap) {
         if (snap.connectionState == ConnectionState.waiting) {
           return Center(
             child: CircularProgressIndicator(
-              color: Colors.red,
+              color: Colors.orange,
             ),
           );
         } else {
-          List<Ricetta> _ricette = snap.data;
+          List<Ricetta> _ricette = snap.data!;
           return ListView.separated(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -168,9 +212,46 @@ class _PastoWidgetState extends State<PastoWidget> {
               itemCount: _ricette.length,
               itemBuilder: (context, index) {
                 return GestureDetector(
-                    onTap: () => _showReceiptDetails(_ricette[index]),
-                    //spostare qui il dismissable in modo da eliminare anche il pasto
-                    child: SingleRicetta(_ricette[index]));
+                  onTap: () => _showReceiptDetails(_ricette[index]),
+                  //spostare qui il dismissable in modo da eliminare anche il pasto
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.all(
+                          Radius.circular(10),
+                        ),
+                      ),
+                      child: Dismissible(
+                        child: SingleRicetta(_ricette[index]),
+                        key: UniqueKey(),
+                        onDismissed: (direction) =>
+                            _deleteReceipt(_ricette[index]),
+                        direction: DismissDirection.endToStart,
+                        dismissThresholds: {DismissDirection.endToStart: 0.4},
+                        confirmDismiss: (direction) =>
+                            _confirmDismissRicetta(context),
+                        background: Container(),
+                        secondaryBackground: Container(
+                          decoration: BoxDecoration(
+                              color: Colors.red,
+                              borderRadius: BorderRadius.circular(10)),
+                          child: Align(
+                            alignment: Alignment.centerRight,
+                            child: Padding(
+                              padding: const EdgeInsets.only(right: 15.0),
+                              child: Icon(
+                                CupertinoIcons.delete,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                );
               });
         }
       },
@@ -182,7 +263,7 @@ class _PastoWidgetState extends State<PastoWidget> {
         context: context,
         builder: (ctx) {
           return CupertinoAlertDialog(
-            title: Text("Sicuro di voler rimuovere questo prodotto?"),
+            title: Text("Confermi di rimuovere questo prodotto?"),
             actions: [
               CupertinoDialogAction(
                 child: Text("si"),
@@ -215,18 +296,18 @@ class _PastoWidgetState extends State<PastoWidget> {
       padding: const EdgeInsets.only(top: 10.0),
       child: StreamBuilder<List<Product>>(
         stream: DatabaseService.instance.getProductsFromMenuIdAndDateAndPasto(
-            widget.mealDetailModel.menuIdRef,
-            widget.mealDetailModel.dateTimeDay,
-            widget.mealDetailModel.pasto),
+            widget.mealDetailModel.menuIdRef!,
+            widget.mealDetailModel.dateTimeDay!,
+            widget.mealDetailModel.pasto!),
         builder: (context, snap) {
           if (snap.connectionState == ConnectionState.waiting) {
             return Center(
               child: CircularProgressIndicator(
-                color: Colors.red,
+                color: Colors.orange,
               ),
             );
           } else {
-            List<Product> _products = snap.data;
+            List<Product> _products = snap.data!;
             return ListView.separated(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
@@ -240,35 +321,39 @@ class _PastoWidgetState extends State<PastoWidget> {
                   return GestureDetector(
                     onTap: () => _showProductDetails(_products[index]),
                     //spostare qui il dismissable in modo da eliminare anche il pasto
-                    child: Container(
-                      clipBehavior: Clip.hardEdge,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.all(
-                          Radius.circular(10),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.all(
+                            Radius.circular(10),
+                          ),
                         ),
-                      ),
-                      child: Dismissible(
-                        child: ProductReceiptWidget(
-                          _products[index],
-                        ),
-                        key: UniqueKey(),
-                        onDismissed: (direction) =>
-                            _removeProduct(_products[index]),
-                        direction: DismissDirection.startToEnd,
-                        dismissThresholds: {DismissDirection.startToEnd: 0.3},
-                        confirmDismiss: (direction) => _confirmDismiss(context),
-                        background: Container(
-                          decoration: BoxDecoration(
-                              color: Colors.red,
-                              borderRadius: BorderRadius.circular(10)),
-                          child: Align(
-                            alignment: Alignment.centerLeft,
-                            child: Padding(
-                              padding: const EdgeInsets.only(left: 10.0),
-                              child: Icon(
-                                CupertinoIcons.delete,
-                                color: Colors.white,
+                        child: Dismissible(
+                          child: ProductReceiptWidget(
+                            _products[index],
+                          ),
+                          key: UniqueKey(),
+                          onDismissed: (direction) =>
+                              _removeProduct(_products[index]),
+                          direction: DismissDirection.endToStart,
+                          dismissThresholds: {DismissDirection.endToStart: 0.4},
+                          confirmDismiss: (direction) =>
+                              _confirmDismiss(context),
+                          background: Container(),
+                          secondaryBackground: Container(
+                            decoration: BoxDecoration(
+                                color: Colors.red,
+                                borderRadius: BorderRadius.circular(10)),
+                            child: Align(
+                              alignment: Alignment.centerRight,
+                              child: Padding(
+                                padding: const EdgeInsets.only(right: 25.0),
+                                child: Icon(
+                                  CupertinoIcons.delete,
+                                  color: Colors.white,
+                                ),
                               ),
                             ),
                           ),

@@ -1,22 +1,34 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:market_organizer/pages/home_page.dart';
+import 'package:market_organizer/auth/authentication.dart';
+import 'package:market_organizer/pages/dispatch_page.dart';
+import 'package:market_organizer/pages/home/home_page.dart';
+import 'package:market_organizer/pages/home/saveWorkspace_page.dart';
 import 'package:market_organizer/pages/menu/singleDay/meal/ricettaSearch_page.dart';
 import 'package:market_organizer/pages/menu/singleDay/receipt/product/productSearch_page.dart';
 import 'package:market_organizer/pages/menu/singleDay/receipt/product/product_page.dart';
 import 'package:market_organizer/pages/menu/singleDay/receipt/receipt_page.dart';
 import 'package:market_organizer/pages/menu/singleDay/single_day_page.dart';
+import 'package:market_organizer/pages/notify/notify_page.dart';
+import 'package:market_organizer/pages/shareToUser/shareToUserPage.dart';
 import 'package:market_organizer/pages/spesa/add_spesa_page.dart';
+import 'package:market_organizer/pages/spesa/product_search_page.dart';
 import 'package:market_organizer/pages/spesa/single_product_detail_page.dart';
+import 'package:market_organizer/provider/auth_provider.dart';
 import 'package:market_organizer/provider/date_provider.dart';
 import 'package:market_organizer/service/navigation_service.dart';
+import 'package:market_organizer/utils/loader_page.dart';
 import 'package:provider/provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(); //init firebase
   runApp(ChangeNotifierProvider(
-      create: (context) => DateProvider(), child: MyApp()));
+      create: (context) => AuthProvider(),
+      child: ChangeNotifierProvider(
+        create: (context) => DateProvider(),
+        child: MyApp(),
+      )));
 }
 
 class MyApp extends StatelessWidget {
@@ -32,13 +44,25 @@ class MyApp extends StatelessWidget {
         accentColor: Colors.black,
         cardColor: Color.fromRGBO(229, 229, 229, 1), //light grey
         primarySwatch: Colors.blue,
+        unselectedWidgetColor: Colors.orange,
+        checkboxTheme: CheckboxThemeData(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(100),
+          ),
+        ),
       ),
-      initialRoute: "home",
+      initialRoute: "loader",
       routes: {
-        "home": (BuildContext _contex) => HomePage(),
+        "loader": (BuildContext _context) => LoaderPage(),
+        "auth": (BuildContext _context) => AuthenticationPage(),
+        "notifyPage": (BuildContext _context) => NotifyPage(),
+        "home": (BuildContext _context) => HomePage(),
+        "dispatchPage": (BuildContext _contex) => DispatchPage(),
+        "shareToUserPage": (BuildContext _contex) => ShareToUserPage(),
         "singleDay": (BuildContext _context) => SingleDayPage(),
         "ricettaSearchPage": (BuildContext _context) => RicettaSearchPage(),
         "addSpesaPage": (BuildContext _context) => AddSpesaPage(),
+        "saveWorkspace": (BuildContext _context) => SaveWorkspacePage(),
       },
       onGenerateRoute: (settings) {
         //DETTAGLIO PRODOTTO IN SPESA
@@ -69,6 +93,14 @@ class MyApp extends StatelessWidget {
           ProductSearchInput args = settings.arguments as ProductSearchInput;
           return MaterialPageRoute(builder: (context) {
             return ProductSearchPage(args);
+          });
+        }
+        //ricerca prodotto in spesa
+        if (settings.name == "productSpesaSearchPage") {
+          ProductSpesaSearchInput args =
+              settings.arguments as ProductSpesaSearchInput;
+          return MaterialPageRoute(builder: (context) {
+            return ProductSpesaSearchPage(args);
           });
         }
         return null;

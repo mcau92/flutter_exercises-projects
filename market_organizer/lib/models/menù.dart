@@ -1,12 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Menu {
-  String id;
-  String name;
-  String ownerId;
-  DateTime startWeek;
-  DateTime endWeek;
-  String workspaceIdRef;
+  String? id;
+  String? name;
+  String? ownerId;
+  DateTime? startWeek;
+  DateTime? endWeek;
+  String? workspaceIdRef;
 
   Menu({
     this.id,
@@ -18,7 +18,7 @@ class Menu {
   });
 
   factory Menu.fromFirestore(DocumentSnapshot _snapshot) {
-    var _data = _snapshot.data();
+    var _data = _snapshot.data() as Map;
     return Menu(
       id: _snapshot.id,
       name: _data["name"] != null ? _data["name"] : "default",

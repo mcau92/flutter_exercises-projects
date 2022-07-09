@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:market_organizer/database/database_service.dart';
 import 'package:market_organizer/models/userdata_model.dart';
@@ -37,7 +39,7 @@ class _UserSharedState extends State<UserShared> {
             children: [
               Text(
                 "Creato da: ",
-                style: TextStyle(fontWeight: FontWeight.bold),
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
               ),
               SizedBox(
                 width: 10,
@@ -46,7 +48,10 @@ class _UserSharedState extends State<UserShared> {
                   future: userFuture,
                   builder: (c, s) {
                     if (s.hasData) {
-                      return Text(s.data!.name!);
+                      return Text(
+                        s.data!.name!,
+                        style: TextStyle(fontSize: 12),
+                      );
                     }
                     return Shimmer(
                       child: Text("....."),
@@ -76,7 +81,7 @@ class _UserSharedState extends State<UserShared> {
             children: [
               Text(
                 "Condiviso con: ",
-                style: TextStyle(fontWeight: FontWeight.bold),
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
               ),
               SizedBox(
                 width: 10,
@@ -93,6 +98,7 @@ class _UserSharedState extends State<UserShared> {
                               (contributor) => [
                                 Text(
                                   contributor.name!,
+                                  style: TextStyle(fontSize: 12),
                                 ),
                                 SizedBox(
                                   height: 10,

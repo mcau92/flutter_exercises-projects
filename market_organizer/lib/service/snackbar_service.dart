@@ -15,6 +15,10 @@ class SnackBarService {
   void showSnackBarError(String _message) {
     ScaffoldMessenger.of(_buildContext).showSnackBar(
       SnackBar(
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(20))),
+        margin: EdgeInsets.all(20),
+        behavior: SnackBarBehavior.floating,
         duration: Duration(seconds: 2),
         content: Text(
           _message,
@@ -31,6 +35,10 @@ class SnackBarService {
   void showSnackBarSuccesfull(String _message) {
     ScaffoldMessenger.of(_buildContext).showSnackBar(
       SnackBar(
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(20))),
+        margin: EdgeInsets.symmetric(vertical: 20, horizontal: 10),
+        behavior: SnackBarBehavior.floating,
         duration: Duration(seconds: 2),
         content: Text(
           _message,

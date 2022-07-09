@@ -4,7 +4,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:market_organizer/exception/login_exception.dart';
 import 'package:market_organizer/provider/auth_provider.dart';
-import 'package:market_organizer/service/navigation_service.dart';
 import 'package:provider/provider.dart';
 
 class SignInWidget extends StatefulWidget {

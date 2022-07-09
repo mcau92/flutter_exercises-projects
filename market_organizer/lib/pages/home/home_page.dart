@@ -89,7 +89,9 @@ class _HomePageState extends State<HomePage> {
                 onPressed: () => _goToNotifyPage(),
               )
             : Container(),
-        title: _selectedIndex == 0 ? Text("I miei workspace") : Text("Account"),
+        title: Text(
+          _selectedIndex == 0 ? "I miei workspace" : "Account",
+        ),
         actions: [
           if (_selectedIndex == 0)
             CupertinoButton(

@@ -10,6 +10,7 @@ import 'package:market_organizer/models/userworkspace.model.dart';
 import 'package:market_organizer/pages/home/widget/userShared_widget.dart';
 import 'package:market_organizer/provider/auth_provider.dart';
 import 'package:market_organizer/service/navigation_service.dart';
+import 'package:market_organizer/service/snackbar_service.dart';
 import 'package:market_organizer/utils/full_page_loader.dart';
 import 'package:provider/provider.dart';
 
@@ -21,6 +22,7 @@ class WorkspacesWidget extends StatefulWidget {
 class _WorkspacesWidgetState extends State<WorkspacesWidget> {
   List<UserWorkspace> workspaces = [];
   bool _isLoadingData = false;
+  late AuthProvider provider;
 
   /** -------------------START FUNCTIONS------------------------- */
 
@@ -80,29 +82,25 @@ class _WorkspacesWidgetState extends State<WorkspacesWidget> {
   }
 
   void _deleteWorkspace(UserWorkspace workspacesWidget) async {
-    Navigator.pop(context);
-    bool isToDeleteAfterConfirm = await _confirmDismiss(context);
     setState(() {
       _isLoadingData = true;
-      print(_isLoadingData);
     });
-    AuthProvider provider = Provider.of<AuthProvider>(context, listen: false);
-    if (isToDeleteAfterConfirm) {
-      if (workspacesWidget.ownerId == provider.userData!.id!) {
-        await DatabaseService.instance
-            .deleteWorkspace(provider.userData!.id!, workspacesWidget.id!);
-        setState(() {});
-      } else {
-        print(_isLoadingData);
 
-        // await DatabaseService.instance.removeUserFromWorkspace(
-        //     provider, provider.userData!.id!, workspacesWidget);
-        Future.delayed(Duration(seconds: 5));
-        setState(() {
-          _isLoadingData = false;
-        });
-      }
+    await Future.delayed(Duration(seconds: 1));
+    if (workspacesWidget.ownerId == provider.userData!.id!) {
+      await DatabaseService.instance
+          .deleteWorkspace(provider.userData!.id!, workspacesWidget.id!);
+    } else {
+      await DatabaseService.instance.removeUserFromWorkspace(
+          provider, provider.userData!.id!, workspacesWidget);
     }
+
+    setState(() {
+      _isLoadingData = false;
+    });
+
+    SnackBarService.instance
+        .showSnackBarSuccesfull("Workspace eliminato con successo");
   }
 
   void _dispatchWorkspace(UserWorkspace workspacesWidget) {
@@ -114,9 +112,11 @@ class _WorkspacesWidgetState extends State<WorkspacesWidget> {
 
   @override
   Widget build(BuildContext context) {
+    SnackBarService.instance.buildContext = context;
+    provider = Provider.of<AuthProvider>(context, listen: false);
     return Stack(
       children: [
-        if (!_isLoadingData) _wsStream(),
+        _wsStream(),
         if (_isLoadingData) FullPageLoader(),
       ],
     );
@@ -220,7 +220,7 @@ class _WorkspacesWidgetState extends State<WorkspacesWidget> {
                             favouriteWs == workspacesWidget.id
                         ? Colors.orange
                         : Colors.black,
-                    size: 22,
+                    size: 20,
                   ),
                   onPressed: () {
                     HapticFeedback.heavyImpact();
@@ -236,7 +236,7 @@ class _WorkspacesWidgetState extends State<WorkspacesWidget> {
                   child: Icon(
                     CupertinoIcons.ellipsis_vertical,
                     color: Colors.black,
-                    size: 22,
+                    size: 20,
                   ),
                   onPressed: () =>
                       _showUpdateActions(workspacesWidget, isOwnerId)),
@@ -299,8 +299,11 @@ class _WorkspacesWidgetState extends State<WorkspacesWidget> {
             title: Text("Condividi"),
           ),
         ListTile(
-          onTap: () {
-            _deleteWorkspace(workspacesWidget);
+          onTap: () async {
+            bool isToDeleteAfterConfirm = await _confirmDismiss(context);
+            if (isToDeleteAfterConfirm) _deleteWorkspace(workspacesWidget);
+
+            Navigator.pop(context);
           },
           leading: Icon(CupertinoIcons.delete),
           title: Text("Cancella"),

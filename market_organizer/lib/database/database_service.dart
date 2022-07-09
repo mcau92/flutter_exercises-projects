@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:flutter/material.dart';
 import 'package:market_organizer/exception/login_exception.dart';
 import 'package:market_organizer/models/invites.dart';
 import 'package:market_organizer/models/men%C3%B9.dart';
@@ -17,7 +16,6 @@ import 'package:market_organizer/models/userworkspace.model.dart';
 import 'package:market_organizer/pages/menu/singleDay/meal/meal_detail_model.dart';
 import 'package:market_organizer/pages/menu/singleDay/receipt/product/productInputForDb.dart';
 import 'package:market_organizer/provider/auth_provider.dart';
-import 'package:market_organizer/service/navigation_service.dart';
 import 'package:market_organizer/utils/category_enum.dart';
 import 'package:market_organizer/utils/color_costant.dart';
 
@@ -1791,7 +1789,6 @@ class DatabaseService {
       print(element);
     });
     provider.refreshUserData(_userData);
-    NavigationService.instance.navigateToReplacement("home");
   }
 
   Future<List<UserDataModel>> getContributorsInfo(

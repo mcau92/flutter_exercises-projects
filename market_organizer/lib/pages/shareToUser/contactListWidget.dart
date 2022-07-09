@@ -6,6 +6,7 @@ import 'package:market_organizer/models/invites.dart';
 import 'package:market_organizer/models/userdata_model.dart';
 import 'package:market_organizer/provider/auth_provider.dart';
 import 'package:market_organizer/service/snackbar_service.dart';
+import 'package:market_organizer/utils/full_page_loader.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:sticky_headers/sticky_headers.dart';
@@ -21,6 +22,7 @@ class _ContactListWidgetState extends State<ContactListWidget> {
   Iterable<Contact> _contacts = [];
   late TextEditingController _textController;
   String emailSearchBarText = "";
+  bool _isLoadingData = false;
 
   @override
   void initState() {
@@ -96,7 +98,12 @@ class _ContactListWidgetState extends State<ContactListWidget> {
     //check if user exist manage invites and notify
     List<UserDataModel> userSingletonList =
         await DatabaseService.instance.getUserFromEmail(email);
+
     if (userSingletonList.isNotEmpty) {
+      setState(() {
+        _isLoadingData = true;
+      });
+      await Future.delayed(Duration(seconds: 1));
       try {
         await DatabaseService.instance.shareWorkspaceToUser(
             ownerId.id!, userSingletonList.first.id!, email, widget.workspaceId,
@@ -104,15 +111,16 @@ class _ContactListWidgetState extends State<ContactListWidget> {
           SnackBarService.instance.showSnackBarSuccesfull(
               "L'invito è stato inoltrato correttamente");
         });
-        setState(() {
-          _textController.text = "";
-          emailSearchBarText = "";
-        });
       } catch (e) {
         print(e);
         SnackBarService.instance
             .showSnackBarError("impossibile condividere, riprova più tardi");
       }
+      setState(() {
+        _isLoadingData = false;
+        _textController.text = "";
+        emailSearchBarText = "";
+      });
     } else {
       //if not present send invitation, actualy print user not exist
       print("non esiste");
@@ -122,6 +130,15 @@ class _ContactListWidgetState extends State<ContactListWidget> {
 
   @override
   Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        _body(),
+        if (_isLoadingData) FullPageLoader(),
+      ],
+    );
+  }
+
+  Widget _body() {
     if (emailSearchBarText.isNotEmpty) {
       return SingleChildScrollView(
         child: Column(

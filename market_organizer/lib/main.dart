@@ -1,4 +1,5 @@
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:market_organizer/auth/authentication.dart';
 import 'package:market_organizer/pages/dispatch_page.dart';
@@ -61,15 +62,77 @@ class MyApp extends StatelessWidget {
         "shareToUserPage": (BuildContext _contex) => ShareToUserPage(),
         "singleDay": (BuildContext _context) => SingleDayPage(),
         "ricettaSearchPage": (BuildContext _context) => RicettaSearchPage(),
-        "addSpesaPage": (BuildContext _context) => AddSpesaPage(),
         "saveWorkspace": (BuildContext _context) => SaveWorkspacePage(),
       },
       onGenerateRoute: (settings) {
+        if (settings.name == "auth") {
+          return CupertinoPageRoute(
+            builder: (context) {
+              return AuthenticationPage();
+            },
+          );
+        }
+        if (settings.name == "notifyPage") {
+          return CupertinoPageRoute(
+            builder: (context) {
+              return NotifyPage();
+            },
+          );
+        }
+        if (settings.name == "home") {
+          return CupertinoPageRoute(
+            builder: (context) {
+              return HomePage();
+            },
+          );
+        }
+        if (settings.name == "dispatchPage") {
+          return CupertinoPageRoute(
+            builder: (context) {
+              return DispatchPage();
+            },
+          );
+        }
+        if (settings.name == "shareToUserPage") {
+          return CupertinoPageRoute(
+            builder: (context) {
+              return ShareToUserPage();
+            },
+          );
+        }
+        if (settings.name == "singleDay") {
+          return CupertinoPageRoute(
+            builder: (context) {
+              return SingleDayPage();
+            },
+          );
+        }
+        if (settings.name == "ricettaSearchPage") {
+          return CupertinoPageRoute(
+            builder: (context) {
+              return RicettaSearchPage();
+            },
+          );
+        }
+        if (settings.name == "saveWorkspace") {
+          return CupertinoPageRoute(
+            builder: (context) {
+              return SaveWorkspacePage();
+            },
+          );
+        }
+        if (settings.name == "addSpesaPage") {
+          return CupertinoPageRoute(
+            builder: (context) {
+              return AddSpesaPage();
+            },
+          );
+        }
         //DETTAGLIO PRODOTTO IN SPESA
         if (settings.name == "singleProductDetailPage") {
           SingleProductDetailPageInput args =
               settings.arguments as SingleProductDetailPageInput;
-          return MaterialPageRoute(builder: (context) {
+          return CupertinoPageRoute(builder: (context) {
             return SingleProductDetailPage(args);
           });
         }
@@ -77,21 +140,21 @@ class MyApp extends StatelessWidget {
         if (settings.name == "receiptPage") {
           NewSelectedReceiptInput args =
               settings.arguments as NewSelectedReceiptInput;
-          return MaterialPageRoute(builder: (context) {
+          return CupertinoPageRoute(builder: (context) {
             return NewSelectedReceiptPage(args);
           });
         }
         //PAGINA PRODOTTO MENU
         if (settings.name == "productPageReceipt") {
           ProductReceiptInput args = settings.arguments as ProductReceiptInput;
-          return MaterialPageRoute(builder: (context) {
+          return CupertinoPageRoute(builder: (context) {
             return ProductReceiptPage(args);
           });
         }
         //ricerca prodotto ricetta
         if (settings.name == "productSearchPage") {
           ProductSearchInput args = settings.arguments as ProductSearchInput;
-          return MaterialPageRoute(builder: (context) {
+          return CupertinoPageRoute(builder: (context) {
             return ProductSearchPage(args);
           });
         }
@@ -99,7 +162,7 @@ class MyApp extends StatelessWidget {
         if (settings.name == "productSpesaSearchPage") {
           ProductSpesaSearchInput args =
               settings.arguments as ProductSpesaSearchInput;
-          return MaterialPageRoute(builder: (context) {
+          return CupertinoPageRoute(builder: (context) {
             return ProductSpesaSearchPage(args);
           });
         }

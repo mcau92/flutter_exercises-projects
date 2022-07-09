@@ -134,7 +134,7 @@ class _UserWidgetState extends State<UserWidget> {
         ),
         _imageUserSection(),
         SizedBox(
-          height: 10,
+          height: 20,
         ),
         _settings(),
       ],
@@ -246,14 +246,14 @@ class _UserWidgetState extends State<UserWidget> {
       onTap: () => _showCupertinoPickerImage(),
       child: Container(
         margin: EdgeInsets.all(20),
-        height: 130,
-        width: 130,
+        height: 100,
+        width: 100,
         clipBehavior: Clip.hardEdge,
         decoration: BoxDecoration(
           // image: DecorationImage(
           //     image: NetworkImage(userDataModel.image!), fit: BoxFit.cover),
           color: Colors.white,
-          borderRadius: BorderRadius.circular(150),
+          borderRadius: BorderRadius.circular(100),
           boxShadow: [
             BoxShadow(
               color: Colors.grey[700]!,
@@ -270,7 +270,7 @@ class _UserWidgetState extends State<UserWidget> {
             ? Center(
                 child: Icon(
                   CupertinoIcons.camera,
-                  size: 40,
+                  size: 30,
                 ),
               )
             : Image.network(
@@ -318,7 +318,7 @@ class _UserWidgetState extends State<UserWidget> {
             ),
             _generalMenuSettings(),
             SizedBox(
-              height: 50,
+              height: 40,
             ),
             _logoutWidget(),
             SizedBox(

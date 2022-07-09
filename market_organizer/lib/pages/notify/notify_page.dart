@@ -7,6 +7,7 @@ import 'package:market_organizer/models/userdata_model.dart';
 import 'package:market_organizer/provider/auth_provider.dart';
 import 'package:market_organizer/service/navigation_service.dart';
 import 'package:market_organizer/service/snackbar_service.dart';
+import 'package:market_organizer/utils/full_page_loader.dart';
 import 'package:provider/provider.dart';
 
 class NotifyPage extends StatefulWidget {
@@ -17,22 +18,36 @@ class NotifyPage extends StatefulWidget {
 }
 
 class _NotifyPageState extends State<NotifyPage> {
+  bool _isLoadingData = false;
+
   void _acceptWorkspaceWork(Notifiche notifica, String userId) async {
+    setState(() {
+      _isLoadingData = true;
+    });
+    await Future.delayed(Duration(seconds: 1));
     AuthProvider _auth = Provider.of<AuthProvider>(context, listen: false);
     await DatabaseService.instance.acceptWorkspaceWork(notifica, userId, _auth);
 
     SnackBarService.instance
         .showSnackBarSuccesfull("Ora puoi iniziare a contribuire!");
-
+    setState(() {
+      _isLoadingData = false;
+    });
     NavigationService.instance.goBack();
   }
 
   void _rejectWorkspaceWork(Notifiche notifica, String userId) async {
+    setState(() {
+      _isLoadingData = true;
+    });
+    await Future.delayed(Duration(seconds: 1));
     await DatabaseService.instance.rejectWorkspaceWork(notifica, userId);
 
     SnackBarService.instance
         .showSnackBarSuccesfull("Workspace rifiutato con successo");
-    setState(() {});
+    setState(() {
+      _isLoadingData = false;
+    });
   }
 
   @override
@@ -52,7 +67,10 @@ class _NotifyPageState extends State<NotifyPage> {
         ),
         title: Text("Le tue notifiche"),
       ),
-      body: _bodySelection(),
+      body: Stack(children: [
+        _bodySelection(),
+        if (_isLoadingData) FullPageLoader(),
+      ]),
     );
   }
 

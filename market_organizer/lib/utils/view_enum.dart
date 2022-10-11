@@ -1,0 +1,1 @@
+enum ViewProd { reparti, prodotti }

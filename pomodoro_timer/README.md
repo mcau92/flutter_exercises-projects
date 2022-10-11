@@ -1,4 +1,4 @@
-# pomodoro_timer
+# Pomodoro Timer
 
 Flutter application for the pomodor timer technique.
 

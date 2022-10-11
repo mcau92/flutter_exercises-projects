@@ -1,6 +1,6 @@
 # pomodoro_timer
 
-A new Flutter project.
+Flutter application for the pomodor timer technique.
 
 ## Getting Started
 

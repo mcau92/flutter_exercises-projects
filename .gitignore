@@ -44,6 +44,7 @@ Latest commit b04bdd0 on 13 May
 .buildlog/
 .history
 .svn/
+*/.packages
 
 # IntelliJ related
 *.iml

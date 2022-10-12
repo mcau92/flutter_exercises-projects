@@ -11,7 +11,11 @@ Flutter application for the pomodor timer technique.
 This simple app is a time manager for your study journey.
 It's based on pomodoro rule that alternates study moments with break moments.
 
-![image info](/assets/screenshot/main.png)
+<p>
+    <img src="./assets/screenshot/main.png" width="220" height="440" />
+    <img src="./assets/screenshot/studio.png" width="220" height="440" />
+    <img src="./assets/screenshot/break.png" width="220" height="440" />
+</p>
 
 ## Technologies
 This project is build using flutter [2.10.5](https://docs.flutter.dev/development/tools/sdk/releases) and the following utility libraries:

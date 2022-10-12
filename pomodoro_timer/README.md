@@ -2,15 +2,27 @@
 
 Flutter application for the pomodor timer technique.
 
-## Getting Started
+## Table of contents
+* [General info](#general-info)
+* [Technologies](#technologies)
+* [Setup](#setup)
 
-This project is a starting point for a Flutter application.
+## General info
+This simple app is a time manager for your study journey.
+It's based on pomodoro rule that alternates study moments with break moments.
 
-A few resources to get you started if this is your first Flutter project:
+## Technologies
+This project is build using flutter [2.10.5](https://docs.flutter.dev/development/tools/sdk/releases) and the following utility libraries:
+* [shared_preferences](https://pub.dev/packages/shared_preferences)
+* [provider](https://pub.dev/packages/provider)
+* [logger](https://pub.dev/packages/logger)
 
-- [Lab: Write your first Flutter app](https://flutter.dev/docs/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://flutter.dev/docs/cookbook)
-
-For help getting started with Flutter, view our
-[online documentation](https://flutter.dev/docs), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Setup
+Since this app is not published on any stores, to use it you need to:
+<ol>
+  <li>Download the repository</li>
+  <li>Ensure that you have installed flutter 2.10.5</li>
+  <li>Go to the main root folder of the project: ..pomodoro_timer/ </li>
+  <li>Open terminal and run <code>flutter run</code> </li>
+</ol>
+  
